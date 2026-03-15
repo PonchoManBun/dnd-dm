@@ -1,38 +1,65 @@
-# The Welcome Wench — Game Design Document
+# The Welcome Wench
 
-A 2D pixel art dungeon crawler RPG where **Claude Code CLI is the game engine**.
+A single-player 2D pixel art dungeon crawler where **Claude Code CLI is the game engine**.
 
-Phaser 3 renders the world. Claude reads D&D 5e SRD markdown files, rolls dice, resolves combat, controls NPCs, and generates narrative — just like a human Dungeon Master.
+Phaser 3 renders the world. Claude reads D&D 5e SRD markdown, rolls dice, resolves combat, controls every NPC, and generates narrative — like a human Dungeon Master. You don't play a video game that imitates D&D. You play D&D with a pixel art tabletop.
 
----
+## Tech Stack
 
-## Sections
+- **Client:** Phaser 3 + TypeScript + Vite
+- **Server:** Node.js + Socket.IO
+- **Engine/DM:** Claude Code CLI
+- **Rules:** D&D 5e SRD (markdown)
+- **Tests:** Vitest
 
-| # | Section | Description |
-|---|---------|-------------|
-| 01 | [Game Overview](01-game-overview.md) | Elevator pitch, pillars, and core loop |
-| 02 | [Narrative & Setting](02-narrative-and-setting.md) | World, tone, and lore framework |
-| 03 | [Visual Style Guide](03-visual-style-guide.md) | Art direction, tile specs, palette |
-| 04 | [Character Creation](04-character-creation.md) | Race, class, stats, alignment flow |
-| 05 | [Character Sheet](05-character-sheet.md) | Stats, skills, equipment slots |
-| 06 | [Progression & Leveling](06-progression-and-leveling.md) | XP, level-up, spell slots |
-| 07 | [Item Cards](07-item-cards.md) | Loot, rarity, encumbrance, currency |
-| 08 | [Permadeath & Tavern Hub](08-permadeath-and-tavern-hub.md) | Death flow, legacy, tavern as home base |
-| 09 | [Overworld & Exploration](09-overworld-and-exploration.md) | Node-based travel, random encounters |
-| 10 | [Fog of War](10-fog-of-war.md) | Vision, darkvision, torches, stealth |
-| 11 | [Combat System](11-combat-system.md) | Turn-based grid combat, action economy |
-| 12 | [Monster & NPC Sheets](12-monster-and-npc-sheets.md) | Stat blocks, behavior, social rules |
-| 13 | [AI Dungeon Master](13-ai-dungeon-master.md) | DM archetypes, response cycle, narrative |
-| 14 | [Multi-Agent NPC System](14-multi-agent-npc-system.md) | Faction agents, memory, event bus |
-| 15 | [UI & HUD](15-ui-and-hud.md) | Split-screen layout, DM panel, hotbar |
-| 16 | [Menus & Game Flow](16-menus-and-game-flow.md) | Title screen, saves, game states |
-| 17 | [Audio & TTS](17-audio-and-tts.md) | Sound design, music, future TTS |
-| 18 | [Technical Architecture](18-technical-architecture.md) | Client/server/Claude pipeline |
-| 19 | [Data Models](19-data-models.md) | JSON schemas, state contract |
-| 20 | [Development Roadmap](20-development-roadmap.md) | Milestones, MVP scope, phasing |
+## Development Phases
 
----
+| Phase | Name | Goal |
+|-------|------|------|
+| **1** | Core Proof of Concept | Prove Claude can be the DM |
+| **2** | Character & Tavern | Create a character, exist in the world |
+| **3** | Combat | Fight something |
+| **4** | Dungeon Crawl | Enter a dungeon, fight, loot, return |
+| **5** | Living World | NPCs remember, factions exist, death matters |
+| **6** | Polish | Full game flow, audio, visual refinement |
 
-**Repo:** `/home/jetson/TWW` (private)
-**Stack:** Phaser 3 · TypeScript · Vite · Node.js · Socket.IO · Claude Code CLI
-**Rules:** D&D 5e SRD (markdown)
+**Current phase:** Phase 1
+
+## Project Structure
+
+```
+PROMPT.md              # Current phase context (RALPH)
+@fix_plan.md           # Prioritized task list (RALPH)
+@AGENT.md              # Build/run/test commands (RALPH)
+CLAUDE.md              # Project instructions for Claude Code
+specs/
+  phase-1-core/        # Phase 1 design specs (active)
+  phase-2-tavern/      # Phase 2 placeholder
+  phase-3-combat/      # Phase 3 placeholder
+  phase-4-dungeon/     # Phase 4 placeholder
+  phase-5-world/       # Phase 5 placeholder
+  phase-6-polish/      # Phase 6 placeholder
+  reference/           # Original 20 GDD documents
+rules/                 # D&D 5e SRD markdown files
+```
+
+## Architecture
+
+```
+Browser (Phaser 3) ◄──Socket.IO──► Node.js Server ◄──CLI──► Claude Code (DM)
+```
+
+- **Client** = dumb renderer (reads JSON, draws pixels)
+- **Server** = thin relay (shuttles messages, persists state)
+- **Claude** = the engine (decides everything)
+
+## Design Pillars
+
+1. **The DM is real.** Claude interprets rules, improvises, and reacts to creativity.
+2. **Permadeath matters.** One life. The world remembers your dead characters.
+3. **Emergent everything.** Quests, factions, NPCs — generated, never scripted.
+4. **Dark comedy.** Dangerous, absurd, and narrated with gallows humor.
+
+## Specs
+
+Full game design is documented across 20 GDD files in `specs/reference/`. Phase-specific build specs are in `specs/phase-N-*/`.
