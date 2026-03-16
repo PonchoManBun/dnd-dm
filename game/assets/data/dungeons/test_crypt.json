@@ -1,0 +1,198 @@
+{
+  "name": "The Crypt of the Fallen",
+  "description": "A crumbling crypt beneath the ruins of an old chapel. The air is thick with dust and the smell of decay.",
+  "floors": [
+    {
+      "id": "crypt_f1",
+      "depth": 1,
+      "name": "Upper Crypt",
+      "width": 30,
+      "height": 20,
+      "rooms": [
+        {
+          "id": 0,
+          "name": "Entrance Chamber",
+          "x": 2, "y": 8, "w": 6, "h": 5,
+          "type": "entrance",
+          "narrative": "You descend worn stone steps into a dim chamber. Cobwebs hang from the ceiling and rats scatter at your approach. A faded mural on the north wall depicts a knight's burial procession.",
+          "stairs_up": true,
+          "items": [{"slug": "dagger", "x": 4, "y": 10}]
+        },
+        {
+          "id": 1,
+          "name": "Guard Room",
+          "x": 10, "y": 6, "w": 7, "h": 8,
+          "type": "combat",
+          "narrative": "This room was once a guard post. Rusted weapon racks line the walls. Something moves in the shadows...",
+          "monsters": [
+            {"slug": "goblin", "x": 13, "y": 9},
+            {"slug": "goblin", "x": 14, "y": 11}
+          ],
+          "items": [{"slug": "arrow", "x": 12, "y": 8, "quantity": 5}]
+        },
+        {
+          "id": 2,
+          "name": "Rat Warren",
+          "x": 19, "y": 3, "w": 5, "h": 6,
+          "narrative": "The floor is covered in gnawed bones and droppings. Giant rats nest in the corners.",
+          "type": "combat",
+          "monsters": [
+            {"slug": "giant_rat", "x": 21, "y": 5},
+            {"slug": "giant_rat", "x": 22, "y": 6},
+            {"slug": "giant_rat", "x": 20, "y": 7}
+          ]
+        },
+        {
+          "id": 3,
+          "name": "Chapel Remains",
+          "x": 19, "y": 11, "w": 8, "h": 7,
+          "type": "treasure",
+          "narrative": "Broken pews and a toppled altar fill this chamber. Faded holy symbols still adorn the walls. Among the rubble, something glints.",
+          "items": [
+            {"slug": "longsword", "x": 22, "y": 14},
+            {"slug": "apple", "x": 24, "y": 13}
+          ],
+          "stairs_down": true
+        }
+      ],
+      "corridors": [
+        {"from": 0, "to": 1},
+        {"from": 1, "to": 2},
+        {"from": 1, "to": 3}
+      ]
+    },
+    {
+      "id": "crypt_f2",
+      "depth": 2,
+      "name": "Lower Crypts",
+      "width": 30,
+      "height": 20,
+      "rooms": [
+        {
+          "id": 0,
+          "name": "Ossuary Landing",
+          "x": 2, "y": 8, "w": 6, "h": 5,
+          "type": "entrance",
+          "narrative": "The stairs open into a hall of bones. Skulls are stacked neatly in alcoves along the walls, their empty eye sockets watching your every move.",
+          "stairs_up": true
+        },
+        {
+          "id": 1,
+          "name": "Burial Hall",
+          "x": 10, "y": 4, "w": 8, "h": 6,
+          "type": "combat",
+          "narrative": "Stone sarcophagi line both walls. As you enter, the lids begin to shift and skeletal hands emerge...",
+          "monsters": [
+            {"slug": "skeleton", "x": 13, "y": 6},
+            {"slug": "skeleton", "x": 15, "y": 7},
+            {"slug": "zombie", "x": 14, "y": 8}
+          ]
+        },
+        {
+          "id": 2,
+          "name": "Collapsed Passage",
+          "x": 10, "y": 12, "w": 6, "h": 6,
+          "type": "trap",
+          "narrative": "The ceiling here is cracked and unstable. Loose stones litter the floor. [color=red]Trap: Falling rubble! DEX save DC 12 or take 1d6 bludgeoning.[/color]",
+          "trap": {"type": "falling_rubble", "dc": 12, "damage_dice": 1, "damage_sides": 6, "damage_type": "bludgeoning"}
+        },
+        {
+          "id": 3,
+          "name": "Armory",
+          "x": 20, "y": 6, "w": 7, "h": 5,
+          "type": "treasure",
+          "narrative": "An ancient armory, mostly looted. But a few pieces remain in surprisingly good condition.",
+          "items": [
+            {"slug": "bronze_armor", "x": 23, "y": 8},
+            {"slug": "tufted_helm", "x": 24, "y": 9}
+          ]
+        },
+        {
+          "id": 4,
+          "name": "Dark Shrine",
+          "x": 20, "y": 13, "w": 8, "h": 6,
+          "type": "combat",
+          "narrative": "A dark altar dominates this chamber. Unholy runes pulse with faint violet light. An orc warrior kneels before it, and rises to face you with a snarl.",
+          "monsters": [
+            {"slug": "orc", "x": 24, "y": 15},
+            {"slug": "skeleton", "x": 22, "y": 16}
+          ],
+          "stairs_down": true
+        }
+      ],
+      "corridors": [
+        {"from": 0, "to": 1},
+        {"from": 0, "to": 2},
+        {"from": 1, "to": 3},
+        {"from": 2, "to": 4},
+        {"from": 3, "to": 4}
+      ]
+    },
+    {
+      "id": "crypt_f3",
+      "depth": 3,
+      "name": "The Crypt Heart",
+      "width": 30,
+      "height": 20,
+      "rooms": [
+        {
+          "id": 0,
+          "name": "Antechamber",
+          "x": 2, "y": 8, "w": 6, "h": 5,
+          "type": "entrance",
+          "narrative": "The air grows colder. Frost clings to the stone walls. You can hear a deep, rhythmic breathing echoing from somewhere ahead.",
+          "stairs_up": true
+        },
+        {
+          "id": 1,
+          "name": "Guardian Hall",
+          "x": 10, "y": 6, "w": 8, "h": 8,
+          "type": "combat",
+          "narrative": "Two massive stone statues flank a wide corridor. As you pass between them, the 'statues' lurch to life — zombies encased in crumbling stone armor!",
+          "monsters": [
+            {"slug": "zombie", "x": 13, "y": 9},
+            {"slug": "zombie", "x": 15, "y": 11},
+            {"slug": "skeleton", "x": 14, "y": 8},
+            {"slug": "skeleton", "x": 16, "y": 12}
+          ]
+        },
+        {
+          "id": 2,
+          "name": "Treasury",
+          "x": 20, "y": 3, "w": 6, "h": 5,
+          "type": "treasure",
+          "narrative": "A hidden treasury! Gold coins spill from rotting chests. Among the treasure, a gleaming suit of armor catches your eye.",
+          "items": [
+            {"slug": "gold_armor", "x": 22, "y": 5},
+            {"slug": "crested_helm", "x": 23, "y": 6},
+            {"slug": "apple", "x": 24, "y": 5}
+          ]
+        },
+        {
+          "id": 3,
+          "name": "Boss Chamber — The Ogre's Lair",
+          "x": 18, "y": 10, "w": 10, "h": 8,
+          "type": "boss",
+          "narrative": "[color=red][b]BOSS ENCOUNTER[/b][/color]\n\nA massive ogre sits on a throne of bones, gnawing on what appears to be a femur. It spots you and roars, shaking dust from the ceiling. Behind it, you see a glowing portal — your way out of this crypt.\n\n[color=yellow]Defeat the Ogre to escape the Crypt of the Fallen![/color]",
+          "monsters": [
+            {"slug": "ogre", "x": 23, "y": 14}
+          ],
+          "choices": [
+            {"text": "Charge in, weapons drawn!", "action": "combat"},
+            {"text": "Try to sneak past to the portal.", "action": "stealth_check", "dc": 15},
+            {"text": "Offer the ogre food as tribute.", "action": "persuasion_check", "dc": 18}
+          ],
+          "on_clear": {
+            "narrative": "[color=green]The ogre falls with an earth-shaking thud! The portal behind the throne flares to life. You've conquered the Crypt of the Fallen![/color]",
+            "victory": true
+          }
+        }
+      ],
+      "corridors": [
+        {"from": 0, "to": 1},
+        {"from": 1, "to": 2},
+        {"from": 1, "to": 3}
+      ]
+    }
+  ]
+}
