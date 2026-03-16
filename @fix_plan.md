@@ -49,9 +49,9 @@
 
 ### LOW — Nice to have
 
-- [ ] Audio integration (placeholder music + SFX)
-- [ ] Death/permadeath flow (UI only — last stand prompt, eulogy screen, memorial wall)
-- [ ] Install Godot 4 ARM64 on Jetson for on-device testing
+- [x] Audio integration (procedural AudioStreamGenerator sounds via AudioManager autoload)
+- [x] Death/permadeath flow (immersive death screen with eulogy, memorial stats, fade-in)
+- [ ] Install Godot 4 ARM64 on Jetson for on-device testing (requires SSH, manual setup)
 
 ---
 
