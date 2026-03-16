@@ -96,6 +96,14 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
+[node name="WeightLabel" type="RichTextLabel" parent="MarginContainer/PanelContainer/MainVBox/ContentHBox/InventoryContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 16)
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/PanelContainer/MainVBox/ContentHBox/InventoryContainer"]
 layout_mode = 2
 alignment = 1
@@ -382,6 +390,17 @@ offset_bottom = 133.0
 theme_type_variation = &"SubtleLabel"
 text = "Gloves"
 horizontal_alignment = 1
+
+[node name="EquipWeightLabel" type="RichTextLabel" parent="MarginContainer/PanelContainer/MainVBox/ContentHBox/EquipmentContainer/Control"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 15.0
+offset_top = 195.0
+offset_right = 200.0
+offset_bottom = 215.0
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
 
 [node name="UnequipButton" type="Button" parent="MarginContainer/PanelContainer/MainVBox/ContentHBox/EquipmentContainer/Control"]
 unique_name_in_owner = true

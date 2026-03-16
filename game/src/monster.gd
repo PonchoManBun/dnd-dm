@@ -512,6 +512,37 @@ func get_current_load() -> int:
 	return total_mass
 
 
+## Returns total carried weight in lbs (inventory + equipped items).
+func get_total_carried_weight() -> float:
+	var total: float = 0.0
+	for item: Item in inventory.to_array():
+		total += item.get_mass()
+	for item: Item in equipment.get_all_equipped_items():
+		total += item.get_mass()
+	return total
+
+
+## Returns D&D 5e carrying capacity (STR * 15) if character_data is available, else -1.
+func get_dnd_carrying_capacity() -> float:
+	if character_data:
+		return character_data.strength * 15.0
+	return -1.0
+
+
+## Returns D&D 5e encumbrance threshold (STR * 5) if character_data is available, else -1.
+func get_dnd_encumbered_threshold() -> float:
+	if character_data:
+		return character_data.strength * 5.0
+	return -1.0
+
+
+## Returns D&D 5e heavy encumbrance threshold (STR * 10) if character_data is available, else -1.
+func get_dnd_heavily_encumbered_threshold() -> float:
+	if character_data:
+		return character_data.strength * 10.0
+	return -1.0
+
+
 func tick_encumbrance() -> void:
 	var current_load := get_current_load()
 	var max_capacity := get_max_carrying_capacity()

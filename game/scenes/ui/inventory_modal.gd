@@ -32,6 +32,8 @@ signal toggle_container_requested(item: Item)
 @onready var use_button: Button = %UseButton
 @onready var throw_button: Button = %ThrowButton
 @onready var unequip_button: Button = %UnequipButton
+@onready var weight_label: RichTextLabel = %WeightLabel
+@onready var equip_weight_label: RichTextLabel = %EquipWeightLabel
 
 var equipment_sockets: Dictionary = {}
 var _previous_tab: int = Tab.INVENTORY
@@ -361,6 +363,7 @@ func update() -> void:
 	_update_equipment_items()
 	_update_buttons()
 	_update_tabs()
+	_update_weight_display()
 	Log.d("Updated")
 
 
@@ -481,3 +484,52 @@ func _update_tabs() -> void:
 		Tab.INVENTORY, "Inventory" if inventory_items == 0 else "Inventory (%d)" % inventory_items
 	)
 	tabs.set_tab_title(Tab.EQUIPMENT, "Equipment")
+
+
+func _update_weight_display() -> void:
+	var text := _get_weight_bbcode()
+	weight_label.text = text
+	equip_weight_label.text = text
+
+
+func _get_weight_bbcode() -> String:
+	var player: Monster = World.player
+	if not player:
+		return ""
+
+	var total_weight: float = player.get_total_carried_weight()
+	var capacity: float = player.get_dnd_carrying_capacity()
+
+	# Determine color and encumbrance status
+	var weight_color: Color = GameColors.WHITE
+	var encumbrance_text: String = ""
+
+	if capacity > 0:
+		var ratio: float = total_weight / capacity
+		var encumbered_threshold: float = player.get_dnd_encumbered_threshold()
+		var heavily_encumbered_threshold: float = player.get_dnd_heavily_encumbered_threshold()
+
+		if total_weight > capacity:
+			weight_color = GameColors.RED
+		elif ratio > 0.5:
+			weight_color = GameColors.YELLOW
+
+		if total_weight > heavily_encumbered_threshold:
+			encumbrance_text = "Heavily Encumbered"
+		elif total_weight > encumbered_threshold:
+			encumbrance_text = "Encumbered"
+
+	# Build the BBCode string
+	var color_hex: String = weight_color.to_html()
+	var result: String = ""
+
+	if capacity > 0:
+		result = "[color=%s]Weight: %.1f / %.0f lbs[/color]" % [color_hex, total_weight, capacity]
+	else:
+		result = "Weight: %.1f lbs" % total_weight
+
+	if encumbrance_text != "":
+		var enc_color: String = GameColors.RED.to_html() if encumbrance_text == "Heavily Encumbered" else GameColors.ORANGE.to_html()
+		result += "  [color=%s]%s[/color]" % [enc_color, encumbrance_text]
+
+	return result
