@@ -1,127 +1,82 @@
-# Phase 1: Core Proof of Concept — Architecture
+# Phase 1 Architecture — Three-Layer Single-Machine Topology
 
-> Extracted from [GDD 18 — Technical Architecture](../reference/18-technical-architecture.md) and [GDD 19 — Data Models](../reference/19-data-models.md)
+## Overview
 
-## System Overview
+All components run on a single Jetson Orin Nano (8GB shared memory):
 
 ```
-┌─────────────┐     WebSocket      ┌─────────────┐     CLI / API     ┌─────────────┐
-│   Phaser 3   │ ◄──(Socket.IO)──► │  Node.js     │ ◄──────────────► │ Claude Code  │
-│   Client     │                   │  Server      │                  │ CLI (DM)     │
-│  (browser)   │                   │              │                  │              │
-│  TypeScript  │                   │  State store  │                  │  SRD .md     │
-│  Vite        │                   │  Relay        │                  │  files       │
-└─────────────┘                    └─────────────┘                   └─────────────┘
+┌──────────────────────────────────────────────────────┐
+│  JETSON ORIN NANO                                     │
+│                                                       │
+│  [Godot 4 Client] ──HTTP──▶ [DM Orchestrator]        │
+│                              │            │           │
+│                    [Ollama/LLM]    [Forge/Claude]     │
+└──────────────────────────────────────────────────────┘
 ```
 
-## Component Roles
+## Architecture Principles
 
-### Phaser 3 Client (Browser)
-- **Role:** Renderer + input handler
-- **Does:** Display JSON game state, capture player input, send actions via Socket.IO
-- **Does NOT:** Roll dice, resolve combat, decide NPC behavior, generate narrative
+1. **Client = dumb renderer.** Godot reads game state JSON and draws pixels. No dice, no combat, no narrative.
+2. **Orchestrator = the brain.** Routes between LLM, Forge, and rules engine. Maintains all state.
+3. **Local LLM = fast DM.** Handles every turn. Narration, dialogue, choices. ~20-43 tok/s.
+4. **Forge (Claude) = quality content.** On-demand generation of dungeons, monsters, quests via persistent CLI session. 10-60 sec, player waits.
+5. **State contract = JSON.** All layers communicate via JSON. Godot reads JSON. Orchestrator writes JSON. Claude generates JSON. Everyone speaks the same language.
+6. **Deterministic rules stay deterministic.** Dice, combat math, conditions — no LLM involved. Fair, reproducible, SRD-compliant.
 
-### Node.js Server
-- **Role:** Thin relay + state persistence
-- **Does:** Relay messages between client and Claude, persist game state, manage sessions
-- **Does NOT:** Contain game logic
+## Communication
 
-### Claude Code CLI (The Engine)
-- **Role:** The actual game engine / Dungeon Master
-- **Reads:** D&D 5e SRD markdown files
-- **Maintains:** Full game state
-- **Outputs:** JSON game state objects → server relays → client renders
-- **Decides:** Everything — combat, loot, NPC behavior, narrative, difficulty
+| From | To | Transport | Format |
+|------|----|-----------|--------|
+| Godot | Orchestrator | HTTP localhost | JSON |
+| Orchestrator | Ollama | Ollama Python SDK | JSON messages |
+| Orchestrator | Claude | Claude Code CLI (persistent session) | Prompts + JSON output |
+| Orchestrator | Game State | File I/O | JSON files |
+| Forge | Content Output | File I/O | .json, .tres, .gd, .tscn |
 
 ## State Contract
 
-Claude outputs structured JSON game state. The client renders it. These TypeScript interfaces define the boundary.
+The orchestrator outputs JSON game state. The Godot client renders it.
 
 ### GameState
 
-```typescript
-interface GameState {
-  scene: 'tavern' | 'overworld' | 'dungeon' | 'combat';
-  turn: number;
-  timeOfDay: string;
-  character: CharacterState;
-  location: LocationState;
-  npcs: NpcState[];
-  narrative: NarrativeState;
-  ui: UiState;
-}
-```
-
-### NarrativeState
-
-```typescript
-interface NarrativeState {
-  text: string;
-  choices: string[];
-  allowFreeText: boolean;
-  diceRolls: DiceRoll[];
-  combatLog: string[];
-  ttsMarked: boolean;
-}
-
-interface DiceRoll {
-  type: string;     // e.g., "d20"
-  result: number;
-  label: string;    // e.g., "Perception"
+```json
+{
+  "scene": "tavern|overworld|dungeon|combat",
+  "turn": 42,
+  "time_of_day": "evening",
+  "character": { "name": "...", "race": "...", "class": "...", "level": 5, "hp": {"current": 28, "max": 35}, "ac": 16, "abilities": {"str": 14, "dex": 12, ...}, "equipment": {...}, "inventory": [...], "conditions": [], "gold": 150, "xp": 6500, "position": {"x": 12, "y": 8} },
+  "location": { "map_id": "crypt_level_1", "room_id": "room_3" },
+  "npcs": [{ "id": "skeleton_1", "position": {"x": 15, "y": 8}, "hp": {"current": 13, "max": 13} }],
+  "narrative": { "text": "A skeleton emerges from the shadows...", "choices": ["Attack with sword", "Cast shield", "Retreat"], "allow_free_text": true, "dice_rolls": [{"type": "d20", "result": 17, "label": "Initiative"}], "combat_log": [] }
 }
 ```
 
 ### PlayerAction
 
-```typescript
-interface PlayerAction {
-  type: 'choice' | 'freetext' | 'move' | 'hotkey';
-  value: string;    // The choice text, free-text input, direction, or hotkey ID
-  timestamp: number;
+```json
+{
+  "type": "choice|freetext|move|hotkey",
+  "value": "Attack with sword",
+  "timestamp": 1710000000
 }
 ```
 
-### CharacterState
+## Base Game
 
-```typescript
-interface CharacterState {
-  name: string;
-  race: string;
-  class: string;
-  level: number;
-  hp: { current: number; max: number };
-  ac: number;
-  abilities: { str: number; dex: number; con: number; int: number; wis: number; cha: number };
-  equipment: Record<string, string>;
-  inventory: ItemCard[];
-  conditions: string[];
-  gold: number;
-  xp: number;
-  position: { x: number; y: number };
-}
-```
+Fork of [statico/godot-roguelike-example](https://github.com/statico/godot-roguelike-example):
+- MIT license, Godot 4.6, pure GDScript
+- D20 combat, BSP dungeon gen, inventory, fog of war
+- Data-driven (CSV), behavior tree AI, faction system
+- Designed for AI-assisted editing
 
-## Phase 1 Scope
+## Key Technical Decisions
 
-For the proof of concept, implement:
-1. The three-component pipeline (client → server → Claude → server → client)
-2. `NarrativeState` and `PlayerAction` types in `shared/`
-3. A minimal `GameState` (can be a subset — just `narrative` and `scene` are enough)
-4. Socket.IO message passing with `player:action` and `dm:response` events
-
-Full `CharacterState`, `LocationState`, and `ItemCard` are defined in `shared/` as types but not populated until Phase 2.
-
-## Monorepo Structure
-
-```
-client/      # Phaser 3 + TypeScript + Vite
-server/      # Node.js + Socket.IO
-shared/      # TypeScript interfaces (state contract)
-rules/       # D&D 5e SRD .md files
-```
-
-## Design Principles
-
-- **Claude is authoritative** — the server never modifies game state, only stores it
-- **Client is a dumb renderer** — it reads JSON and draws pixels
-- **Schemas evolve** — these are starting shapes, refined during development
+| Decision | Choice | Reason |
+|----------|--------|--------|
+| Game engine | Godot 4 + GDScript | ARM64 support, text-based files, AI-friendly |
+| Local LLM | Llama 3.2 3B via Ollama | Fits in 8GB, 20-43 tok/s, tool calling support |
+| Forge backend | Claude Code CLI (persistent session) | /clear + CLAUDE.md, file I/O tools, Commercial Terms |
+| Orchestrator | Python/FastAPI | Async, Ollama SDK, CLI integration, simple |
+| State format | JSON files | Readable by all layers, simple, diffable |
+| Communication | HTTP localhost | Simple, no WebSocket complexity needed |
+| Renderer | OpenGL Compatibility | Lower memory than Vulkan on Jetson |

@@ -1,77 +1,40 @@
-# Phase 1: Core Proof of Concept — DM Integration
+# DM Integration — Dual-Model Architecture
 
-> Extracted from [GDD 13 — AI Dungeon Master](../reference/13-ai-dungeon-master.md)
+> See [GDD 13 — AI Dungeon Master](../reference/13-ai-dungeon-master.md) for full DM design
 
-## The DM's Role
+## The DM System
 
-The AI DM is not a feature — it **is** the game engine. Claude Code CLI reads D&D 5e SRD markdown files, maintains game state, rolls dice, resolves mechanics, controls every NPC, generates narrative, and adjudicates every player action. Phaser renders what the DM decides.
+The AI DM is a **dual-model system** coordinated by the DM Orchestrator:
+
+| Model | Role | Speed | When Used |
+|-------|------|-------|-----------|
+| **Local LLM** (Llama 3.2 3B) | Real-time DM | ~20-43 tok/s | Every player turn |
+| **Claude** (CLI session) | Forge content gen | 10-60 sec | On demand, player waits |
+
+The **DM Orchestrator** (Python/FastAPI) handles deterministic rules (dice, combat math, SRD lookups) and routes between models.
 
 ## The DM Response Cycle
 
-This is the core game loop that Phase 1 must prove:
+```
+Player → Godot (HTTP) → Orchestrator → Rules Engine → Local LLM → Orchestrator → Godot
+                                                   ↘ (on trigger) Forge → content files → resume
+```
 
-1. **Player takes action** — types a message or clicks a choice button.
-2. **Input locks.** Loading indicator appears.
-3. **Claude processes.** Reads the player action, current game state, and any relevant context.
-4. **DM responds.** Returns a JSON `NarrativeState` with text, choices, and optional dice rolls.
-5. **Client renders.** Narrative text appears in the DM panel. Choice buttons appear.
-6. **Input unlocks.** Player's turn again.
+1. **Player takes action** — types or clicks in Godot
+2. **Orchestrator receives** — parses action, loads game state
+3. **Rules engine resolves** — dice rolls, combat math, SRD checks
+4. **Local LLM narrates** — receives rules outcome + context, generates text
+5. **Orchestrator merges** — combines rules results + narration
+6. **Godot renders** — narrative text, choices, state updates
 
 ## DM Input Options
 
-The player always sees:
-
-- **Contextual choices** — DM-suggested actions appropriate to the situation (from `NarrativeState.choices`)
+- **Contextual choices** — LLM-suggested actions appropriate to the situation
 - **"Do something else..."** — Free-text input. Type anything. The DM will adjudicate it.
 
-This is what makes TWW a D&D game, not a menu-driven RPG. The player can always try something creative.
+## DM Archetypes
 
-## Phase 1 Implementation
-
-### Claude CLI Invocation
-
-The server spawns Claude Code CLI as a child process (or uses the API). The prompt includes:
-1. System context: "You are a D&D 5e Dungeon Master for The Welcome Wench..."
-2. Current game state (JSON)
-3. The player's action
-4. Instruction to respond with valid JSON matching the `NarrativeState` schema
-
-### Response Parsing
-
-The server:
-1. Receives Claude's text output
-2. Extracts the JSON block
-3. Validates it against the `NarrativeState` interface
-4. Forwards valid JSON to the client via Socket.IO
-5. On parse failure: returns a fallback error response
-
-### Minimal DM Prompt (Phase 1)
-
-For the proof of concept, the DM prompt is simple:
-
-```
-You are the Dungeon Master for The Welcome Wench, a D&D 5e dungeon crawler.
-The player is in the tavern. Respond to their action.
-
-Respond with JSON matching this schema:
-{
-  "text": "Your narrative response",
-  "choices": ["Option 1", "Option 2", "Option 3"],
-  "allowFreeText": true,
-  "diceRolls": [],
-  "combatLog": [],
-  "ttsMarked": false
-}
-
-Current state: [game state JSON]
-Player action: [player input]
-```
-
-The prompt grows in sophistication in later phases as we add SRD rules, character context, combat state, etc.
-
-## DM Archetypes (Deferred to Phase 2)
-
-At game start, the player will choose a DM personality. For Phase 1, use the default "Classic Storyteller" personality. The full archetype table:
+Implemented as prompt templates for the local LLM:
 
 | Archetype | Style |
 |-----------|-------|
@@ -81,6 +44,27 @@ At game start, the player will choose a DM personality. For Phase 1, use the def
 | **Grim Historian** | Lore-heavy. Deep world-building. |
 | **Merciful Guide** | Easier. More hints, generous loot. |
 
-## Level-Up Narration (Deferred to Phase 4)
+## What's Deterministic vs What's AI
 
-The DM narrates level-ups in character, explains options as if a mentor is speaking, and lets the player choose. No raw stat screens.
+| System | Handler |
+|--------|---------|
+| Dice rolls, attack resolution, damage | **Orchestrator** (Python) |
+| Spell mechanics, conditions | **Orchestrator** (SRD lookup) |
+| Narration, flavor text | **Local LLM** |
+| NPC dialogue, choices | **Local LLM** |
+| Dungeon layouts, monster design, quests | **Forge (Claude)** |
+
+## Forge Triggers
+
+The orchestrator triggers Forge for heavyweight content when the player's action requires it:
+- New dungeon floor, boss encounters, major story beats
+- New NPC profiles, quest arcs, unique items
+- Level-up class feature descriptions
+
+Forge is player-action-triggered — the game shows a "Generating..." indicator while content is produced by a persistent Claude Code CLI session. Gameplay resumes when content is ready.
+
+## Implementation Phases
+
+- **Phase 1:** No AI. Hardcoded content. Proves Godot client works.
+- **Phase 2:** Local LLM integration. DM response cycle works.
+- **Phase 3:** Forge Mode. Claude generates content on demand.

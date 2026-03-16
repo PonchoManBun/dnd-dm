@@ -2,74 +2,73 @@
 
 ## Philosophy
 
-**Renderer first, then connect Claude.** Build the visual game as a working Phaser app with mock data, then wire in the AI DM. This ensures the client works independently and the state contract is proven before adding AI complexity.
+**Prove the architecture first, then add content.** Validate that Godot + local LLM + Forge can work together on the Jetson before investing in game content depth.
 
-## Milestone 1 — Tavern Room (MVP Visual)
+## Phase 0 — Research & Documentation (Current)
 
-- 32×32 tile map of the tavern interior
-- Character sprite with movement (WASD / arrow keys)
-- Wall collision detection
-- Camera follow
-- Basic tileset integration (OpenGameArt)
-- **Goal:** A character walks around a room. That's it.
+- Evaluate open-source Godot 4 base games
+- Research legal/ToS for Claude automated usage
+- Research Jetson Orin Nano LLM capabilities
+- Research Godot file formats for AI editability
+- Design Forge Mode architecture (persistent CLI session)
+- Rewrite GDDs and specs for new architecture
+- **Goal:** All research complete, architecture documented, ready to build.
 
-## Milestone 2 — UI Shell
+## Phase 1 — Standalone Godot Game (Hardcoded Content)
 
-- Split-screen layout (viewport + DM panel)
-- Mock DM narrative text
-- Action bar with placeholder stats
-- Inventory overlay (empty)
-- Menu screens (title, settings)
+- Fork and adapt base game (statico/godot-roguelike-example)
+- Adapt D20 combat to D&D 5e SRD rules
+- Add DM panel UI (narrative text, choices, free-text input)
+- Hardcoded test dungeon with hand-authored content
+- Basic character creation flow
+- Save/load system
+- **Goal:** A playable turn-based tactical RPG with no AI. Proves the game client works.
 
-## Milestone 3 — State Contract
+## Phase 2 — Local LLM Integration
 
-- Define JSON schemas for all game state objects
-- Build client state parser (JSON → Phaser rendering)
-- Mock game state files for testing
-- Server scaffold (Socket.IO relay + state persistence)
+- Set up Ollama on Jetson with Llama 3.2 3B
+- Build DM Orchestrator (Python/FastAPI)
+- Implement DM response cycle: player → orchestrator → LLM → response
+- Deterministic rules engine (dice, combat math, SRD lookups)
+- DM archetype prompt templates
+- NPC dialogue via local LLM (basic)
+- Contextual choice generation
+- **Goal:** The local LLM acts as DM for every turn. Proves the DM loop works.
 
-## Milestone 4 — Claude Integration
+## Phase 3 — Forge Mode (Claude Content Generation)
 
-- Connect Claude Code CLI as the DM process
-- SRD markdown files downloaded, converted, indexed
-- Basic DM response cycle (action → processing → response)
-- Character creation flow (DM-guided)
+- Set up persistent Claude Code CLI session for Forge Mode
+- Implement forge tools: dungeon, monster, item, NPC, narrative
+- Forge trigger detection: when to call Forge
+- On-demand content pipeline (player action → generate → load → resume)
+- Content hot-reloading in Godot
+- JSON tilemap grid → GDScript set_cell() loader
+- **Goal:** Claude generates quality content on demand via persistent CLI session. Proves the forge pipeline works.
 
-## Milestone 5 — Combat
+## Phase 4 — Content Depth
 
-- Turn-based grid combat rendering
-- Initiative tracker UI
-- Action economy (movement, action, bonus action)
-- Reaction window
-- Dice animation + combat log
-- Fog of war overlay
+- Full faction system with reputation mechanics
+- NPC state machines + LLM narration overlay
+- Cross-death NPC memory and world persistence
+- Permadeath flow (death → eulogy → new character)
+- Multiple dungeon themes and boss encounters
+- Quest system with branching narratives
+- Overworld / node-based travel
+- **Goal:** Deep, replayable game content.
 
-## Milestone 6 — Dungeon Generation
-
-- Procedural floor generation (DM-created layouts)
-- Multiple dungeon themes
-- Loot drops + item cards
-- Trap and puzzle adjudication
-
-## Milestone 7 — Overworld & Persistence
-
-- Node-based travel map
-- Random encounters
-- Day/night cycle
-- Permadeath flow (death → eulogy → world log → new character)
-- Cross-death NPC memory
-
-## Milestone 8 — Polish & Post-MVP
+## Phase 5 — Polish & Formalization
 
 - Audio integration (music + SFX)
-- TTS implementation
+- TTS for DM narration (if feasible on Jetson)
+- MCP server formalization (wrap forge tools in proper MCP)
+- Performance optimization for Jetson
+- Playtesting and balance tuning
 - Additional tilesets and sprite sheets
-- Balance tuning with DM archetype adjustments
-- Bug fixing and playtesting
+- **Goal:** Polished, complete game experience.
 
 ## Project Management
 
 - **GitHub Issues** for task tracking
-- **Milestones** map to the phases above
-- **Monorepo** — all code in `/home/jetson/TWW/`
-- **User role** — Game designer. Claude Code builds all code.
+- **Phases** map to GitHub milestones
+- **Two-machine workflow** — develop on Windows 11 laptop, deploy/play on Jetson Orin Nano (see `specs/research/dev-workflow.md`)
+- **User role** — Game designer. Claude Code builds code. Local LLM handles runtime.
