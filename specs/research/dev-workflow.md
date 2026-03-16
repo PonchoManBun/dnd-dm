@@ -29,10 +29,12 @@ type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh user@jetson "mkdir -p ~/.ssh && 
 ### SSH config (~/.ssh/config)
 ```
 Host jetson
-    HostName 192.168.x.x
-    User <your-user>
-    IdentityFile ~/.ssh/id_ed25519
+    HostName 192.168.2.1
+    User jetson
+    IdentityFile C:\Users\ctsul\.ssh\poncho_ed25519
 ```
+
+**Connection:** Direct ethernet cable between laptop and Jetson. Laptop is 192.168.2.2, Jetson is 192.168.2.1. No router involved.
 
 Then: `ssh jetson`
 

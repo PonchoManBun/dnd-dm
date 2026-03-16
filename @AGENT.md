@@ -2,9 +2,10 @@
 
 ## Prerequisites
 
-- Godot 4.x (ARM64 Linux for Jetson, or Windows for development)
-- Python 3.10+
-- Ollama (for Phase 2+)
+- Godot 4.6.1 — installed on Windows via winget (`godot` or `godot_console` in PATH after shell restart)
+- Godot 4 ARM64 — not yet installed on Jetson (LOW priority, Phase 1 task)
+- Python 3.10+ (Jetson: 3.10.12, Windows: 3.13.12)
+- Ollama 0.18.0 (Jetson: installed, running, Llama 3.2 3B on GPU)
 - Anthropic API Key (for Phase 3+ Forge Mode)
 
 ## Development Workflow (Windows → Jetson)
@@ -42,10 +43,7 @@ game_state/       # JSON game state files (Phase 2+)
 
 ## Commands
 
-### Phase 0 (Current — Research & Docs)
-No build commands. Documentation only.
-
-### Phase 1 (Godot Game — No AI)
+### Phase 1 (Current — Godot Game, No AI)
 ```bash
 # Open in Godot editor (Windows)
 godot --path game/

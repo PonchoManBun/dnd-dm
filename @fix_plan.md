@@ -1,68 +1,50 @@
-# Phase 0 — Research & Documentation: Task List
+# Phase 1 — Standalone Godot Game: Task List
 
-## COMPLETED — Research
+## COMPLETED — Phase 0 Readiness
 
-- [x] Legal/ToS research for Claude automated usage → `specs/research/legal-claude-usage.md`
-- [x] Base game evaluation (Godot 4 dungeon crawlers) → `specs/research/base-game-evaluation.md`
-- [x] Godot file format analysis for AI editability → `specs/research/godot-file-formats.md`
-- [x] Jetson Orin Nano hardware/software research → `specs/research/jetson-setup.md`
-- [x] MCP/Forge Mode architecture design → `specs/research/mcp-forge-design.md`
-
-## COMPLETED — GDD Rewrites
-
-- [x] GDD-18 (Technical Architecture) — Three-layer single-machine topology
-- [x] GDD-13 (AI Dungeon Master) — Dual-model DM (local LLM + Claude Forge)
-- [x] GDD-14 (Multi-Agent NPC System) — State machines + freeform LLM conversation
-- [x] GDD-20 (Development Roadmap) — New phased plan (0-5)
-
-## COMPLETED — New Specs
-
-- [x] `specs/phase-1-core/architecture.md` — Rewritten for new architecture
-- [x] `specs/phase-1-core/overview.md` — Updated for new stack
-- [x] `specs/phase-1-core/dm-integration.md` — Updated for dual-model DM
-- [x] `specs/phase-1-core/forge-mode.md` — Persistent CLI session model, player-action-triggered
-- [x] `specs/phase-1-core/dm-orchestrator.md` — DM Orchestrator design, forge trigger detection
-
-## COMPLETED — Meta File Updates
-
-- [x] `PROMPT.md` — Updated for new architecture
-- [x] `CLAUDE.md` — Updated project instructions and tech stack
-- [x] `@fix_plan.md` — This file (updated)
-- [x] `@AGENT.md` — Updated build/run/test commands
-
-## COMPLETED — Design Decision Refinements (Phase 0b)
-
-- [x] Forge invocation model → persistent CLI session, not Agent SDK subprocess
-- [x] Development workflow → Windows 11 laptop → Jetson (SSH, git, rsync)
-- [x] Genre language → "turn-based tactical RPG" with hybrid combat
-- [x] NPC emphasis → all NPCs are freeform conversational agents
-- [x] New file: `forge/CLAUDE.md` — Forge-specific instructions
-- [x] New file: `specs/research/dev-workflow.md` — Two-machine dev workflow
-- [x] Updated all specs, reference docs, and meta files for consistency
+- [x] Jetson Orin Nano: SSH working (192.168.2.1, user jetson, direct ethernet)
+- [x] Jetson: Ollama 0.18.0 + Llama 3.2 3B running on GPU (CUDA 12.6)
+- [x] Jetson: Project repo cloned to ~/dnd-dm
+- [x] Windows: Godot 4.6.1 installed (winget)
+- [x] Windows: Python 3.13, Git, Claude Code ready
+- [x] D&D 5e SRD markdown files in rules/ (17 chapter files, OGL licensed, BTMorton/dnd-5e-srd)
+- [x] All Phase 0 research and specs complete
+- [x] PROMPT.md, CLAUDE.md, @AGENT.md updated for Phase 1
 
 ---
 
-## NEXT — Phase 1 Tasks (Standalone Godot Game)
+## Phase 1 Tasks (Standalone Godot Game — No AI)
 
 ### HIGH — Must complete
 
-- [ ] Fork statico/godot-roguelike-example into project
-- [ ] Evaluate and adapt D20 combat to D&D 5e SRD rules
-- [ ] Add DM panel UI (narrative text display, choice buttons, free-text input)
-- [ ] Create hardcoded test dungeon with hand-authored content
-- [ ] Basic character creation flow (race, class, ability scores)
-- [ ] Save/load system
-- [ ] Implement hybrid combat model (roguelike exploration + tactical D&D 5e combat)
+- [ ] Fork statico/godot-roguelike-example into `game/` directory
+- [ ] Evaluate base game: understand its scene tree, combat system, dungeon gen, data structures
+- [ ] Adapt D20 combat to D&D 5e SRD rules (action economy: movement + action + bonus + reaction)
+- [ ] Add DM panel UI (right-side panel: narrative text display, choice buttons, free-text input)
+- [ ] Create hardcoded test dungeon with hand-authored content (rooms, enemies, loot)
+- [ ] Basic character creation flow (race, class, ability scores per SRD)
+- [ ] Save/load system (JSON game state, continuous auto-save, delete-on-resume)
 
 ### MEDIUM — Should complete
 
-- [ ] Adapt tileset/sprites for TWW visual style
-- [ ] Implement DM archetype selection (UI only, no LLM yet)
-- [ ] Inventory and equipment UI polish
-- [ ] SRD rules markdown loading into Godot (for reference display)
+- [ ] Implement hybrid combat model (roguelike exploration + tactical D&D 5e combat mode switch)
+- [ ] Adapt tileset/sprites for TWW visual style (darker palette, 32x32 or base game's 16x16)
+- [ ] Implement DM archetype selection (UI only, no LLM — stores choice for Phase 2)
+- [ ] Inventory and equipment UI (paper-doll slots, backpack grid, weight tracker)
+- [ ] SRD rules reference display in-game (load markdown from rules/ for tooltips/info panels)
 
 ### LOW — Nice to have
 
 - [ ] Audio integration (placeholder music + SFX)
-- [ ] Death/permadeath flow (UI only)
-- [ ] Title screen and menu flow
+- [ ] Death/permadeath flow (UI only — last stand prompt, eulogy screen, memorial wall)
+- [ ] Title screen and menu flow (new game, continue, settings)
+- [ ] Install Godot 4 ARM64 on Jetson for on-device testing
+
+---
+
+## Environment Notes
+
+- **Jetson memory:** 8 GB shared. Desktop GUI uses ~400 MB + Xorg ~140 MB. Close Firefox and extra Claude sessions before running Ollama with 3B model. Consider headless mode if memory is tight in Phase 2.
+- **SRD upgrade path:** Current rules/ has 17 chapter-level files (BTMorton). For Phase 2+ when per-entity lookup matters, swap to OldManUmby/DND.SRD.Wiki (CC-BY-4.0, ~900 individual files per spell/monster/class).
+- **Base game:** statico/godot-roguelike-example — MIT, Godot 4.6, GDScript, D20 combat, BSP dungeon gen, CSV data-driven, behavior tree AI, fog of war. Copy into game/, don't GitHub-fork.
+- **Godot on Windows:** `godot` command available after shell restart, or use full path at `AppData/Local/Microsoft/WinGet/Packages/GodotEngine.GodotEngine_*/Godot_v4.6.1-stable_win64_console.exe`

@@ -47,15 +47,16 @@ PROMPT.md              # Current phase context and principles
 CLAUDE.md              # Project instructions for Claude Code
 specs/
   phase-1-core/        # Phase 1 design specs (active)
-  phase-2-tavern/      # Phase 2 placeholder
-  phase-3-combat/      # Phase 3 placeholder
-  phase-4-dungeon/     # Phase 4 placeholder
-  phase-5-world/       # Phase 5 placeholder
-  phase-6-polish/      # Phase 6 placeholder
-  research/            # Research documents
+  phase-2-tavern/      # Future phase placeholders
+  phase-3-combat/      #   (specs written when phase begins)
+  phase-4-dungeon/
+  phase-5-world/
+  phase-6-polish/
+  research/            # Research documents (legal, base game, Jetson, dev workflow)
   reference/           # Original 20 GDD documents
-rules/                 # D&D 5e SRD markdown files
-forge/                 # Forge Mode working directory
+rules/                 # D&D 5e SRD markdown files (17 files, OGL)
+forge/                 # Forge Mode working directory (Phase 3+)
+game/                  # Godot 4 project (Phase 1+, not yet created)
 ```
 
 ## Architecture
