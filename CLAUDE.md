@@ -55,4 +55,4 @@ No external plugins or loop runners. Claude Code manages all development directl
 
 ## Current Phase
 
-Phase 0: Research & Documentation — complete. See `PROMPT.md` for objectives and `@fix_plan.md` for Phase 1 tasks.
+Phase 1: Standalone Godot Game — playable game with hardcoded content, no AI. See `PROMPT.md` for objectives and `@fix_plan.md` for tasks.

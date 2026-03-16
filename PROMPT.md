@@ -6,27 +6,26 @@
 
 **Development:** Windows 11 laptop. **Deployment/play:** Jetson Orin Nano (8GB). See `specs/research/dev-workflow.md`.
 
-## Current Phase: Phase 0 — Research & Documentation
+## Current Phase: Phase 1 — Standalone Godot Game
 
-**Goal:** Complete research, validate architecture, update all documentation.
+**Goal:** Playable game with hardcoded content, no AI.
 
 ### Objectives
-1. Legal/ToS research for Claude automated usage (DONE)
-2. Base game evaluation — open-source Godot 4 dungeon crawlers (DONE)
-3. Godot file format analysis for AI editability (DONE)
-4. Jetson Orin Nano hardware/software research (DONE)
-5. MCP/Forge Mode architecture design (DONE)
-6. Rewrite GDDs 13, 14, 18, 20 for new architecture (DONE)
-7. Write new specs: Forge Mode, DM Orchestrator, Architecture (DONE)
-8. Update meta files: PROMPT.md, CLAUDE.md, @fix_plan.md, @AGENT.md (DONE)
-9. Design decision refinements: Forge CLI model, dev workflow, genre, NPC emphasis (DONE)
+1. Fork and adapt statico/godot-roguelike-example base game
+2. Adapt D20 combat to D&D 5e SRD rules
+3. Add DM panel UI (narrative text, choices, free-text input)
+4. Hardcoded test dungeon with hand-authored content
+5. Basic character creation flow (race, class, ability scores)
+6. Save/load system
+7. Hybrid combat model (roguelike exploration + tactical D&D 5e combat)
 
-### Phase 0 is done when:
-- All research docs written to `specs/research/`
-- GDDs rewritten for three-layer architecture
-- New specs written for Forge Mode and DM Orchestrator
-- Meta files updated to reflect the pivot
-- Design decisions documented (Forge CLI, dev workflow, genre, NPC model)
+### Phase 1 is done when:
+- The game runs in Godot with a playable dungeon loop
+- Character creation produces a valid D&D 5e character
+- Combat uses SRD action economy (movement + action + bonus + reaction)
+- DM panel displays narrative text, choices, and free-text input
+- Game can save and load state
+- **No AI** — all content is hardcoded. LLM integration is Phase 2.
 
 ## Tech Stack
 
