@@ -11,6 +11,7 @@ var _throw_selection: Variant = null  # Track item being thrown
 
 var dm_panel: DMPanel
 var initiative_tracker: InitiativeTracker
+var srd_reference: SrdReference
 
 @onready var map_renderer: MapRenderer = %MapRenderer
 @onready var actors: Node2D = %Actors
@@ -95,6 +96,15 @@ func _ready() -> void:
 	initiative_tracker.offset_left = 4.0
 	initiative_tracker.offset_top = 4.0
 	ui_layer.add_child(initiative_tracker)
+
+	# -- SRD Reference Panel (full-screen overlay, starts hidden) --
+	srd_reference = SrdReference.new()
+	srd_reference.anchor_left = 0.05
+	srd_reference.anchor_right = 0.95
+	srd_reference.anchor_top = 0.05
+	srd_reference.anchor_bottom = 0.95
+	srd_reference.visible = false
+	ui_layer.add_child(srd_reference)
 
 	# -- Dungeon atmosphere: cold desaturated tint --
 	var canvas_mod := CanvasModulate.new()
@@ -191,6 +201,16 @@ func _on_game_over() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# SRD reference toggle works in any state
+	if event.is_action_pressed("help"):
+		get_viewport().set_input_as_handled()
+		srd_reference.toggle()
+		return
+
+	# Block all other game input while SRD panel is open
+	if srd_reference.visible:
+		return
+
 	if Modals.has_visible_modals():
 		if event.is_action_pressed("attack_move_to_location"):
 			get_viewport().set_input_as_handled()
@@ -728,7 +748,7 @@ func _update_reticle() -> void:
 
 
 func _should_show_reticle() -> bool:
-	return not (World.game_over or Modals.has_visible_modals())
+	return not (World.game_over or Modals.has_visible_modals() or srd_reference.visible)
 
 
 func _hide_reticle() -> void:
