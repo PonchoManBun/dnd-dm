@@ -195,9 +195,12 @@ func _on_game_over() -> void:
 	# Update actors
 	_update_actors()
 
-	# Display the game over screen
+	# Brief pause before showing the death screen
 	await get_tree().create_timer(1).timeout
-	Modals.show_game_over()
+
+	# Show the immersive death screen overlay
+	var death_screen := DeathScreen.new()
+	ui_layer.add_child(death_screen)
 
 
 func _unhandled_input(event: InputEvent) -> void:
