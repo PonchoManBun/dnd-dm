@@ -96,6 +96,25 @@ func _ready() -> void:
 	initiative_tracker.offset_top = 4.0
 	ui_layer.add_child(initiative_tracker)
 
+	# -- Dungeon atmosphere: cold desaturated tint --
+	var canvas_mod := CanvasModulate.new()
+	canvas_mod.color = Color(0.75, 0.72, 0.85)
+	add_child(canvas_mod)
+
+	# -- Ambient vignette: subtle always-on edge darkening --
+	var vignette_shader := load("res://assets/shaders/ambient_vignette.gdshader") as Shader
+	var vignette_mat := ShaderMaterial.new()
+	vignette_mat.shader = vignette_shader
+	vignette_mat.set_shader_parameter("vignette_intensity", 0.4)
+	vignette_mat.set_shader_parameter("vignette_softness", 0.45)
+	var vignette_rect := ColorRect.new()
+	vignette_rect.material = vignette_mat
+	vignette_rect.anchors_preset = Control.PRESET_FULL_RECT
+	vignette_rect.anchor_right = 1.0
+	vignette_rect.anchor_bottom = 1.0
+	vignette_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui_layer.add_child(vignette_rect)
+
 	# Note: InitiativeTracker starts hidden. Connect to GameMode signals
 	# (turn_order_changed, mode_changed) once GameMode is wired into World.
 
