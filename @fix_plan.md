@@ -41,10 +41,11 @@
   - game_mode.gd (state machine), initiative_tracker.gd (turn order UI)
 - [x] Integrate DM panel into game scene (right 1/3 overlay in UI CanvasLayer)
 - [x] Wire dungeon loader into game flow (initialize_from_dungeon, stair wiring, room triggers)
-- [ ] Adapt tileset/sprites for TWW visual style (darker palette, 32x32 or base game's 16x16)
-- [ ] Implement DM archetype selection (UI only, no LLM — stores choice for Phase 2)
-- [ ] Inventory and equipment UI (paper-doll slots, backpack grid, weight tracker)
-- [ ] SRD rules reference display in-game (load markdown from rules/ for tooltips/info panels)
+- [x] Adapt tileset/sprites for TWW visual style (CanvasModulate tint + ambient vignette shader)
+- [x] Implement DM archetype selection (5 archetypes, UI only, stores choice for Phase 2)
+  - dm_selection.gd + .tscn, wired between character creation and game start
+- [x] Inventory and equipment UI (D&D 5e weight/encumbrance display in inventory modal)
+- [x] SRD rules reference display in-game (toggleable overlay, ? key, markdown-to-BBCode)
 
 ### LOW — Nice to have
 
