@@ -9,11 +9,15 @@ var waiting_for_player_input: bool = false
 var _last_mouse_tile_pos: Vector2i = Utils.INVALID_POS
 var _throw_selection: Variant = null  # Track item being thrown
 
+var dm_panel: DMPanel
+var initiative_tracker: InitiativeTracker
+
 @onready var map_renderer: MapRenderer = %MapRenderer
 @onready var actors: Node2D = %Actors
 @onready var hud: HUD = %HUD
 @onready var hit_effect_rect: ColorRect = %HitEffect
 @onready var reticle: Reticle = %Reticle
+@onready var ui_layer: CanvasLayer = %UI
 
 
 func _ready() -> void:
@@ -72,6 +76,28 @@ func _ready() -> void:
 				func(message: String) -> void: World.message_logged.emit(message)
 			)
 	)
+
+	# -- DM Panel (right side of screen) --
+	dm_panel = DMPanel.new()
+	var panel_ratio := 192.0 / 576.0  # ~1/3 of viewport width
+	dm_panel.anchor_left = 1.0 - panel_ratio
+	dm_panel.anchor_right = 1.0
+	dm_panel.anchor_top = 0.0
+	dm_panel.anchor_bottom = 1.0
+	ui_layer.add_child(dm_panel)
+
+	# -- Initiative Tracker (top-left) --
+	initiative_tracker = InitiativeTracker.new()
+	initiative_tracker.anchor_left = 0.0
+	initiative_tracker.anchor_top = 0.0
+	initiative_tracker.anchor_right = 0.0
+	initiative_tracker.anchor_bottom = 0.0
+	initiative_tracker.offset_left = 4.0
+	initiative_tracker.offset_top = 4.0
+	ui_layer.add_child(initiative_tracker)
+
+	# Note: InitiativeTracker starts hidden. Connect to GameMode signals
+	# (turn_order_changed, mode_changed) once GameMode is wired into World.
 
 	# Hook up HUD signals
 	hud.drop_requested.connect(

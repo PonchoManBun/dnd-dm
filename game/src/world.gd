@@ -34,6 +34,10 @@ var game_over: bool = false
 # Keep track of the max depth reached
 var max_depth: int = 1
 
+# Dungeon loader data (set when playing a JSON-defined dungeon)
+var dungeon_data: DungeonLoader.DungeonData = null
+var current_floor_data: DungeonLoader.FloorData = null
+
 # Set to true when game state was loaded from a save file.
 # game.gd checks this to skip World.initialize() after scene change.
 var loaded_from_save: bool = false
@@ -89,6 +93,12 @@ func initialize() -> void:
 
 	Log.i("Player created: %s" % player)
 
+	# Check if we should load a test dungeon instead of normal world gen
+	if has_meta("use_test_dungeon"):
+		remove_meta("use_test_dungeon")
+		initialize_from_dungeon("res://assets/data/dungeons/test_crypt.json")
+		return
+
 	# Create the first level
 	maps.clear()
 	var plan := world_plan.get_first_level_plan()
@@ -108,6 +118,67 @@ func initialize() -> void:
 	# Signal that the world is ready
 	map_changed.emit(current_map)
 	world_initialized.emit()
+
+
+func initialize_from_dungeon(path: String) -> void:
+	Log.i("Loading dungeon from: %s" % path)
+
+	dungeon_data = DungeonLoader.load_dungeon(path)
+	if not dungeon_data:
+		Log.e("Failed to load dungeon: %s" % path)
+		return
+
+	Log.i("Dungeon loaded: %s (%d floors)" % [dungeon_data.name, dungeon_data.floors.size()])
+
+	# Clear visited rooms for this new dungeon
+	RoomTriggers.clear()
+
+	# Generate maps for all floors and wire stair destinations
+	maps.clear()
+	for i in range(dungeon_data.floors.size()):
+		var floor_data := dungeon_data.floors[i]
+		var map := DungeonLoader.generate_map_from_floor(floor_data)
+		maps[floor_data.id] = map
+
+		# Wire stair destinations based on floor ordering
+		_wire_stair_destinations(map, floor_data, i)
+
+	# Start on the first floor
+	current_floor_data = dungeon_data.floors[0]
+	current_map = maps[current_floor_data.id]
+
+	# Add the player at the entrance (stairs_up position)
+	assert(
+		current_map.add_monster_at_stairs(player, Obstacle.Type.STAIRS_UP),
+		"Failed to add player to dungeon entrance"
+	)
+
+	# Compute FOV before the first turn
+	update_vision()
+
+	# Signal that the world is ready
+	map_changed.emit(current_map)
+	world_initialized.emit()
+
+
+## Wire destination_level on stairs obstacles based on floor ordering in the dungeon.
+func _wire_stair_destinations(map: Map, floor_data: DungeonLoader.FloorData, floor_index: int) -> void:
+	for x in range(map.width):
+		for y in range(map.height):
+			var cell := map.get_cell(Vector2i(x, y))
+			if not cell.obstacle:
+				continue
+
+			if cell.obstacle.type == Obstacle.Type.STAIRS_UP:
+				if floor_index == 0:
+					# First floor: stairs up leads to escape
+					cell.obstacle.destination_level = ESCAPE_LEVEL
+				else:
+					cell.obstacle.destination_level = dungeon_data.floors[floor_index - 1].id
+
+			elif cell.obstacle.type == Obstacle.Type.STAIRS_DOWN:
+				if floor_index < dungeon_data.floors.size() - 1:
+					cell.obstacle.destination_level = dungeon_data.floors[floor_index + 1].id
 
 
 func _generate_map(plan: WorldPlan.LevelPlan) -> Map:
@@ -180,6 +251,12 @@ func apply_player_action(action: BaseAction) -> ActionResult:
 			message_logged.emit(result.message)
 		Log.i("[color=gray]==== TURN CANCELLED (Result False) ====[/color]")
 		return result
+
+	# Check room entry triggers if playing a dungeon
+	if current_floor_data:
+		var player_pos := current_map.find_monster_position(player)
+		if player_pos != Utils.INVALID_POS:
+			RoomTriggers.check_room_entry(current_map, player_pos, current_floor_data)
 
 	# Update all monster systems
 	for monster in current_map.get_monsters():
@@ -283,17 +360,29 @@ func handle_special_level(id: String) -> void:
 
 
 func handle_level_transition(destination_level: String, coming_from_stairs: Obstacle.Type) -> void:
-	# Get the level plan for the destination
-	var plan := world_plan.get_level_plan(destination_level)
-	if not plan:
-		Log.e("No level plan found for %s" % destination_level)
-		return
+	if dungeon_data:
+		# Dungeon-loaded transition: maps are pre-generated
+		if not maps.has(destination_level):
+			Log.e("No dungeon map found for %s" % destination_level)
+			return
 
-	# Generate or load the next level
-	if not maps.has(destination_level):
-		var map := _generate_map(plan)
-		map.id = destination_level
-		maps[destination_level] = map
+		# Update current_floor_data to match the destination
+		for floor_data in dungeon_data.floors:
+			if floor_data.id == destination_level:
+				current_floor_data = floor_data
+				break
+	else:
+		# Normal procedural transition
+		var plan := world_plan.get_level_plan(destination_level)
+		if not plan:
+			Log.e("No level plan found for %s" % destination_level)
+			return
+
+		# Generate or load the next level
+		if not maps.has(destination_level):
+			var map := _generate_map(plan)
+			map.id = destination_level
+			maps[destination_level] = map
 
 	# Remove player from current map
 	current_map.find_and_remove_monster(player)
