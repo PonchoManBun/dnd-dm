@@ -28,6 +28,9 @@ var species: Species.Type
 var variant: int = 0
 var hit_particles_color := Color(1.0, 0.1, 0.1)
 
+# D&D 5e character data (null for legacy monsters without full stat blocks)
+var character_data: CharacterData = null
+
 # Stats and mutables
 var hp: int
 var max_hp: int

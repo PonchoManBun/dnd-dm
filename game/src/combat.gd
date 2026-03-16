@@ -18,148 +18,168 @@ class MeleeAttackResult:
 	extends RefCounted
 
 	var damage: int = 0
-	var damage_type: Damage.Type = Damage.Type.BLUNT
+	var damage_type: Damage.Type = Damage.Type.BLUDGEONING
 	var killed: bool = false
 	var missed: bool = false
+	var critical: bool = false
+	var attack_description: String = ""
+	var damage_description: String = ""
 
 	func _to_string() -> String:
 		return (
-			"MeleeAttackResult(damage=%d, killed=%s, missed=%s)"
-			% [
-				damage,
-				killed,
-				missed,
-			]
+			"MeleeAttackResult(damage=%d, killed=%s, missed=%s, crit=%s)"
+			% [damage, killed, missed, critical]
 		)
 
 
-## Handles a melee interaction between an attacker and defender
-## Returns a MeleeAttackResult containing damage dealt and any special effects
+## Handles a melee interaction between an attacker and defender.
+## Uses D&D 5e rules when character_data is available, falls back to legacy.
 static func resolve_melee_attack(attacker: Monster, defender: Monster) -> MeleeAttackResult:
 	var attacker_name := attacker.get_name(Monster.NameFormat.THE)
 	var defender_name := defender.get_name(Monster.NameFormat.THE)
 	var item := attacker.equipment.get_equipped_item(Equipment.Slot.MELEE)
 	Log.i("Resolving melee attack from %s to %s with %s" % [attacker_name, defender_name, item])
 
+	# Use D&D 5e rules if attacker has character data
+	if attacker.character_data:
+		return _resolve_dnd_melee(attacker, defender, item)
+	return _resolve_legacy_melee(attacker, defender, item)
+
+
+## D&D 5e melee attack resolution
+static func _resolve_dnd_melee(attacker: Monster, defender: Monster, item: Item) -> MeleeAttackResult:
+	var result := MeleeAttackResult.new()
+	var char_data := attacker.character_data
+
+	# Determine weapon stats
+	var weapon_dice := 1
+	var weapon_sides := 1
+	var damage_type := Damage.Type.BLUDGEONING
+	var ability := CharacterData.Ability.STRENGTH
+
+	if item:
+		weapon_dice = item.damage[0]
+		weapon_sides = item.damage[1]
+		if not item.damage_types.is_empty():
+			damage_type = item.damage_types.pick_random()
+	else:
+		# Unarmed strike: 1 + STR mod
+		weapon_dice = 0
+		weapon_sides = 0
+
+	# Check for finesse (use DEX if higher)
+	var str_mod := char_data.get_modifier(CharacterData.Ability.STRENGTH)
+	var dex_mod := char_data.get_modifier(CharacterData.Ability.DEXTERITY)
+	if dex_mod > str_mod:
+		ability = CharacterData.Ability.DEXTERITY
+
+	# Determine target AC
+	var target_ac: int
+	if defender.character_data:
+		target_ac = defender.character_data.base_ac
+	else:
+		target_ac = defender.get_armor_class() + 10  # Legacy AC is additive; shift to D&D range
+
+	# Check advantage/disadvantage from conditions
+	var advantage := false
+	var disadvantage := false
+	if defender.character_data:
+		advantage = RulesEngine.has_advantage_against(defender.character_data)
+	if attacker.character_data:
+		disadvantage = RulesEngine.has_disadvantage_from_conditions(attacker.character_data)
+
+	# Resolve attack via RulesEngine
+	var attack_result := RulesEngine.resolve_attack(
+		char_data, target_ac,
+		weapon_dice, weapon_sides, damage_type,
+		ability, true, advantage, disadvantage
+	)
+
+	result.damage_type = damage_type
+	result.attack_description = attack_result.attack_description
+	result.damage_description = attack_result.damage_description
+	result.critical = attack_result.critical
+
+	if not attack_result.hit:
+		result.missed = true
+		_show_popup(defender, "Miss")
+		Log.d("  D&D attack: %s — MISS" % attack_result.attack_description)
+		return result
+
+	# Handle unarmed strike (no dice, just 1 + STR mod)
+	var final_damage: int
+	if weapon_dice == 0:
+		final_damage = maxi(1, 1 + char_data.get_modifier(ability))
+		result.damage_description = "1+%d=%d bludgeoning" % [char_data.get_modifier(ability), final_damage]
+	else:
+		final_damage = attack_result.damage
+
+	result.damage = maxi(0, final_damage)
+	_show_popup(defender, result.damage)
+	Log.d("  D&D attack: %s — %s" % [attack_result.attack_description, result.damage_description])
+
+	if defender.hp <= result.damage:
+		result.killed = true
+		Log.d("  %s is killed!" % defender)
+
+	return result
+
+
+## Legacy melee attack (for monsters without D&D character data)
+static func _resolve_legacy_melee(attacker: Monster, defender: Monster, item: Item) -> MeleeAttackResult:
 	var result := MeleeAttackResult.new()
 
-	# 1. Attack roll
 	var attack_roll := Dice.roll(1, 20)
-
-	var to_hit_bonus := 0
 	var attacker_strength := attacker.get_strength()
-	if attacker_strength <= 5:
-		to_hit_bonus = -2
-	elif attacker_strength <= 7:
-		to_hit_bonus = -1
-	elif attacker_strength <= 16:
-		to_hit_bonus = 0
-	elif attacker_strength <= 20:
-		to_hit_bonus = 1
-	elif attacker_strength <= 29:
-		to_hit_bonus = 2
-	else:
-		to_hit_bonus = 3
+	var to_hit_bonus := 0
+	if attacker_strength <= 5: to_hit_bonus = -2
+	elif attacker_strength <= 7: to_hit_bonus = -1
+	elif attacker_strength <= 16: to_hit_bonus = 0
+	elif attacker_strength <= 20: to_hit_bonus = 1
+	elif attacker_strength <= 29: to_hit_bonus = 2
+	else: to_hit_bonus = 3
 
-	# Add skill bonus
 	var skill_bonus := 0
 	if item:
-		var skill_hit_bonus := attacker.get_skill_hit_bonus(item.skill_type)
-		skill_bonus = int(20.0 * skill_hit_bonus)  # Convert percentage to bonus (e.g. 20% -> +4)
-		Log.d("    Skill bonus from %s: %d" % [Skills.Type.keys()[item.skill_type], skill_bonus])
-
-	# TODO: dexterity
-	# TODO: equipment enhancement bonuses
+		skill_bonus = int(20.0 * attacker.get_skill_hit_bonus(item.skill_type))
 
 	var target_ac := defender.get_armor_class()
-
 	var is_hit := attack_roll + to_hit_bonus + skill_bonus >= target_ac
-
-	var params := [
-		attack_roll,
-		to_hit_bonus,
-		skill_bonus,
-		target_ac,
-		is_hit,
-	]
-	Log.d("  1. Attack roll: %d + %d + %d >= %d -> %s" % params)
+	Log.d("  Legacy attack: d20(%d)+%d+%d=%d vs AC %d -> %s" % [
+		attack_roll, to_hit_bonus, skill_bonus,
+		attack_roll + to_hit_bonus + skill_bonus, target_ac, is_hit
+	])
 
 	if not is_hit:
-		Log.d("    Missed")
 		_show_popup(attacker, "Miss")
 		result.missed = true
 		return result
 
-	# 2. Calculate base damage
-	Log.d("    Equipped item: %s" % item)
 	var base_damage := Dice.roll(item.damage[0], item.damage[1]) if item else 1
-
-	var damage_type := item.damage_types.pick_random() as Damage.Type if item else Damage.Type.BLUNT
-	Log.d("    Damage type: %s" % Damage.Type.keys()[damage_type])
-
+	var damage_type := item.damage_types.pick_random() as Damage.Type if item else Damage.Type.BLUDGEONING
 	var modifier := 0
-	if attacker_strength <= 5:
-		modifier = -1
-	elif attacker_strength <= 15:
-		modifier = 0
-	elif attacker_strength <= 17:
-		modifier = 1
-	elif attacker_strength <= 20:
-		modifier = 2
-	elif attacker_strength <= 23:
-		modifier = 3
-	elif attacker_strength <= 26:
-		modifier = 5
-	elif attacker_strength <= 29:
-		modifier = 5
-	else:
-		modifier = 6
+	if attacker_strength <= 5: modifier = -1
+	elif attacker_strength <= 15: modifier = 0
+	elif attacker_strength <= 17: modifier = 1
+	elif attacker_strength <= 20: modifier = 2
+	elif attacker_strength <= 23: modifier = 3
+	else: modifier = 5
 
 	var damage := base_damage + modifier
 
-	params = [
-		Dice.format(item.damage[0], item.damage[1]) if item else "null",
-		base_damage,
-		modifier,
-		damage,
-	]
-	Log.d("  2. Base damage: (%s -> %d) + %d = %d" % params)
-
-	# TODO: weapon enchantment
-	# TODO: role bonus
-	# TODO: monster class vulnerability
-
-	# 3. Critical hit
-	# TODO: items with immediate death, like vorpal blade
-	Log.d("  3. Critical hits efects: TODO")
-
-	# 4. Damage reductions
-	Log.d("  4. Damage reductions:")
-
-	# TODO: Shield absorption system
-
-	# Check resistances
 	if damage > 0:
 		var resistances := defender.get_resistances()
 		if damage_type in resistances:
-			var resistance: int = resistances[damage_type]
-			Log.d("    %s resistance: %d" % [Damage.Type.keys()[damage_type], resistance])
 			_show_popup(defender, "Resist")
-			damage = _calculate_damage_reduction(damage_type, resistance, damage)
-			Log.d("    Damage after reduction: %d" % damage)
+			damage = _calculate_damage_reduction(damage_type, resistances[damage_type], damage)
 
-	# 5. Apply damage
 	result.damage = damage
-	Log.d("  5. Damage applied: %d" % damage)
-
+	result.damage_type = damage_type
 	_show_popup(defender, damage)
 
-	# 6. Check for death
 	if defender.hp <= result.damage:
 		result.killed = true
-		Log.d("  6. %s is killed" % defender)
 
-	Log.d("  Result: %s" % result)
 	return result
 
 
@@ -177,29 +197,49 @@ static func _show_popup(monster: Monster, damage: Variant) -> void:
 		World.effect_occurred.emit(popup)
 
 
-## Format combat message
+## Format combat message with D&D 5e roll breakdown when available.
 static func format_melee_attack_message(
 	attacker: Monster, defender: Monster, result: MeleeAttackResult
 ) -> String:
 	var is_player_attacker := attacker == World.player
 	var is_player_defender := defender == World.player
 
-	var subject := "you" if is_player_attacker else attacker.get_name(Monster.NameFormat.THE)
+	var subject := "You" if is_player_attacker else Utils.capitalize_first(attacker.get_name(Monster.NameFormat.THE))
 	var object := "you" if is_player_defender else defender.get_name(Monster.NameFormat.THE)
-	var verb := "hit" if is_player_attacker else "hits"
+	var verb := "attack" if is_player_attacker else "attacks"
 
+	# D&D 5e detailed format: "Goblin attacks you: d20(14)+4=18 vs AC 16 — HIT! 1d6(4)+2=6 slashing"
+	if result.attack_description:
+		var message := "%s %s %s: %s" % [subject, verb, object, result.attack_description]
+		if result.missed:
+			return message
+		if result.damage_description:
+			message += " %s" % result.damage_description
+		if result.killed:
+			if is_player_defender:
+				message += " You die."
+			else:
+				message += " %s is killed!" % Utils.capitalize_first(
+					defender.get_name(Monster.NameFormat.THE)
+				)
+		return message
+
+	# Legacy format
 	if result.missed:
 		if is_player_attacker:
 			return "You miss."
-		return "%s misses." % Utils.capitalize_first(subject)
+		return "%s misses." % subject
 
-	var message := "%s %s %s." % [Utils.capitalize_first(subject), verb, object]
+	verb = "hit" if is_player_attacker else "hits"
+	var message := "%s %s %s." % [subject, verb, object]
 
 	if result.killed:
 		if is_player_defender:
 			message += " You die."
 		else:
-			message += " %s is killed!" % Utils.capitalize_first(defender.get_name(Monster.NameFormat.THE))
+			message += " %s is killed!" % Utils.capitalize_first(
+				defender.get_name(Monster.NameFormat.THE)
+			)
 
 	return message
 
@@ -212,7 +252,7 @@ class RangedAttackResult:
 	var hit_obstacle: Obstacle = null
 	var hit_terrain: Terrain = null
 	var damage: int = 0
-	var damage_type: Damage.Type = Damage.Type.BLUNT
+	var damage_type: Damage.Type = Damage.Type.BLUDGEONING
 	var killed: bool = false
 
 
@@ -545,7 +585,7 @@ class AreaOfEffectDamageResult:
 
 	var hit_monster: Monster = null
 	var damage: int = 0
-	var damage_type: Damage.Type = Damage.Type.BLUNT
+	var damage_type: Damage.Type = Damage.Type.BLUDGEONING
 	var killed: bool = false
 
 

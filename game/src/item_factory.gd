@@ -110,7 +110,7 @@ static func _load_item_data() -> void:
 			&"gross": false,
 			&"hp": 0,
 			&"damage": [1, 1],
-			&"damage_types": [Damage.Type.BLUNT] as Array[Damage.Type],
+			&"damage_types": [Damage.Type.BLUDGEONING] as Array[Damage.Type],
 			&"max_stack_size": row[_get_col(&"max_stack_size")].to_int(),
 			&"max_children": 0,
 			&"resistance_multiplier": row[_get_col(&"resistance_multiplier")].to_int(),
@@ -151,16 +151,13 @@ static func _load_item_data() -> void:
 			var parts := damage.split("d")
 			data[&"damage"] = [parts[0].to_int(), parts[1].to_int()]
 
-		# Parse damage type
+		# Parse damage type (supports both old names like "blunt" and new like "bludgeoning")
 		if !row[_get_col(&"damage_types")].is_empty():
 			var strings := row[_get_col(&"damage_types")].split(",")
 			if not strings.is_empty():
 				var types: Array[Damage.Type] = []
 				for type_str in strings:
-					for key: StringName in Damage.Type.keys():
-						if type_str.to_upper() == key.to_upper():
-							types.append(Damage.Type[key])
-							break
+					types.append(Damage.string_to_type(type_str.strip_edges()))
 				data[&"damage_types"] = types
 
 		# Parse ammo type
@@ -185,11 +182,8 @@ static func _load_item_data() -> void:
 		for key: StringName in data:
 			var key_str := String(key)
 			if key_str.begins_with("resist_"):
-				var resistance := key_str.substr(7).to_upper()  # Remove "resist_" prefix
-				var damage_type: Variant = Damage.Type.get(resistance)
-				assert(
-					damage_type is Damage.Type, "Invalid resistance for %s: %s" % [slug, resistance]
-				)
+				var resistance_name := key_str.substr(7).strip_edges()  # Remove "resist_" prefix
+				var damage_type: Damage.Type = Damage.string_to_type(resistance_name)
 
 				# Get resistance value from flag
 				var value: int = 0
@@ -222,10 +216,9 @@ static func _load_item_data() -> void:
 		if data[&"aoe"] is Array:
 			var parts: Array = data[&"aoe"]
 			assert(parts.size() == 3, "Invalid AoE data for %s: %s" % [slug, data[&"aoe"]])
-			var damage_type: Variant = Damage.Type.get((parts[0] as String).to_upper())
-			assert(damage_type != null, "Invalid AoE type for %s: %s" % [slug, parts[0]])
+			var aoe_damage_type := Damage.string_to_type(parts[0] as String)
 			data[&"aoe"] = AreaOfEffectConfig.new(
-				damage_type as Damage.Type,
+				aoe_damage_type,
 				(parts[1] as String).to_int(),
 				(parts[2] as String).to_int()
 			)
@@ -375,10 +368,9 @@ static func _parse_flags(flags_str: String, data: Dictionary) -> void:
 						% [parts.slice(1)]
 					)
 				)
-				var damage_type: Variant = Damage.Type.get(parts[1].to_upper())
-				assert(damage_type != null, "Invalid AoE damage type: %s" % parts[1])
+				var aoe_dmg_type := Damage.string_to_type(parts[1])
 				data[&"aoe"] = AreaOfEffectConfig.new(
-					damage_type as Damage.Type,
+					aoe_dmg_type,
 					(parts[2] as String).to_int(),
 					(parts[3] as String).to_int()
 				)
