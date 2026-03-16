@@ -43,6 +43,16 @@ forge/               # Forge Mode working directory (has its own CLAUDE.md)
 - JSON for all state and communication
 - Test integration points (orchestrator API, LLM routing, forge pipeline)
 
+## Development Workflow
+
+No external plugins or loop runners. Claude Code manages all development directly:
+
+1. **Read context:** `PROMPT.md` (phase goals), `@fix_plan.md` (task list), `specs/phase-N-*/` (specs)
+2. **Work in tasks:** Break phases into prioritized tasks (HIGH/MEDIUM/LOW). Work through them in order. Each task = implement → test → verify → mark done in `@fix_plan.md`.
+3. **Use agents:** Parallelize independent work via Claude Code agents. Use tasks/todos to track progress within a session.
+4. **Commit often:** Commit after each completed task or logical unit. Straight to master.
+5. **Phase transitions:** When all HIGH/MEDIUM tasks are done, update `PROMPT.md` and `@fix_plan.md` for the next phase.
+
 ## Current Phase
 
 Phase 0: Research & Documentation — complete. See `PROMPT.md` for objectives and `@fix_plan.md` for Phase 1 tasks.

@@ -1,4 +1,4 @@
-# The Welcome Wench — Development Context
+# The Welcome Wench — Phase Context
 
 ## Project
 
@@ -62,6 +62,16 @@ Every NPC is a **freeform conversational agent** powered by the local LLM. No me
 3. **Keep it simple.** Avoid over-engineering. Start with direct invocation, formalize later.
 4. **Tests at integration points.** Test orchestrator API, LLM routing, forge pipeline. Don't test LLM output quality or pixel rendering.
 5. **Iterate on specs.** Phase specs are written when that phase begins. Research informs everything.
+
+## Development Workflow
+
+Claude Code is the developer. Work is managed through phases, tasks, and agents:
+
+1. **Start of phase:** Read this file for context, `@fix_plan.md` for the task list, and `specs/phase-N-*/` for specs.
+2. **Work through tasks** in priority order (HIGH → MEDIUM → LOW). Each task is a vertical slice — implement, test, verify, mark done.
+3. **Use agents** for parallel work where tasks are independent (e.g., research in one agent, coding in another).
+4. **Track progress** by checking off tasks in `@fix_plan.md` as they complete.
+5. **Phase complete** when all HIGH and MEDIUM tasks are done. Update `@fix_plan.md`, advance phase references in this file and `CLAUDE.md`.
 
 ## Current Tasks
 
