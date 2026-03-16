@@ -30,6 +30,7 @@ CharacterTiles="*res://src/character_tiles.gd"
 Rules="*res://src/rules_engine.gd"
 NarrativeManager="*res://src/narrative_manager.gd"
 AutoSave="*res://src/auto_save.gd"
+Audio="*res://src/audio_manager.gd"
 
 [debug]
 
