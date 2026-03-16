@@ -28,6 +28,8 @@ ItemTiles="*res://src/item_tiles.gd"
 WorldTiles="*res://src/world_tiles.gd"
 CharacterTiles="*res://src/character_tiles.gd"
 Rules="*res://src/rules_engine.gd"
+NarrativeManager="*res://src/narrative_manager.gd"
+AutoSave="*res://src/auto_save.gd"
 
 [debug]
 

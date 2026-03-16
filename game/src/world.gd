@@ -34,6 +34,10 @@ var game_over: bool = false
 # Keep track of the max depth reached
 var max_depth: int = 1
 
+# Set to true when game state was loaded from a save file.
+# game.gd checks this to skip World.initialize() after scene change.
+var loaded_from_save: bool = false
+
 # The player's faction affinity
 var faction_affinities: Dictionary = {
 	Factions.Type.HUMAN: 100,  # There could be different human factions with different affinities
@@ -67,9 +71,22 @@ func initialize() -> void:
 	Log.i("World world_plan created: %s" % world_plan)
 
 	# Create the player with starting equipment
-	# TODO: Choose role based at main menu
 	player = MonsterFactory.create_monster(&"knight", Roles.Type.KNIGHT)
 	Roles.equip_monster(player, Roles.Type.KNIGHT)
+
+	# Apply character creation data if available (set by main menu)
+	if has_meta("player_character_data"):
+		var char_data: CharacterData = get_meta("player_character_data") as CharacterData
+		if char_data:
+			player.character_data = char_data
+			player.name = char_data.character_name
+			player.max_hp = char_data.max_hp
+			player.hp = char_data.current_hp
+			Log.i("Applied character creation data: %s the %s %s" % [
+				char_data.character_name, char_data.get_race_name(), char_data.get_class_name_str()
+			])
+		remove_meta("player_character_data")
+
 	Log.i("Player created: %s" % player)
 
 	# Create the first level

@@ -85,6 +85,14 @@ func _initialize() -> void:
 	# Clear the effects queue
 	effects_queue.clear()
 
+	# If the world was loaded from a save, skip re-initialization
+	if World.loaded_from_save:
+		World.loaded_from_save = false
+		# Re-render the loaded map and actors
+		map_renderer.render_map(World.current_map)
+		_update_actors()
+		return
+
 	# Initialize the world
 	World.initialize()
 

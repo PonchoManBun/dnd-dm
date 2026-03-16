@@ -1,0 +1,8 @@
+{
+  "fighter": {"name": "Fighter", "description": "A master of martial combat, skilled with weapons and armor.", "hit_die": 10, "primary_ability": "str", "saving_throws": ["str", "con"], "suggested_abilities": ["str", "con"]},
+  "wizard": {"name": "Wizard", "description": "A scholarly magic-user who commands arcane power through study.", "hit_die": 6, "primary_ability": "int", "saving_throws": ["int", "wis"], "suggested_abilities": ["int", "wis"]},
+  "rogue": {"name": "Rogue", "description": "A scoundrel who uses stealth and trickery to overcome obstacles.", "hit_die": 8, "primary_ability": "dex", "saving_throws": ["dex", "int"], "suggested_abilities": ["dex", "cha"]},
+  "cleric": {"name": "Cleric", "description": "A priestly champion who wields divine magic in service of a higher power.", "hit_die": 8, "primary_ability": "wis", "saving_throws": ["wis", "cha"], "suggested_abilities": ["wis", "str"]},
+  "ranger": {"name": "Ranger", "description": "A warrior of the wilderness, skilled in tracking and nature magic.", "hit_die": 10, "primary_ability": "dex", "saving_throws": ["str", "dex"], "suggested_abilities": ["dex", "wis"]},
+  "paladin": {"name": "Paladin", "description": "A holy warrior bound to a sacred oath, combining martial prowess with divine magic.", "hit_die": 10, "primary_ability": "str", "saving_throws": ["wis", "cha"], "suggested_abilities": ["str", "cha"]}
+}

@@ -1,0 +1,80 @@
+{
+  "room_entry": {
+    "dungeon": [
+      "The air grows thick and damp as you step into the chamber. Cobwebs hang from the ceiling like tattered curtains.",
+      "Your torchlight reveals ancient stonework, cracked and worn by centuries of neglect. Something skitters in the shadows.",
+      "A musty corridor stretches before you, its walls lined with faded murals of forgotten battles.",
+      "The room opens up into a wide hall. Pillars of dark stone rise to a vaulted ceiling above.",
+      "Water drips steadily from somewhere overhead, pooling in cracks between the flagstones."
+    ],
+    "cave": [
+      "Natural stone formations jut from floor and ceiling, creating a maze of mineral columns.",
+      "The cave walls glisten with moisture. Bioluminescent fungi cast an eerie pale glow.",
+      "Loose gravel crunches underfoot as you enter a wider cavern. The echo carries far.",
+      "Stalactites hang like stone teeth from the ceiling above. The air smells of wet earth."
+    ],
+    "crypt": [
+      "Rows of stone sarcophagi line the walls, their lids carved with stern-faced effigies.",
+      "The crypt reeks of decay and old incense. Alcoves hold the remains of the long dead.",
+      "Dusty bones rest in niches along the corridor. Some of them look... recently disturbed.",
+      "Funerary urns sit on shelves carved into the rock. A cold draft moans through the passage."
+    ]
+  },
+  "combat_start": [
+    "Steel rings against stone as weapons are drawn. Roll for initiative!",
+    "The creature snarls and lunges! Combat begins!",
+    "Hostile intent fills the air. The enemy moves to attack!",
+    "A guttural war cry echoes off the walls. Prepare yourself!",
+    "The shadows coalesce into a threatening form. Battle is joined!"
+  ],
+  "combat_end": [
+    "The last enemy falls. Silence returns to the chamber.",
+    "You stand victorious, though the battle has taken its toll.",
+    "The threat is vanquished. You catch your breath among the fallen.",
+    "Combat ends. The adrenaline slowly fades as quiet settles in.",
+    "Your foes lie defeated. The dungeon holds its breath once more."
+  ],
+  "item_discovery": [
+    "Something glints in the dim light, half-buried in the debris.",
+    "Amid the rubble, you spot something worth investigating.",
+    "Your keen eyes notice an object tucked into a crevice nearby.",
+    "A faint magical aura draws your attention to a forgotten treasure.",
+    "Searching the area, your hands close around something useful."
+  ],
+  "choice_scenarios": [
+    {
+      "text": "The corridor forks ahead. A foul stench drifts from the left passage, while faint chanting echoes from the right.",
+      "choices": [
+        "Take the left passage toward the stench",
+        "Follow the chanting to the right",
+        "Listen carefully before deciding"
+      ]
+    },
+    {
+      "text": "You find an ornate chest, its lock glowing with arcane runes. A skeletal hand rests on the lid, still clutching a rusted key.",
+      "choices": [
+        "Use the rusted key to open the chest",
+        "Attempt to disarm the magical ward",
+        "Leave it alone — it smells like a trap"
+      ]
+    },
+    {
+      "text": "A wounded goblin cowers in the corner, whimpering. It raises its hands in a gesture of surrender.",
+      "choices": [
+        "Show mercy and let it go",
+        "Demand information about the dungeon",
+        "Put it out of its misery"
+      ]
+    }
+  ],
+  "rest": [
+    "You find a defensible alcove and take a moment to rest. The dungeon's ambient sounds feel almost peaceful.",
+    "Leaning against cool stone, you catch your breath and tend to your wounds.",
+    "A brief respite. You eat a ration and check your equipment."
+  ],
+  "level_transition": [
+    "Stone stairs spiral downward into deeper darkness. The air grows colder with each step.",
+    "You descend further into the earth. The walls here are rougher, more ancient.",
+    "The passage slopes down. Whatever lies ahead, it has not seen visitors in a long while."
+  ]
+}

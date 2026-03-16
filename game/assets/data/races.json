@@ -1,0 +1,8 @@
+{
+  "human": {"name": "Human", "description": "Versatile and ambitious, humans are the most common race.", "ability_bonuses": {"str": 1, "dex": 1, "con": 1, "int": 1, "wis": 1, "cha": 1}, "speed": 30, "traits": ["Extra Language"]},
+  "elf": {"name": "Elf", "description": "Graceful and long-lived, elves are attuned to magic and nature.", "ability_bonuses": {"dex": 2}, "speed": 30, "traits": ["Darkvision", "Keen Senses", "Fey Ancestry", "Trance"]},
+  "dwarf": {"name": "Dwarf", "description": "Bold and hardy, dwarves are known as skilled warriors and craftsmen.", "ability_bonuses": {"con": 2}, "speed": 25, "traits": ["Darkvision", "Dwarven Resilience", "Stonecunning"]},
+  "halfling": {"name": "Halfling", "description": "Small but brave, halflings are resourceful and lucky.", "ability_bonuses": {"dex": 2}, "speed": 25, "traits": ["Lucky", "Brave", "Halfling Nimbleness"]},
+  "half_orc": {"name": "Half-Orc", "description": "Fierce and enduring, half-orcs combine human versatility with orcish might.", "ability_bonuses": {"str": 2, "con": 1}, "speed": 30, "traits": ["Darkvision", "Menacing", "Relentless Endurance", "Savage Attacks"]},
+  "gnome": {"name": "Gnome", "description": "Curious and inventive, gnomes delight in discovery and creation.", "ability_bonuses": {"int": 2}, "speed": 25, "traits": ["Darkvision", "Gnome Cunning"]}
+}
