@@ -1,8 +1,297 @@
 {
-  "fighter": {"name": "Fighter", "description": "A master of martial combat, skilled with weapons and armor.", "hit_die": 10, "primary_ability": "str", "saving_throws": ["str", "con"], "suggested_abilities": ["str", "con"]},
-  "wizard": {"name": "Wizard", "description": "A scholarly magic-user who commands arcane power through study.", "hit_die": 6, "primary_ability": "int", "saving_throws": ["int", "wis"], "suggested_abilities": ["int", "wis"]},
-  "rogue": {"name": "Rogue", "description": "A scoundrel who uses stealth and trickery to overcome obstacles.", "hit_die": 8, "primary_ability": "dex", "saving_throws": ["dex", "int"], "suggested_abilities": ["dex", "cha"]},
-  "cleric": {"name": "Cleric", "description": "A priestly champion who wields divine magic in service of a higher power.", "hit_die": 8, "primary_ability": "wis", "saving_throws": ["wis", "cha"], "suggested_abilities": ["wis", "str"]},
-  "ranger": {"name": "Ranger", "description": "A warrior of the wilderness, skilled in tracking and nature magic.", "hit_die": 10, "primary_ability": "dex", "saving_throws": ["str", "dex"], "suggested_abilities": ["dex", "wis"]},
-  "paladin": {"name": "Paladin", "description": "A holy warrior bound to a sacred oath, combining martial prowess with divine magic.", "hit_die": 10, "primary_ability": "str", "saving_throws": ["wis", "cha"], "suggested_abilities": ["str", "cha"]}
+  "barbarian": {
+    "name": "Barbarian",
+    "description": "A fierce warrior of primitive background who can enter a battle rage.",
+    "hit_die": 12,
+    "primary_ability": "str",
+    "saving_throws": [
+      "str",
+      "con"
+    ],
+    "armor_proficiencies": [
+      "light",
+      "medium",
+      "shields"
+    ],
+    "num_skills": 2,
+    "skill_choices": [
+      "animal_handling",
+      "athletics",
+      "intimidation",
+      "nature",
+      "perception",
+      "survival"
+    ]
+  },
+  "bard": {
+    "name": "Bard",
+    "description": "An inspiring magician whose power echoes the music of creation.",
+    "hit_die": 8,
+    "primary_ability": "cha",
+    "saving_throws": [
+      "dex",
+      "cha"
+    ],
+    "armor_proficiencies": [
+      "light"
+    ],
+    "num_skills": 3,
+    "skill_choices": [
+      "acrobatics",
+      "animal_handling",
+      "arcana",
+      "athletics",
+      "deception",
+      "history",
+      "insight",
+      "intimidation",
+      "investigation",
+      "medicine",
+      "nature",
+      "perception",
+      "performance",
+      "persuasion",
+      "religion",
+      "sleight_of_hand",
+      "stealth",
+      "survival"
+    ]
+  },
+  "cleric": {
+    "name": "Cleric",
+    "description": "A priestly champion who wields divine magic in service of a higher power.",
+    "hit_die": 8,
+    "primary_ability": "wis",
+    "saving_throws": [
+      "wis",
+      "cha"
+    ],
+    "armor_proficiencies": [
+      "light",
+      "medium",
+      "shields"
+    ],
+    "num_skills": 2,
+    "skill_choices": [
+      "history",
+      "insight",
+      "medicine",
+      "persuasion",
+      "religion"
+    ]
+  },
+  "druid": {
+    "name": "Druid",
+    "description": "A priest of the Old Faith, wielding the powers of nature and adopting animal forms.",
+    "hit_die": 8,
+    "primary_ability": "wis",
+    "saving_throws": [
+      "int",
+      "wis"
+    ],
+    "armor_proficiencies": [
+      "light",
+      "medium",
+      "shields"
+    ],
+    "num_skills": 2,
+    "skill_choices": [
+      "arcana",
+      "animal_handling",
+      "insight",
+      "medicine",
+      "nature",
+      "perception",
+      "religion",
+      "survival"
+    ]
+  },
+  "fighter": {
+    "name": "Fighter",
+    "description": "A master of martial combat, skilled with a variety of weapons and armor.",
+    "hit_die": 10,
+    "primary_ability": "str",
+    "saving_throws": [
+      "str",
+      "con"
+    ],
+    "armor_proficiencies": [
+      "light",
+      "medium",
+      "heavy",
+      "shields"
+    ],
+    "num_skills": 2,
+    "skill_choices": [
+      "acrobatics",
+      "animal_handling",
+      "athletics",
+      "history",
+      "insight",
+      "intimidation",
+      "perception",
+      "survival"
+    ]
+  },
+  "monk": {
+    "name": "Monk",
+    "description": "A master of martial arts, harnessing the power of the body in pursuit of perfection.",
+    "hit_die": 8,
+    "primary_ability": "dex",
+    "saving_throws": [
+      "str",
+      "dex"
+    ],
+    "armor_proficiencies": [],
+    "num_skills": 2,
+    "skill_choices": [
+      "acrobatics",
+      "athletics",
+      "history",
+      "insight",
+      "religion",
+      "stealth"
+    ]
+  },
+  "paladin": {
+    "name": "Paladin",
+    "description": "A holy warrior bound to a sacred oath, combining martial prowess with divine magic.",
+    "hit_die": 10,
+    "primary_ability": "str",
+    "saving_throws": [
+      "wis",
+      "cha"
+    ],
+    "armor_proficiencies": [
+      "light",
+      "medium",
+      "heavy",
+      "shields"
+    ],
+    "num_skills": 2,
+    "skill_choices": [
+      "athletics",
+      "insight",
+      "intimidation",
+      "medicine",
+      "persuasion",
+      "religion"
+    ]
+  },
+  "ranger": {
+    "name": "Ranger",
+    "description": "A warrior who combats threats on the edges of civilization.",
+    "hit_die": 10,
+    "primary_ability": "dex",
+    "saving_throws": [
+      "str",
+      "dex"
+    ],
+    "armor_proficiencies": [
+      "light",
+      "medium",
+      "shields"
+    ],
+    "num_skills": 3,
+    "skill_choices": [
+      "animal_handling",
+      "athletics",
+      "insight",
+      "investigation",
+      "nature",
+      "perception",
+      "stealth",
+      "survival"
+    ]
+  },
+  "rogue": {
+    "name": "Rogue",
+    "description": "A scoundrel who uses stealth and trickery to overcome obstacles and enemies.",
+    "hit_die": 8,
+    "primary_ability": "dex",
+    "saving_throws": [
+      "dex",
+      "int"
+    ],
+    "armor_proficiencies": [
+      "light"
+    ],
+    "num_skills": 4,
+    "skill_choices": [
+      "acrobatics",
+      "athletics",
+      "deception",
+      "insight",
+      "intimidation",
+      "investigation",
+      "perception",
+      "performance",
+      "persuasion",
+      "sleight_of_hand",
+      "stealth"
+    ]
+  },
+  "sorcerer": {
+    "name": "Sorcerer",
+    "description": "A spellcaster who draws on inherent magic from a gift or bloodline.",
+    "hit_die": 6,
+    "primary_ability": "cha",
+    "saving_throws": [
+      "con",
+      "cha"
+    ],
+    "armor_proficiencies": [],
+    "num_skills": 2,
+    "skill_choices": [
+      "arcana",
+      "deception",
+      "insight",
+      "intimidation",
+      "persuasion",
+      "religion"
+    ]
+  },
+  "warlock": {
+    "name": "Warlock",
+    "description": "A wielder of magic derived from a bargain with an extraplanar entity.",
+    "hit_die": 8,
+    "primary_ability": "cha",
+    "saving_throws": [
+      "wis",
+      "cha"
+    ],
+    "armor_proficiencies": [
+      "light"
+    ],
+    "num_skills": 2,
+    "skill_choices": [
+      "arcana",
+      "deception",
+      "history",
+      "intimidation",
+      "investigation",
+      "nature",
+      "religion"
+    ]
+  },
+  "wizard": {
+    "name": "Wizard",
+    "description": "A scholarly magic-user capable of manipulating the structures of reality.",
+    "hit_die": 6,
+    "primary_ability": "int",
+    "saving_throws": [
+      "int",
+      "wis"
+    ],
+    "armor_proficiencies": [],
+    "num_skills": 2,
+    "skill_choices": [
+      "arcana",
+      "history",
+      "insight",
+      "investigation",
+      "medicine",
+      "religion"
+    ]
+  }
 }

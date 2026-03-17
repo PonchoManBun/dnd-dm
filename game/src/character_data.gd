@@ -53,6 +53,9 @@ enum Race {
 	HALFLING,
 	HALF_ORC,
 	GNOME,
+	DRAGONBORN,
+	HALF_ELF,
+	TIEFLING,
 }
 
 enum DndClass {
@@ -62,6 +65,12 @@ enum DndClass {
 	CLERIC,
 	RANGER,
 	PALADIN,
+	BARBARIAN,
+	BARD,
+	DRUID,
+	MONK,
+	SORCERER,
+	WARLOCK,
 }
 
 enum Ability {
@@ -184,6 +193,24 @@ const RACE_DATA: Dictionary = {
 		"speed": 25,
 		"size": "Small",
 	},
+	Race.DRAGONBORN: {
+		"name": "Dragonborn",
+		"ability_bonuses": {Ability.STRENGTH: 2, Ability.CHARISMA: 1},
+		"speed": 30,
+		"size": "Medium",
+	},
+	Race.HALF_ELF: {
+		"name": "Half-Elf",
+		"ability_bonuses": {Ability.CHARISMA: 2},
+		"speed": 30,
+		"size": "Medium",
+	},
+	Race.TIEFLING: {
+		"name": "Tiefling",
+		"ability_bonuses": {Ability.INTELLIGENCE: 1, Ability.CHARISMA: 2},
+		"speed": 30,
+		"size": "Medium",
+	},
 }
 
 # Class data
@@ -241,6 +268,60 @@ const CLASS_DATA: Dictionary = {
 		"armor_proficiencies": [ArmorCategory.LIGHT, ArmorCategory.MEDIUM, ArmorCategory.HEAVY, ArmorCategory.SHIELDS],
 		"num_skills": 2,
 		"skill_choices": [Skill.ATHLETICS, Skill.INSIGHT, Skill.INTIMIDATION, Skill.MEDICINE, Skill.PERSUASION, Skill.RELIGION],
+	},
+	DndClass.BARBARIAN: {
+		"name": "Barbarian",
+		"hit_die": 12,
+		"primary_ability": Ability.STRENGTH,
+		"saving_throws": [Ability.STRENGTH, Ability.CONSTITUTION],
+		"armor_proficiencies": [ArmorCategory.LIGHT, ArmorCategory.MEDIUM, ArmorCategory.SHIELDS],
+		"num_skills": 2,
+		"skill_choices": [Skill.ANIMAL_HANDLING, Skill.ATHLETICS, Skill.INTIMIDATION, Skill.NATURE, Skill.PERCEPTION, Skill.SURVIVAL],
+	},
+	DndClass.BARD: {
+		"name": "Bard",
+		"hit_die": 8,
+		"primary_ability": Ability.CHARISMA,
+		"saving_throws": [Ability.DEXTERITY, Ability.CHARISMA],
+		"armor_proficiencies": [ArmorCategory.LIGHT],
+		"num_skills": 3,
+		"skill_choices": [Skill.ACROBATICS, Skill.ANIMAL_HANDLING, Skill.ARCANA, Skill.ATHLETICS, Skill.DECEPTION, Skill.HISTORY, Skill.INSIGHT, Skill.INTIMIDATION, Skill.INVESTIGATION, Skill.MEDICINE, Skill.NATURE, Skill.PERCEPTION, Skill.PERFORMANCE, Skill.PERSUASION, Skill.RELIGION, Skill.SLEIGHT_OF_HAND, Skill.STEALTH, Skill.SURVIVAL],
+	},
+	DndClass.DRUID: {
+		"name": "Druid",
+		"hit_die": 8,
+		"primary_ability": Ability.WISDOM,
+		"saving_throws": [Ability.INTELLIGENCE, Ability.WISDOM],
+		"armor_proficiencies": [ArmorCategory.LIGHT, ArmorCategory.MEDIUM, ArmorCategory.SHIELDS],
+		"num_skills": 2,
+		"skill_choices": [Skill.ARCANA, Skill.ANIMAL_HANDLING, Skill.INSIGHT, Skill.MEDICINE, Skill.NATURE, Skill.PERCEPTION, Skill.RELIGION, Skill.SURVIVAL],
+	},
+	DndClass.MONK: {
+		"name": "Monk",
+		"hit_die": 8,
+		"primary_ability": Ability.DEXTERITY,
+		"saving_throws": [Ability.STRENGTH, Ability.DEXTERITY],
+		"armor_proficiencies": [],
+		"num_skills": 2,
+		"skill_choices": [Skill.ACROBATICS, Skill.ATHLETICS, Skill.HISTORY, Skill.INSIGHT, Skill.RELIGION, Skill.STEALTH],
+	},
+	DndClass.SORCERER: {
+		"name": "Sorcerer",
+		"hit_die": 6,
+		"primary_ability": Ability.CHARISMA,
+		"saving_throws": [Ability.CONSTITUTION, Ability.CHARISMA],
+		"armor_proficiencies": [],
+		"num_skills": 2,
+		"skill_choices": [Skill.ARCANA, Skill.DECEPTION, Skill.INSIGHT, Skill.INTIMIDATION, Skill.PERSUASION, Skill.RELIGION],
+	},
+	DndClass.WARLOCK: {
+		"name": "Warlock",
+		"hit_die": 8,
+		"primary_ability": Ability.CHARISMA,
+		"saving_throws": [Ability.WISDOM, Ability.CHARISMA],
+		"armor_proficiencies": [ArmorCategory.LIGHT],
+		"num_skills": 2,
+		"skill_choices": [Skill.ARCANA, Skill.DECEPTION, Skill.HISTORY, Skill.INTIMIDATION, Skill.INVESTIGATION, Skill.NATURE, Skill.RELIGION],
 	},
 }
 

@@ -1,8 +1,135 @@
 {
-  "human": {"name": "Human", "description": "Versatile and ambitious, humans are the most common race.", "ability_bonuses": {"str": 1, "dex": 1, "con": 1, "int": 1, "wis": 1, "cha": 1}, "speed": 30, "traits": ["Extra Language"]},
-  "elf": {"name": "Elf", "description": "Graceful and long-lived, elves are attuned to magic and nature.", "ability_bonuses": {"dex": 2}, "speed": 30, "traits": ["Darkvision", "Keen Senses", "Fey Ancestry", "Trance"]},
-  "dwarf": {"name": "Dwarf", "description": "Bold and hardy, dwarves are known as skilled warriors and craftsmen.", "ability_bonuses": {"con": 2}, "speed": 25, "traits": ["Darkvision", "Dwarven Resilience", "Stonecunning"]},
-  "halfling": {"name": "Halfling", "description": "Small but brave, halflings are resourceful and lucky.", "ability_bonuses": {"dex": 2}, "speed": 25, "traits": ["Lucky", "Brave", "Halfling Nimbleness"]},
-  "half_orc": {"name": "Half-Orc", "description": "Fierce and enduring, half-orcs combine human versatility with orcish might.", "ability_bonuses": {"str": 2, "con": 1}, "speed": 30, "traits": ["Darkvision", "Menacing", "Relentless Endurance", "Savage Attacks"]},
-  "gnome": {"name": "Gnome", "description": "Curious and inventive, gnomes delight in discovery and creation.", "ability_bonuses": {"int": 2}, "speed": 25, "traits": ["Darkvision", "Gnome Cunning"]}
+  "dwarf": {
+    "name": "Dwarf",
+    "description": "Bold and hardy, dwarves are known as skilled warriors and craftsmen.",
+    "ability_bonuses": {
+      "con": 2
+    },
+    "speed": 25,
+    "size": "Medium",
+    "traits": [
+      "Darkvision",
+      "Dwarven Resilience",
+      "Stonecunning",
+      "Dwarven Combat Training",
+      "Tool Proficiency"
+    ]
+  },
+  "elf": {
+    "name": "Elf",
+    "description": "Graceful and long-lived, elves are attuned to magic and nature.",
+    "ability_bonuses": {
+      "dex": 2
+    },
+    "speed": 30,
+    "size": "Medium",
+    "traits": [
+      "Darkvision",
+      "Fey Ancestry",
+      "Trance",
+      "Keen Senses"
+    ]
+  },
+  "halfling": {
+    "name": "Halfling",
+    "description": "Small but brave, halflings are resourceful and lucky.",
+    "ability_bonuses": {
+      "dex": 2
+    },
+    "speed": 25,
+    "size": "Small",
+    "traits": [
+      "Brave",
+      "Halfling Nimbleness",
+      "Lucky"
+    ]
+  },
+  "human": {
+    "name": "Human",
+    "description": "Versatile and ambitious, humans are the most common race.",
+    "ability_bonuses": {
+      "str": 1,
+      "dex": 1,
+      "con": 1,
+      "int": 1,
+      "wis": 1,
+      "cha": 1
+    },
+    "speed": 30,
+    "size": "Medium",
+    "traits": []
+  },
+  "dragonborn": {
+    "name": "Dragonborn",
+    "description": "Born of dragons, dragonborn walk proudly through a world that greets them with fearful incomprehension.",
+    "ability_bonuses": {
+      "str": 2,
+      "cha": 1
+    },
+    "speed": 30,
+    "size": "Medium",
+    "traits": [
+      "Draconic Ancestry",
+      "Breath Weapon",
+      "Damage Resistance"
+    ]
+  },
+  "gnome": {
+    "name": "Gnome",
+    "description": "Curious and inventive, gnomes delight in discovery and creation.",
+    "ability_bonuses": {
+      "int": 2
+    },
+    "speed": 25,
+    "size": "Small",
+    "traits": [
+      "Darkvision",
+      "Gnome Cunning"
+    ]
+  },
+  "half_elf": {
+    "name": "Half-Elf",
+    "description": "Walking in two worlds but truly belonging to neither, half-elves combine the best qualities of their parents.",
+    "ability_bonuses": {
+      "cha": 2
+    },
+    "speed": 30,
+    "size": "Medium",
+    "traits": [
+      "Darkvision",
+      "Fey Ancestry",
+      "Skill Versatility"
+    ]
+  },
+  "half_orc": {
+    "name": "Half-Orc",
+    "description": "Fierce and enduring, half-orcs combine human versatility with orcish might.",
+    "ability_bonuses": {
+      "str": 2,
+      "con": 1
+    },
+    "speed": 30,
+    "size": "Medium",
+    "traits": [
+      "Darkvision",
+      "Savage Attacks",
+      "Relentless Endurance",
+      "Menacing"
+    ]
+  },
+  "tiefling": {
+    "name": "Tiefling",
+    "description": "To be greeted with stares and whispers, to suffer violence and insult — such is the lot of the tiefling.",
+    "ability_bonuses": {
+      "int": 1,
+      "cha": 2
+    },
+    "speed": 30,
+    "size": "Medium",
+    "traits": [
+      "Darkvision",
+      "Hellish Resistance",
+      "Infernal Legacy"
+    ]
+  }
 }

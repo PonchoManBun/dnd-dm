@@ -37,6 +37,9 @@ var _race_keys: Array[CharacterData.Race] = [
 	CharacterData.Race.HALFLING,
 	CharacterData.Race.HALF_ORC,
 	CharacterData.Race.GNOME,
+	CharacterData.Race.DRAGONBORN,
+	CharacterData.Race.HALF_ELF,
+	CharacterData.Race.TIEFLING,
 ]
 
 var _class_keys: Array[CharacterData.DndClass] = [
@@ -46,6 +49,12 @@ var _class_keys: Array[CharacterData.DndClass] = [
 	CharacterData.DndClass.CLERIC,
 	CharacterData.DndClass.RANGER,
 	CharacterData.DndClass.PALADIN,
+	CharacterData.DndClass.BARBARIAN,
+	CharacterData.DndClass.BARD,
+	CharacterData.DndClass.DRUID,
+	CharacterData.DndClass.MONK,
+	CharacterData.DndClass.SORCERER,
+	CharacterData.DndClass.WARLOCK,
 ]
 
 var _ability_keys: Array[CharacterData.Ability] = [
@@ -138,7 +147,7 @@ func _build_ui() -> void:
 
 	# Main panel
 	_root_panel = PanelContainer.new()
-	_root_panel.custom_minimum_size = Vector2(520, 290)
+	_root_panel.custom_minimum_size = Vector2(580, 320)
 	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = PANEL_COLOR
 	panel_style.border_color = Color(0.3, 0.3, 0.35, 0.6)
@@ -228,7 +237,7 @@ func _build_race_step() -> Control:
 	# Left: Grid of race buttons
 	var left := VBoxContainer.new()
 	left.add_theme_constant_override("separation", 4)
-	left.custom_minimum_size.x = 140
+	left.custom_minimum_size.x = 220
 	hbox.add_child(left)
 
 	var grid_label := Label.new()
@@ -238,7 +247,7 @@ func _build_race_step() -> Control:
 	left.add_child(grid_label)
 
 	var grid := GridContainer.new()
-	grid.columns = 2
+	grid.columns = 3
 	grid.add_theme_constant_override("h_separation", 4)
 	grid.add_theme_constant_override("v_separation", 4)
 	left.add_child(grid)
@@ -288,7 +297,7 @@ func _build_class_step() -> Control:
 	# Left: Grid of class buttons
 	var left := VBoxContainer.new()
 	left.add_theme_constant_override("separation", 4)
-	left.custom_minimum_size.x = 140
+	left.custom_minimum_size.x = 220
 	hbox.add_child(left)
 
 	var grid_label := Label.new()
@@ -298,7 +307,7 @@ func _build_class_step() -> Control:
 	left.add_child(grid_label)
 
 	var grid := GridContainer.new()
-	grid.columns = 2
+	grid.columns = 3
 	grid.add_theme_constant_override("h_separation", 4)
 	grid.add_theme_constant_override("v_separation", 4)
 	left.add_child(grid)
