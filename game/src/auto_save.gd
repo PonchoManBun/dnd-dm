@@ -1,4 +1,3 @@
-class_name AutoSave
 extends Node
 
 ## Auto-save singleton. Saves game state after every turn.

@@ -1,4 +1,3 @@
-class_name NarrativeManager
 extends Node
 
 ## Singleton that manages narrative content for the DM panel.

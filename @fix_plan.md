@@ -51,7 +51,8 @@
 
 - [x] Audio integration (procedural AudioStreamGenerator sounds via AudioManager autoload)
 - [x] Death/permadeath flow (immersive death screen with eulogy, memorial stats, fade-in)
-- [ ] Install Godot 4 ARM64 on Jetson for on-device testing (requires SSH, manual setup)
+- [x] Install Godot 4 ARM64 on Jetson for on-device testing (Godot 4.6.1 at /usr/local/bin/godot)
+- [x] Fix class_name/autoload conflicts blocking Jetson (AutoSave, NarrativeManager)
 
 ---
 
