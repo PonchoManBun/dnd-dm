@@ -206,23 +206,15 @@ func _on_game_over() -> void:
 	ui_layer.add_child(death_screen)
 
 
-func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed:
-		Log.i("_input KEY: keycode=%d physical=%d unicode=%d scancode=%s" % [event.keycode, event.physical_keycode, event.unicode, event.as_text()])
-
-
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed:
-		Log.i("_unhandled_input KEY: %s" % event.as_text())
-
 	# SRD reference toggle works in any state
-	if event.is_action_pressed("help"):
+	if srd_reference and event.is_action_pressed("help"):
 		get_viewport().set_input_as_handled()
 		srd_reference.toggle()
 		return
 
 	# Block all other game input while SRD panel is open
-	if srd_reference.visible:
+	if srd_reference and srd_reference.visible:
 		return
 
 	if Modals.has_visible_modals():
