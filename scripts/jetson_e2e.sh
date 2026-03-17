@@ -14,7 +14,8 @@ export XAUTHORITY="${XAUTHORITY:-/run/user/1000/gdm/Xauthority}"
 # --- Window discovery ---
 find_window() {
     local wid
-    wid=$(xdotool search --name 'Welcome' 2>/dev/null | head -1)
+    # Use tail -1 to get the LAST (most recent) window matching the name
+    wid=$(xdotool search --name 'Welcome' 2>/dev/null | tail -1)
     if [ -z "$wid" ]; then
         echo "ERROR: Game window not found" >&2
         return 1
@@ -83,7 +84,7 @@ launch_game() {
     local project_dir="${1:-$HOME/tww/game}"
     cd "$project_dir" || return 1
     # Kill any existing instance
-    pkill -f 'godot.*project.godot' 2>/dev/null
+    pkill -f 'godot' 2>/dev/null
     sleep 0.5
     # Launch in background
     godot --path "$project_dir" &
@@ -102,7 +103,7 @@ launch_game() {
 }
 
 kill_game() {
-    pkill -f 'godot.*project.godot' 2>/dev/null
+    pkill -f 'godot' 2>/dev/null
     echo "Game killed"
 }
 
