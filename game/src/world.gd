@@ -483,6 +483,12 @@ func apply_combat_monster_turn() -> void:
 	else:
 		update_vision()
 
+	# Is the player dead?
+	if player.is_dead:
+		game_over = true
+		game_ended.emit()
+		return
+
 	# Advance to next combatant
 	game_mode.advance_turn()
 

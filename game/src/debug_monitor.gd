@@ -8,12 +8,14 @@ extends Node
 
 const SCREENSHOT_DIR := "res://screenshots/"
 const SENTINEL_FILE := "res://screenshots/.monitoring"
-const CAPTURE_INTERVAL := 5.0
+const DEFAULT_CAPTURE_INTERVAL := 5.0
+const PLAYTEST_CAPTURE_INTERVAL := 2.0
 const MAX_SCREENSHOTS := 100
 
 var _enabled := false
 var _timer: Timer
 var _shot_counter := 0
+var _playtest_mode := false
 
 
 func _ready() -> void:
@@ -23,7 +25,12 @@ func _ready() -> void:
 		print("DebugMonitor: disabled (no sentinel file)")
 		return
 
-	print("DebugMonitor: enabled — capturing every %ds" % int(CAPTURE_INTERVAL))
+	# Playtest mode uses faster capture interval
+	_playtest_mode = "--skip-menu" in OS.get_cmdline_user_args()
+	var interval := PLAYTEST_CAPTURE_INTERVAL if _playtest_mode else DEFAULT_CAPTURE_INTERVAL
+	print("DebugMonitor: enabled — capturing every %ds%s" % [
+		int(interval), " (playtest mode)" if _playtest_mode else ""
+	])
 
 	# Ensure output directory exists
 	var dir := DirAccess.open("res://")
@@ -35,7 +42,7 @@ func _ready() -> void:
 
 	# Create capture timer
 	_timer = Timer.new()
-	_timer.wait_time = CAPTURE_INTERVAL
+	_timer.wait_time = interval
 	_timer.autostart = true
 	_timer.timeout.connect(_capture)
 	add_child(_timer)
@@ -100,16 +107,59 @@ func _collect_metadata() -> Dictionary:
 	data["depth"] = current_map.get("depth") if current_map else 0
 	data["max_depth"] = world.get("max_depth") if world else 0
 
-	# Player stats
+	# Player stats and position
 	var player: Variant = world.get("player") if world else null
+	var player_pos := Vector2i(-1, -1)
+	if player and current_map and current_map.has_method("find_monster_position"):
+		player_pos = current_map.find_monster_position(player)
+
 	if player:
 		data["player_hp"] = player.get("hp")
 		data["player_max_hp"] = player.get("max_hp")
 		data["player_name"] = player.name
+		data["player_pos"] = [player_pos.x, player_pos.y]
 	else:
 		data["player_hp"] = 0
 		data["player_max_hp"] = 0
 		data["player_name"] = ""
+		data["player_pos"] = [-1, -1]
+
+	# Waiting for input — check game scene
+	data["waiting_for_input"] = false
+	if current_scene and current_scene.get("waiting_for_player_input") != null:
+		data["waiting_for_input"] = current_scene.waiting_for_player_input
+
+	# Walkable neighbors around player
+	data["walkable_neighbors"] = []
+	if current_map and player_pos.x >= 0:
+		var neighbors: Array = []
+		for dx in range(-1, 2):
+			for dy in range(-1, 2):
+				if dx == 0 and dy == 0:
+					continue
+				var npos := player_pos + Vector2i(dx, dy)
+				if current_map.has_method("is_in_bounds") and current_map.is_in_bounds(npos):
+					var cell: Variant = current_map.get_cell(npos)
+					if cell and cell.has_method("is_walkable") and cell.is_walkable():
+						neighbors.append([npos.x, npos.y])
+		data["walkable_neighbors"] = neighbors
+
+	# Visible monsters (excluding player)
+	data["monsters_visible"] = []
+	if current_map and current_map.has_method("get_visible_monsters"):
+		var visible: Array = current_map.get_visible_monsters()
+		var monster_list: Array = []
+		for m in visible:
+			if m == player:
+				continue
+			var mpos: Vector2i = current_map.find_monster_position(m)
+			monster_list.append({
+				"pos": [mpos.x, mpos.y],
+				"name": m.name,
+				"hp": m.get("hp"),
+				"hostile": m.is_hostile_to(player) if m.has_method("is_hostile_to") else false
+			})
+		data["monsters_visible"] = monster_list
 
 	# Monster count on current map
 	if current_map and current_map.has_method("get_monsters"):
@@ -117,6 +167,29 @@ func _collect_metadata() -> Dictionary:
 		data["monster_count"] = maxi(0, monsters.size() - 1)
 	else:
 		data["monster_count"] = 0
+
+	# Items at player's feet
+	data["items_at_feet"] = []
+	if current_map and player_pos.x >= 0 and current_map.has_method("get_items"):
+		var items: Array = current_map.get_items(player_pos)
+		var item_list: Array = []
+		for item in items:
+			item_list.append({"name": item.get_name() if item.has_method("get_name") else str(item)})
+		data["items_at_feet"] = item_list
+
+	# Stairs positions (scan map for stairs)
+	data["stairs_down_pos"] = null
+	data["stairs_up_pos"] = null
+	if current_map and current_map.get("width") and current_map.get("height"):
+		for x in range(current_map.width):
+			for y in range(current_map.height):
+				var pos := Vector2i(x, y)
+				var cell: Variant = current_map.get_cell(pos)
+				if cell and cell.get("obstacle") and cell.obstacle:
+					if cell.obstacle.type == Obstacle.Type.STAIRS_UP:
+						data["stairs_up_pos"] = [x, y]
+					elif cell.obstacle.type == Obstacle.Type.STAIRS_DOWN:
+						data["stairs_down_pos"] = [x, y]
 
 	# DM text length from NarrativeManager
 	if narrative and narrative.has_method("get_history"):
@@ -142,6 +215,28 @@ func _collect_metadata() -> Dictionary:
 		data["game_mode"] = "combat" if game_mode_node.is_combat() else "exploration"
 	else:
 		data["game_mode"] = "exploration"
+
+	# Combat state details
+	data["combat_state"] = null
+	if game_mode_node and game_mode_node.has_method("is_combat") and game_mode_node.is_combat():
+		var combat_info := {}
+		combat_info["is_player_turn"] = game_mode_node.is_player_turn() if game_mode_node.has_method("is_player_turn") else false
+
+		var player_cs: Variant = game_mode_node.get_combat_state(player) if game_mode_node.has_method("get_combat_state") and player else null
+		combat_info["movement_remaining"] = player_cs.movement_remaining if player_cs else 0
+		combat_info["has_action"] = player_cs.has_action if player_cs else false
+
+		# All combatants
+		var combatant_list: Array = []
+		if game_mode_node.get("combatants"):
+			for cs in game_mode_node.combatants:
+				combatant_list.append({
+					"name": cs.combatant.name,
+					"initiative": cs.initiative,
+					"hp": cs.combatant.get("hp"),
+				})
+		combat_info["combatants"] = combatant_list
+		data["combat_state"] = combat_info
 
 	return data
 

@@ -30,11 +30,18 @@ cmd_setup() {
 }
 
 cmd_launch() {
-    echo "==> Launching Godot..."
+    local skip_menu=""
+    for arg in "$@"; do
+        if [ "$arg" = "--skip-menu" ]; then
+            skip_menu="-- --skip-menu"
+        fi
+    done
+
+    echo "==> Launching Godot...${skip_menu:+ (skip-menu mode)}"
     export DISPLAY="${DISPLAY:-:1}"
     export XAUTHORITY="${XAUTHORITY:-/run/user/1000/gdm/Xauthority}"
     cd "$PROJECT_DIR/game"
-    nohup godot --path . > /tmp/godot-stdout.log 2>&1 &
+    nohup godot --path . $skip_menu > /tmp/godot-stdout.log 2>/tmp/godot-stderr.log &
     echo "==> Waiting for game window..."
     local found=0
     for i in $(seq 1 30); do
@@ -121,7 +128,7 @@ shift || true
 
 case "$cmd" in
     setup)    cmd_setup ;;
-    launch)   cmd_launch ;;
+    launch)   cmd_launch "$@" ;;
     grab)     cmd_grab "$@" ;;
     kill)     cmd_kill ;;
     reload)   cmd_reload ;;

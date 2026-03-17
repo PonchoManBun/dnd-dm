@@ -6,6 +6,7 @@ extends Node2D
 var fast_mode: bool = true
 var effects_queue: Array[ActionEffect] = []
 var waiting_for_player_input: bool = false
+var _processing_action: bool = false
 var _last_mouse_tile_pos: Vector2i = Utils.INVALID_POS
 var _throw_selection: Variant = null  # Track item being thrown
 
@@ -382,6 +383,7 @@ func _check_player_input() -> BaseAction:
 
 func _handle_player_action(action: BaseAction) -> void:
 	Log.i("Player action: %s" % action)
+	_processing_action = true
 
 	# Apply the action
 	World.apply_player_action(action)
@@ -398,9 +400,16 @@ func _handle_player_action(action: BaseAction) -> void:
 	# Update actors
 	_update_actors()
 
-	# Ready for next input (only in exploration; combat uses _run_next_combat_turn)
+	_processing_action = false
+
+	if World.game_over:
+		return
+
+	# Ready for next input
 	if World.game_mode.is_exploration():
 		waiting_for_player_input = true
+	elif World.game_mode.is_combat():
+		_run_next_combat_turn()
 
 
 func _on_mode_changed(mode: GameMode.Mode) -> void:
@@ -413,7 +422,6 @@ func _on_mode_changed(mode: GameMode.Mode) -> void:
 func _on_combat_started(_combatants: Array[Monster]) -> void:
 	World.message_logged.emit("[color=red]Combat begins![/color]")
 	initiative_tracker.update_turn_order(World.game_mode.combatants, World.game_mode.current_combatant_index)
-	_run_next_combat_turn()
 
 
 func _on_combat_ended(victory: bool) -> void:
@@ -422,7 +430,8 @@ func _on_combat_ended(victory: bool) -> void:
 	else:
 		World.message_logged.emit("[color=red]Combat ended — defeat![/color]")
 	initiative_tracker.hide_tracker()
-	waiting_for_player_input = true
+	if not World.game_over:
+		waiting_for_player_input = true
 
 
 func _on_active_combatant_changed(_cs: CombatState) -> void:
@@ -431,6 +440,8 @@ func _on_active_combatant_changed(_cs: CombatState) -> void:
 
 
 func _run_next_combat_turn() -> void:
+	if _processing_action or World.game_over:
+		return
 	if World.game_mode.is_exploration():
 		waiting_for_player_input = true
 		return

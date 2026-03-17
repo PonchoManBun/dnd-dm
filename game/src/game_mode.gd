@@ -131,7 +131,8 @@ func advance_turn() -> void:
 
 	# Check if combat should end
 	if _should_end_combat():
-		exit_combat(true)
+		var player_survived := World.player != null and not World.player.is_dead
+		exit_combat(player_survived)
 		return
 
 	active_combatant_changed.emit(get_active_combatant())

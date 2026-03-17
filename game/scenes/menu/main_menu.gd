@@ -8,12 +8,13 @@ var _character_creation: CharacterCreation = null
 var _dm_selection: DMSelection = null
 var _pending_character_data: CharacterData = null
 
-# Uncomment this to test the game immediately after running
-# func _ready() -> void:
-# 	call_deferred("_on_play_button_pressed")
-
 
 func _ready() -> void:
+	# Skip menu for automated playtesting
+	if "--skip-menu" in OS.get_cmdline_user_args():
+		_start_with_defaults()
+		return
+
 	# Show/hide continue button based on whether a save file exists
 	continue_button.visible = AutoSave.save_exists()
 
@@ -22,6 +23,26 @@ func _ready() -> void:
 		continue_button.grab_focus()
 	else:
 		play_button.grab_focus()
+
+
+func _start_with_defaults() -> void:
+	var data := CharacterData.new()
+	data.character_name = "TestBot"
+	data.race = CharacterData.Race.HUMAN
+	data.dnd_class = CharacterData.DndClass.FIGHTER
+	data.level = 1
+	data.strength = 16
+	data.dexterity = 14
+	data.constitution = 14
+	data.intelligence = 10
+	data.wisdom = 12
+	data.charisma = 8
+	data.max_hp = 12
+	data.current_hp = 12
+	data.initialize_class_features()
+	World.set_meta("player_character_data", data)
+	World.set_meta("dm_archetype", 0)
+	get_tree().change_scene_to_file("res://scenes/game/game.tscn")
 
 
 func _on_continue_button_pressed() -> void:
