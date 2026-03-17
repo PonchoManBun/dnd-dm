@@ -67,6 +67,14 @@ class CharacterState(BaseModel):
     # Conditions
     conditions: list[Condition] = Field(default_factory=list)
 
+    # Spellcasting
+    spell_slots: dict[int, int] = Field(
+        default_factory=lambda: {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0}
+    )
+    spell_slots_max: dict[int, int] = Field(
+        default_factory=lambda: {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0}
+    )
+
     # Flavour
     alignment: str = ""
     backstory: str = ""

@@ -328,3 +328,44 @@ static func apply_condition_speed_modifiers(character_data: CharacterData, base_
 		# Prone: moving costs an extra foot for every foot (halved)
 		speed = speed / 2
 	return speed
+
+
+# --- Class Feature Resolution ---
+
+
+## Resolve Sneak Attack bonus damage for a Rogue.
+## Requires the attacker to be a Rogue with sneak_attack_dice > 0 and either
+## advantage on the attack or an ally adjacent to the target (has_advantage serves
+## as the combined eligibility flag from the caller).
+## Returns the bonus damage rolled, or 0 if ineligible.
+static func resolve_sneak_attack(attacker_data: CharacterData, has_advantage: bool) -> int:
+	if attacker_data.dnd_class != CharacterData.DndClass.ROGUE:
+		return 0
+	var dice_count: int = attacker_data.get_sneak_attack_dice()
+	if dice_count <= 0:
+		return 0
+	if not has_advantage:
+		return 0
+	return Dice.roll(dice_count, 6)
+
+
+## Resolve Rage damage bonus for a Barbarian.
+## Returns the flat bonus to add to melee weapon damage if rage is active, or 0.
+static func resolve_rage_bonus(attacker_data: CharacterData) -> int:
+	return attacker_data.get_rage_damage_bonus()
+
+
+## Apply Action Surge: grants an additional action this turn.
+## Spends one action_surge_charge and restores the combatant's action.
+## Returns true if Action Surge was successfully applied.
+static func apply_action_surge(combat_state: CombatState) -> bool:
+	if combat_state.combatant == null or combat_state.combatant.character_data == null:
+		return false
+	var char_data: CharacterData = combat_state.combatant.character_data
+	if char_data.dnd_class != CharacterData.DndClass.FIGHTER:
+		return false
+	if char_data.action_surge_charges <= 0:
+		return false
+	char_data.action_surge_charges -= 1
+	combat_state.has_action = true
+	return true

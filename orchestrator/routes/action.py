@@ -170,10 +170,12 @@ async def handle_action(action: PlayerAction) -> DmResponse:
         rest_type = extra.get("rest_type", "short")
 
         if rest_type == "long":
-            # Long rest: restore all HP and hit dice
+            # Long rest: restore all HP, hit dice, and spell slots
             healed = state.character.max_hp - state.character.current_hp
             state.character.current_hp = state.character.max_hp
             state.character.hit_dice_remaining = state.character.level
+            for lvl in state.character.spell_slots_max:
+                state.character.spell_slots[lvl] = state.character.spell_slots_max[lvl]
             rules_result = (
                 f"{character_name} takes a long rest. "
                 f"HP restored to {state.character.max_hp}/{state.character.max_hp}"
@@ -209,6 +211,58 @@ async def handle_action(action: PlayerAction) -> DmResponse:
                 state_delta = StateDelta(hp_change=0)
 
         combat_log = [rules_result]
+
+    elif action.action_type == ActionType.CAST_SPELL:
+        from orchestrator.engine.spells import resolve_spell
+
+        extra = action.extra or {}
+        spell_name = extra.get("spell_name", action.target or "")
+        slot_level = extra.get("slot_level")  # None = use spell's base level
+        target_ac = extra.get("target_ac", 13)
+        target_save_mod = extra.get("target_save_modifier", 0)
+        caster_name = extra.get("caster", state.character.name or "Player")
+
+        if not spell_name:
+            rules_result = f"{caster_name} tries to cast a spell, but no spell was specified."
+            combat_log = [rules_result]
+        else:
+            spell_result = resolve_spell(
+                state.character,
+                spell_name,
+                slot_level=slot_level,
+                target_ac=target_ac,
+                target_save_modifier=target_save_mod,
+            )
+
+            # Consume spell slot (cantrips cost nothing)
+            slot_error: str | None = None
+            if spell_result.slot_used > 0:
+                current_slots = state.character.spell_slots.get(spell_result.slot_used, 0)
+                if current_slots <= 0:
+                    slot_error = (
+                        f"{caster_name} has no level {spell_result.slot_used} "
+                        f"spell slots remaining."
+                    )
+                else:
+                    state.character.spell_slots[spell_result.slot_used] = current_slots - 1
+
+            if slot_error:
+                rules_result = slot_error
+                combat_log = [slot_error]
+            else:
+                target_name = action.target or "the target"
+                rules_result = f"{caster_name} casts {spell_result.spell_name} at {target_name}: {spell_result.description}"
+
+                custom: dict = {"spell_name": spell_result.spell_name, "spell_hit": spell_result.hit}
+                if spell_result.hit:
+                    custom["damage"] = spell_result.damage
+                    custom["damage_type"] = spell_result.damage_type
+                if spell_result.slot_used > 0:
+                    custom["slot_used"] = spell_result.slot_used
+                    custom["slots_remaining"] = state.character.spell_slots[spell_result.slot_used]
+
+                state_delta = StateDelta(custom=custom)
+                combat_log = [spell_result.description]
 
     # --- Step 3 & 4: Build prompt and call LLM ---
     narration = ""

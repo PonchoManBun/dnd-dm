@@ -65,8 +65,9 @@ static func create_monster(slug: StringName) -> Monster:
 	var behavior_str: String = data.get("behavior", "aggressive")
 	monster.behavior = Monster.Behavior.get(behavior_str.to_upper(), Monster.Behavior.AGGRESSIVE)
 
-	# Appearance
-	monster.variant = 0
+	# Appearance — pick a random variant from available sprites
+	var appearances := get_appearances(slug)
+	monster.variant = randi() % maxi(1, appearances.size())
 	monster.hit_particles_color = Color.from_string(
 		data.get("hit_particles_color", "#ff0000"), Color.RED
 	)
@@ -106,6 +107,25 @@ static func create_monster(slug: StringName) -> Monster:
 	monster.behavior_tree = MonsterAI.create_behavior_tree(monster)
 
 	return monster
+
+
+## Get CR (challenge rating) for a D&D monster.
+static func get_cr(slug: StringName) -> float:
+	if _monster_data.is_empty():
+		_load_data()
+	var data: Dictionary = _monster_data.get(String(slug), {})
+	return data.get("cr", 0.25)
+
+
+## Get appearance sprite names for a D&D monster.
+static func get_appearances(slug: StringName) -> Array:
+	if _monster_data.is_empty():
+		_load_data()
+	var data: Dictionary = _monster_data.get(String(slug), {})
+	var appearance_str: String = data.get("appearance", "")
+	if appearance_str.is_empty():
+		return []
+	return appearance_str.split(",")
 
 
 ## Get D&D attack data for a monster.

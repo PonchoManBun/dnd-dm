@@ -523,18 +523,24 @@ func _place_down_stairs(map: Map, room: Room, depth: int) -> void:
 func _place_monsters(map: Map, count: int) -> void:
 	Log.d("Placing monsters")
 
-	# Get all monster IDs except 'human'
-	var monster_ids: Array[StringName] = []
+	# Get legacy monster IDs (except player roles)
+	var legacy_ids: Array[StringName] = []
 	for monster_id: StringName in MonsterFactory.monster_data:
-		if monster_id != &"human":
-			monster_ids.append(monster_id)
+		if monster_id not in [&"human", &"knight", &"monk", &"valkyrie"]:
+			legacy_ids.append(monster_id)
 
-	# Place random monsters
-	if monster_ids.is_empty():
-		return
-	for i in range(count * 2):  # Multiply by 2 since we removed the two separate loops
-		var monster_id: StringName = monster_ids[_rng.randi() % monster_ids.size()]
-		_place_single_monster(map, monster_id)
+	# Get D&D monsters appropriate for this depth (CR roughly = depth)
+	var dnd_ids: Array[StringName] = _get_dnd_monsters_for_depth(map.depth)
+
+	# Mix: ~30% legacy, ~70% D&D monsters (if available)
+	var total := count * 2
+	for i in range(total):
+		if not dnd_ids.is_empty() and _rng.randf() < 0.7:
+			var slug: StringName = dnd_ids[_rng.randi() % dnd_ids.size()]
+			_place_single_dnd_monster(map, slug)
+		elif not legacy_ids.is_empty():
+			var monster_id: StringName = legacy_ids[_rng.randi() % legacy_ids.size()]
+			_place_single_monster(map, monster_id)
 
 
 func _place_items(map: Map, count: int) -> void:
@@ -956,3 +962,41 @@ func _place_books(map: Map, room: Room) -> void:
 				map.add_item_with_stacking(Vector2i(x, y), item)
 				break
 			tries += 1
+
+
+## Get D&D monster slugs appropriate for this dungeon depth.
+## Maps depth to CR range: depth 1 → CR 0-1, depth 2 → CR 0.5-2, etc.
+func _get_dnd_monsters_for_depth(depth: int) -> Array[StringName]:
+	var min_cr: float = maxf(0.0, (depth - 1) * 0.5)
+	var max_cr: float = depth * 2.0
+
+	var slugs: Array[StringName] = []
+	for slug: StringName in DndMonsterFactory.get_monster_slugs():
+		var cr: float = DndMonsterFactory.get_cr(slug)
+		if cr >= min_cr and cr <= max_cr:
+			slugs.append(slug)
+
+	# If no monsters match this CR range, widen the search
+	if slugs.is_empty():
+		for slug: StringName in DndMonsterFactory.get_monster_slugs():
+			var cr: float = DndMonsterFactory.get_cr(slug)
+			if cr <= max_cr + 2.0:
+				slugs.append(slug)
+
+	return slugs
+
+
+func _place_single_dnd_monster(map: Map, slug: StringName) -> void:
+	var monster := DndMonsterFactory.create_monster(slug)
+
+	var tries := 0
+	while tries < 10:
+		var x := _rng.randi_range(0, map.width - 1)
+		var y := _rng.randi_range(0, map.height - 1)
+		var cell: MapCell = map.cells[x][y]
+
+		if _is_valid_empty_floor(cell):
+			cell.monster = monster
+			return
+		tries += 1
+	Log.w("Failed to place D&D monster: %s" % slug)

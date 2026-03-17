@@ -43,7 +43,7 @@ func is_combat() -> bool:
 
 
 ## Start combat when a hostile is detected or player attacks.
-func enter_combat(player: Monster, enemies: Array[Monster], trigger: Monster = null) -> void:
+func enter_combat(player: Monster, enemies: Array[Monster], trigger: Monster = null, player_surprised: bool = false, enemies_surprised: bool = false) -> void:
 	if current_mode == Mode.COMBAT:
 		return
 
@@ -77,6 +77,13 @@ func enter_combat(player: Monster, enemies: Array[Monster], trigger: Monster = n
 		var b_dex := b.combatant.character_data.dexterity if b.combatant.character_data else 10
 		return a_dex > b_dex
 	)
+
+	# Mark surprised combatants
+	for cs: CombatState in combatants:
+		if cs.combatant == player and player_surprised:
+			cs.is_surprised = true
+		elif cs.combatant != player and enemies_surprised:
+			cs.is_surprised = true
 
 	current_combatant_index = 0
 	_reset_all_turns()
@@ -112,6 +119,15 @@ func advance_turn() -> void:
 		current_combatant_index = 0
 		_reset_all_turns()
 		Log.i("Combat round %d" % combat_round)
+
+	# Skip surprised combatants in round 1
+	var next := get_active_combatant()
+	if next and next.is_surprised and combat_round == 1:
+		next.has_taken_turn = true
+		next.is_surprised = false
+		Log.i("%s is surprised and loses their turn!" % next.combatant.get_name())
+		advance_turn()
+		return
 
 	# Check if combat should end
 	if _should_end_combat():

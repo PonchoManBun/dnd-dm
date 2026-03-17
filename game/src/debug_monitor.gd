@@ -137,7 +137,11 @@ func _collect_metadata() -> Dictionary:
 			data["srd_visible"] = current_scene.srd_reference.visible
 
 	# Game mode (exploration vs combat)
-	data["game_mode"] = "exploration"
+	var game_mode_node: Variant = world.get("game_mode") if world else null
+	if game_mode_node and game_mode_node.has_method("is_combat"):
+		data["game_mode"] = "combat" if game_mode_node.is_combat() else "exploration"
+	else:
+		data["game_mode"] = "exploration"
 
 	return data
 

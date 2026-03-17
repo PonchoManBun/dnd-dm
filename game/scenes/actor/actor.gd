@@ -240,14 +240,22 @@ func trigger_death_effect() -> void:
 func _choose_initial_appearance() -> void:
 	var pmat: ParticleProcessMaterial = hit_particles.process_material
 
-	# Get appearance data from monster factory
+	# Get appearance data from legacy factory first, then D&D factory
+	var appearances: Array = []
 	var data := MonsterFactory.monster_data.get(monster.slug, {}) as Dictionary
-	var appearances: Array = data.get("appearance", [])
+	if not data.is_empty():
+		appearances = data.get("appearance", [])
+	else:
+		# Try D&D monster factory
+		appearances = DndMonsterFactory.get_appearances(monster.slug)
 
 	# Choose sprite based on species and available appearances
-	assert(not appearances.is_empty())
-	var tile_name: String = appearances[monster.variant % appearances.size()]
-	character.region_rect = CharacterTiles.get_region(StringName(tile_name))
+	if appearances.is_empty():
+		Log.w("No appearances for monster: %s, using debug sprite" % monster.slug)
+		character.region_rect = CharacterTiles.get_region(&"debug")
+	else:
+		var tile_name: String = appearances[monster.variant % appearances.size()]
+		character.region_rect = CharacterTiles.get_region(StringName(tile_name))
 
 	character.flip_h = true
 	pmat.color = monster.hit_particles_color

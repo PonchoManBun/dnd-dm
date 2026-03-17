@@ -16,6 +16,7 @@ var initiative: int = 0
 
 # Turn tracking within a combat round
 var has_taken_turn: bool = false
+var is_surprised: bool = false
 
 
 func _init(p_combatant: Monster = null) -> void:

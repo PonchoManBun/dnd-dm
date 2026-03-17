@@ -58,9 +58,9 @@ _NARRATION: dict[ActionType, list[str]] = {
         "With practiced hands you employ the item. The effect is immediate.",
     ],
     ActionType.CAST_SPELL: [
-        "Arcane energy crackles at your fingertips as you weave the spell.",
-        "You speak the incantation and feel the magic surge through you.",
-        "The air shimmers with magical energy as you complete the casting.",
+        "Arcane energy crackles at your fingertips as you weave the spell. {rules}",
+        "You speak the incantation and feel the magic surge through you. {rules}",
+        "The air shimmers with magical energy as you complete the casting. {rules}",
     ],
     ActionType.CUSTOM: [
         "You act decisively. The world responds in kind.",

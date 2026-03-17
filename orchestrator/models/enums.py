@@ -204,6 +204,28 @@ class _ClassInfo:
         self.skill_choices = skill_choices
 
 
+# Maps each spellcasting class to its spellcasting ability.
+SPELLCASTING_ABILITY: dict[DndClass, Ability] = {
+    DndClass.WIZARD: Ability.INTELLIGENCE,
+    DndClass.CLERIC: Ability.WISDOM,
+    DndClass.PALADIN: Ability.CHARISMA,
+    DndClass.RANGER: Ability.WISDOM,
+    # Fighter and Rogue don't normally cast, but Eldritch Knight / Arcane
+    # Trickster use INT.  Default to INT if looked up for them.
+    DndClass.FIGHTER: Ability.INTELLIGENCE,
+    DndClass.ROGUE: Ability.INTELLIGENCE,
+}
+
+# DC ability abbreviation → Ability enum (used to parse SRD spell dc_type).
+DC_ABILITY_INDEX: dict[str, Ability] = {
+    "str": Ability.STRENGTH,
+    "dex": Ability.DEXTERITY,
+    "con": Ability.CONSTITUTION,
+    "int": Ability.INTELLIGENCE,
+    "wis": Ability.WISDOM,
+    "cha": Ability.CHARISMA,
+}
+
 RACE_DATA: dict[Race, _RaceInfo] = {
     Race.HUMAN: _RaceInfo(
         name="Human",

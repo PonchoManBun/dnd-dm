@@ -9,11 +9,13 @@ from orchestrator.models.enums import (
     CLASS_DATA,
     Condition,
     DamageType,
+    DC_ABILITY_INDEX,
     DmArchetype,
     DndClass,
     Race,
     RACE_DATA,
     SKILL_ABILITIES,
+    SPELLCASTING_ABILITY,
     Skill,
     XP_THRESHOLDS,
 )
@@ -43,8 +45,10 @@ __all__ = [
     "Skill",
     # Constants
     "CLASS_DATA",
+    "DC_ABILITY_INDEX",
     "RACE_DATA",
     "SKILL_ABILITIES",
+    "SPELLCASTING_ABILITY",
     "XP_THRESHOLDS",
     # Character
     "AbilityScores",

@@ -125,8 +125,11 @@ func _ready() -> void:
 	vignette_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui_layer.add_child(vignette_rect)
 
-	# Note: InitiativeTracker starts hidden. Connect to GameMode signals
-	# (turn_order_changed, mode_changed) once GameMode is wired into World.
+	# Connect GameMode signals for combat system
+	World.game_mode.mode_changed.connect(_on_mode_changed)
+	World.game_mode.combat_started.connect(_on_combat_started)
+	World.game_mode.combat_ended.connect(_on_combat_ended)
+	World.game_mode.active_combatant_changed.connect(_on_active_combatant_changed)
 
 	# Hook up HUD signals
 	hud.drop_requested.connect(
@@ -301,6 +304,10 @@ func _check_player_input() -> BaseAction:
 		get_viewport().set_input_as_handled()
 		return PlayerRestAction.new()
 
+	if Input.is_action_just_pressed("end_turn") and World.game_mode.is_combat():
+		get_viewport().set_input_as_handled()
+		return PlayerEndTurnAction.new()
+
 	if Input.is_action_just_pressed("pick_up_item"):
 		get_viewport().set_input_as_handled()
 		var pos := World.current_map.find_monster_position(World.player)
@@ -345,10 +352,16 @@ func _check_player_input() -> BaseAction:
 	# Add explicit stair movement checks
 	if Input.is_action_just_pressed("move_upstairs"):
 		get_viewport().set_input_as_handled()
+		if World.game_mode.is_combat():
+			World.message_logged.emit("[color=yellow]You can't flee during combat![/color]")
+			return null
 		return PlayerMoveUpstairsAction.new()
 
 	if Input.is_action_just_pressed("move_downstairs"):
 		get_viewport().set_input_as_handled()
+		if World.game_mode.is_combat():
+			World.message_logged.emit("[color=yellow]You can't flee during combat![/color]")
+			return null
 		return PlayerMoveDownstairsAction.new()
 
 	if Input.is_action_just_pressed("open"):
@@ -384,8 +397,53 @@ func _handle_player_action(action: BaseAction) -> void:
 	# Update actors
 	_update_actors()
 
-	# Ready for next input
+	# Ready for next input (only in exploration; combat uses _run_next_combat_turn)
+	if World.game_mode.is_exploration():
+		waiting_for_player_input = true
+
+
+func _on_mode_changed(mode: GameMode.Mode) -> void:
+	if mode == GameMode.Mode.COMBAT:
+		initiative_tracker.show_tracker()
+	else:
+		initiative_tracker.hide_tracker()
+
+
+func _on_combat_started(_combatants: Array[Monster]) -> void:
+	World.message_logged.emit("[color=red]Combat begins![/color]")
+	initiative_tracker.update_turn_order(World.game_mode.combatants, World.game_mode.current_combatant_index)
+	_run_next_combat_turn()
+
+
+func _on_combat_ended(victory: bool) -> void:
+	if victory:
+		World.message_logged.emit("[color=lime]Combat ended — victory![/color]")
+	else:
+		World.message_logged.emit("[color=red]Combat ended — defeat![/color]")
+	initiative_tracker.hide_tracker()
 	waiting_for_player_input = true
+
+
+func _on_active_combatant_changed(_cs: CombatState) -> void:
+	initiative_tracker.update_turn_order(World.game_mode.combatants, World.game_mode.current_combatant_index)
+	_run_next_combat_turn()
+
+
+func _run_next_combat_turn() -> void:
+	if World.game_mode.is_exploration():
+		waiting_for_player_input = true
+		return
+	if World.game_mode.is_player_turn():
+		waiting_for_player_input = true
+		return
+	# Monster turn — auto-execute with delay
+	waiting_for_player_input = false
+	await get_tree().create_timer(0.3).timeout
+	World.apply_combat_monster_turn()
+	_render_status_effects()
+	await _flush_effects_queue()
+	map_renderer.render_map(World.current_map)
+	_update_actors()
 
 
 func _update_actors() -> void:

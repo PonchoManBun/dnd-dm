@@ -74,6 +74,15 @@ func update_turn_order(combatants: Array[CombatState], active_index: int) -> voi
 		else:
 			label.text = "[color=white]  %s %s (%s)[/color]" % [init_text, name_text, hp_text]
 
+		if cs.is_surprised:
+			label.text += " [color=yellow][Surprised][/color]"
+
+		# Show action economy for the active combatant
+		if is_active and not is_dead:
+			var action_info := _get_action_economy_text(cs)
+			if not action_info.is_empty():
+				label.text += "\n    " + action_info
+
 		_entries_container.add_child(label)
 		_entry_labels.append(label)
 
@@ -89,5 +98,19 @@ func hide_tracker() -> void:
 
 
 func _get_round_from_combatants(_combatants: Array[CombatState]) -> int:
-	# We don't store round in CombatState, so default to showing from GameMode
-	return 1
+	return World.game_mode.combat_round
+
+
+func _get_action_economy_text(cs: CombatState) -> String:
+	var parts: Array[String] = []
+	if cs.movement_remaining > 0:
+		parts.append("[color=cyan]Mv:%d[/color]" % cs.movement_remaining)
+	if cs.has_action:
+		parts.append("[color=lime]Act[/color]")
+	if cs.has_bonus_action:
+		parts.append("[color=yellow]Bon[/color]")
+	if cs.has_reaction:
+		parts.append("[color=orange]Rea[/color]")
+	if parts.is_empty():
+		return "[color=gray]No actions (Space=end)[/color]"
+	return " ".join(parts) + " [color=gray](Space=end)[/color]"

@@ -27,6 +27,7 @@ var current_map: Map
 
 # Turn management
 var current_turn: int
+var game_mode: GameMode = GameMode.new()
 
 # Is the game over?
 var game_over: bool = false
@@ -68,6 +69,7 @@ func initialize() -> void:
 	# Initialize all vars
 	current_turn = 1
 	game_over = false
+	game_mode = GameMode.new()
 	max_depth = 1
 
 	# Create a new world world_plan
@@ -235,6 +237,15 @@ func _generate_map(plan: WorldPlan.LevelPlan) -> Map:
 
 # Apply an action (presumably from the player) to the world and complete the turn.
 func apply_player_action(action: BaseAction) -> ActionResult:
+	# In combat, validate action economy before executing
+	if game_mode.is_combat():
+		var cs := game_mode.get_combat_state(player)
+		if cs:
+			var block_reason := _validate_combat_action(cs, action)
+			if not block_reason.is_empty():
+				message_logged.emit("[color=yellow]%s[/color]" % block_reason)
+				return null
+
 	Log.i("[color=lime]======== TURN %d STARTED ========[/color]" % World.current_turn)
 	turn_started.emit()
 
@@ -258,12 +269,48 @@ func apply_player_action(action: BaseAction) -> ActionResult:
 		if player_pos != Utils.INVALID_POS:
 			RoomTriggers.check_room_entry(current_map, player_pos, current_floor_data)
 
-	# Update all monster systems
-	for monster in current_map.get_monsters():
-		# Update status effects
-		monster.tick_status_effects()
+	if game_mode.is_combat():
+		_apply_combat_player_turn(result)
+	else:
+		_apply_exploration_turn(result)
 
-		# Check encumbrance
+	return result
+
+
+## Validate whether a combat action is allowed given remaining resources.
+## Returns empty string if allowed, or a reason string if blocked.
+func _validate_combat_action(cs: CombatState, action: BaseAction) -> String:
+	# Allow end-turn action always
+	if action is PlayerEndTurnAction:
+		return ""
+
+	# Check if the action requires movement
+	if action is PlayerAttackMoveAction:
+		var dir: Vector2i = (action as PlayerAttackMoveAction).direction
+		var player_pos := current_map.find_monster_position(player)
+		var target_pos := player_pos + dir
+		var target_monster := current_map.get_monster(target_pos)
+
+		if target_monster:
+			# This will be a melee attack — needs an action
+			if not cs.can_act():
+				return "No action remaining this turn!"
+		else:
+			# This is movement — needs movement points
+			if not cs.can_move():
+				return "No movement remaining this turn!"
+
+	elif action is PlayerMeleeAction or action is PlayerFireAction:
+		if not cs.can_act():
+			return "No action remaining this turn!"
+
+	return ""
+
+
+func _apply_exploration_turn(result: ActionResult) -> void:
+	# Update all monster status effects
+	for monster in current_map.get_monsters():
+		monster.tick_status_effects()
 		monster.tick_encumbrance()
 
 	# Process player nutrition
@@ -278,17 +325,30 @@ func apply_player_action(action: BaseAction) -> ActionResult:
 		)
 		game_over = true
 		game_ended.emit()
-		return result
+		return
 
 	# Process natural healing
 	if player.nutrition.value >= Nutrition.THRESHOLD_STARVING and player.hp < player.max_hp:
-		# Base healing of 1 HP every 3 turns
 		if current_turn % 3 == 0:
 			var heal_amount := 1
-			# Bonus healing when well fed
 			if player.nutrition.value >= Nutrition.THRESHOLD_SATIATED:
 				heal_amount += 1
 			player.hp = mini(player.hp + heal_amount, player.max_hp)
+
+	# Check if player action was an attack — might trigger combat
+	var attack_target: Monster = null
+	for effect in result.effects:
+		if effect is AttackEffect:
+			attack_target = effect.target
+			break
+
+	if attack_target and _check_combat_trigger(attack_target):
+		# Combat started from bump-attack — emit effects and return
+		for effect in result.effects:
+			effect_occurred.emit(effect)
+		if result.message:
+			message_logged.emit(result.message, result.message_level)
+		return
 
 	# Accumulate energy for all monsters
 	for monster in current_map.get_monsters():
@@ -303,14 +363,11 @@ func apply_player_action(action: BaseAction) -> ActionResult:
 	for monster in monsters:
 		if monster == player:
 			continue
-
-		# Only act if we have enough energy
 		if monster.energy >= Monster.SPEED_NORMAL:
 			var monster_action := monster.get_next_action(current_map)
 			if monster_action:
 				var monster_result := monster_action.apply(current_map)
 				results.append(monster_result)
-			# Consume energy after acting
 			monster.energy -= Monster.SPEED_NORMAL
 			energy_updated.emit(monster)
 
@@ -320,13 +377,20 @@ func apply_player_action(action: BaseAction) -> ActionResult:
 	# Update vision
 	update_vision()
 
+	# Check FOW reveal combat trigger
+	if _check_combat_trigger():
+		# Combat started from FOW reveal — emit effects and return
+		for res in results:
+			for effect in res.effects:
+				effect_occurred.emit(effect)
+			if res.message:
+				message_logged.emit(res.message, res.message_level)
+		return
+
 	# Now emit all the results
 	for res in results:
-		# Emit effects
 		for effect in res.effects:
 			effect_occurred.emit(effect)
-
-		# Emit messages
 		if res.message:
 			message_logged.emit(res.message, res.message_level)
 
@@ -342,7 +406,89 @@ func apply_player_action(action: BaseAction) -> ActionResult:
 		game_over = true
 		game_ended.emit()
 
-	return result
+
+func _apply_combat_player_turn(result: ActionResult) -> void:
+	# Tick player status effects only
+	player.tick_status_effects()
+
+	# Consume action economy resources based on what the player did
+	var cs := game_mode.get_combat_state(player)
+	if cs:
+		_consume_combat_resources(cs, result)
+
+	# Update vision
+	update_vision()
+
+	# Emit result effects
+	for effect in result.effects:
+		effect_occurred.emit(effect)
+	if result.message:
+		message_logged.emit(result.message, result.message_level)
+
+	# Is the player dead?
+	if player.is_dead:
+		game_over = true
+		game_ended.emit()
+		return
+
+	# Auto-advance turn if the player has exhausted all resources or explicitly ended
+	if cs and (cs.is_turn_exhausted() or result.message == "You end your turn."):
+		if cs.is_turn_exhausted():
+			message_logged.emit("[color=gray]Turn ended — no actions remaining.[/color]")
+		game_mode.advance_turn()
+
+
+## Consume CombatState resources based on what the action result contained.
+func _consume_combat_resources(cs: CombatState, result: ActionResult) -> void:
+	var had_attack := false
+	var had_move := false
+
+	for effect in result.effects:
+		if effect is AttackEffect or effect is HitEffect:
+			had_attack = true
+		elif effect is MoveEffect and effect.target == player:
+			had_move = true
+
+	if had_attack:
+		cs.use_action()
+	elif had_move:
+		cs.use_movement(1)
+
+
+## Execute the current monster's combat turn.
+func apply_combat_monster_turn() -> void:
+	var cs := game_mode.get_active_combatant()
+	if not cs or cs.combatant == player:
+		return
+
+	var monster := cs.combatant
+
+	# Tick monster status effects
+	monster.tick_status_effects()
+
+	# Get and apply monster action
+	var monster_action := monster.get_next_action(current_map)
+	if monster_action:
+		var result := monster_action.apply(current_map)
+
+		# Consume action economy resources
+		if result:
+			_consume_combat_resources(cs, result)
+
+		# Update vision
+		update_vision()
+
+		# Emit effects
+		if result:
+			for effect in result.effects:
+				effect_occurred.emit(effect)
+			if result.message:
+				message_logged.emit(result.message, result.message_level)
+	else:
+		update_vision()
+
+	# Advance to next combatant
+	game_mode.advance_turn()
 
 
 func handle_special_level(id: String) -> void:
@@ -476,3 +622,44 @@ func update_vision() -> void:
 		current_map.clear_fov(player_pos)
 	else:
 		current_map.compute_fov(player_pos)
+
+
+## Check if combat should start from FOW reveal or bump-attack.
+func _check_combat_trigger(bump_target: Monster = null) -> bool:
+	if game_mode.is_combat():
+		return false
+
+	var player_pos := current_map.find_monster_position(player)
+	if player_pos == Utils.INVALID_POS:
+		return false
+
+	# Get visible monsters that are AGGRESSIVE and hostile to the player
+	var visible_monsters := current_map.get_visible_monsters()
+	var enemies: Array[Monster] = []
+	for monster in visible_monsters:
+		if monster == player:
+			continue
+		if monster.is_hostile_to(player) and monster.behavior == Monster.Behavior.AGGRESSIVE:
+			enemies.append(monster)
+
+	var player_surprised := false
+	var enemies_surprised := false
+
+	if bump_target:
+		# Player bump-attacked something — it joins combat even if not AGGRESSIVE
+		if bump_target not in enemies:
+			bump_target.behavior = Monster.Behavior.AGGRESSIVE
+			enemies.append(bump_target)
+		# If bump target wasn't visible (player snuck up), enemies are surprised
+		var target_pos := current_map.find_monster_position(bump_target)
+		if target_pos != Utils.INVALID_POS and not current_map.is_visible(target_pos):
+			enemies_surprised = true
+		game_mode.enter_combat(player, enemies, bump_target, player_surprised, enemies_surprised)
+		return true
+	else:
+		# FOW reveal check — any AGGRESSIVE hostile visible?
+		if enemies.size() > 0:
+			game_mode.enter_combat(player, enemies)
+			return true
+
+	return false
