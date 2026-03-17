@@ -2,10 +2,9 @@
 # E2E testing helper for The Welcome Wench on Jetson Orin Nano.
 # Deploy to Jetson, then call functions via SSH one-liners.
 #
-# Usage from Windows (via SSH):
-#   ssh jetson@192.168.2.1 'source ~/tww/scripts/jetson_e2e.sh && send_key w'
-#   ssh jetson@192.168.2.1 'source ~/tww/scripts/jetson_e2e.sh && take_screenshot step1'
-#   scp jetson@192.168.2.1:/tmp/e2e_step1.png /tmp/
+# Usage:
+#   source ~/dnd-dm/scripts/jetson_e2e.sh && send_key w
+#   source ~/dnd-dm/scripts/jetson_e2e.sh && take_screenshot step1
 
 # --- Environment ---
 export DISPLAY="${DISPLAY:-:1}"

@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A single-player 2D pixel art turn-based tactical RPG with a dual-model AI Dungeon Master. A local LLM handles real-time DM duties (narration, freeform NPC conversation, choices); Claude generates content on demand via Forge Mode (persistent CLI session with /clear + forge/CLAUDE.md). Godot 4 renders the world. Developed on Windows 11 laptop, deployed/played on Jetson Orin Nano. See `PROMPT.md` for full context.
+A single-player 2D pixel art turn-based tactical RPG with a dual-model AI Dungeon Master. A local LLM handles real-time DM duties (narration, freeform NPC conversation, choices); Claude generates content on demand via Forge Mode (persistent CLI session with /clear + forge/CLAUDE.md). Godot 4 renders the world. Developed and played on Jetson Orin Nano. See `PROMPT.md` for full context.
 
 ## Project Structure
 
@@ -33,8 +33,7 @@ forge/               # Forge Mode working directory (has its own CLAUDE.md)
 - **Real-time DM:** Ollama + Llama 3.2 3B (Q4_K_M quantization)
 - **Forge:** Claude Code CLI (persistent session with /clear + forge/CLAUDE.md)
 - **Rules:** D&D 5e SRD (markdown in `rules/`)
-- **Development:** Windows 11 laptop
-- **Deployment:** Jetson Orin Nano (8GB shared memory)
+- **Platform:** Jetson Orin Nano (8GB shared memory) — development and play
 
 ## Code Conventions
 

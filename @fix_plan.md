@@ -5,11 +5,13 @@
 - [x] Jetson Orin Nano: SSH working (192.168.2.1, user jetson, direct ethernet)
 - [x] Jetson: Ollama 0.18.0 + Llama 3.2 3B running on GPU (CUDA 12.6)
 - [x] Jetson: Project repo cloned to ~/dnd-dm
-- [x] Windows: Godot 4.6.1 installed (winget)
-- [x] Windows: Python 3.13, Git, Claude Code ready
+- [x] Jetson: Godot 4.6.1 installed at /usr/local/bin/godot
+- [x] Jetson: Python 3.10.12, Git, Claude Code ready
 - [x] D&D 5e SRD markdown files in rules/ (17 chapter files, OGL licensed, BTMorton/dnd-5e-srd)
 - [x] All Phase 0 research and specs complete
 - [x] PROMPT.md, CLAUDE.md, @AGENT.md updated for Phase 1
+- [x] 5e-database integration: 334 monsters, 12 classes, 9 races (MIT, single source of truth)
+- [x] All docs migrated from Windows→Jetson workflow to Jetson-only development
 
 ---
 
@@ -61,4 +63,4 @@
 - **Jetson memory:** 8 GB shared. Desktop GUI uses ~400 MB + Xorg ~140 MB. Close Firefox and extra Claude sessions before running Ollama with 3B model. Consider headless mode if memory is tight in Phase 2.
 - **SRD upgrade path:** Current rules/ has 17 chapter-level files (BTMorton). For Phase 2+ when per-entity lookup matters, swap to OldManUmby/DND.SRD.Wiki (CC-BY-4.0, ~900 individual files per spell/monster/class).
 - **Base game:** statico/godot-roguelike-example — MIT, Godot 4.6, GDScript, D20 combat, BSP dungeon gen, CSV data-driven, behavior tree AI, fog of war. Copy into game/, don't GitHub-fork.
-- **Godot on Windows:** `godot` command available after shell restart, or use full path at `AppData/Local/Microsoft/WinGet/Packages/GodotEngine.GodotEngine_*/Godot_v4.6.1-stable_win64_console.exe`
+- **Godot on Jetson:** `/usr/local/bin/godot` (ARM64 Linux build, 4.6.1)

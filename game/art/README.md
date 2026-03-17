@@ -9,7 +9,7 @@ This directory contains scripts to process the DawnLike tileset into individual 
 ```bash
 cd art
 uv venv
-source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+source .venv/bin/activate
 uv pip install -r requirements.txt
 ```
 

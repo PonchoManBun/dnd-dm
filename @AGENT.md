@@ -2,29 +2,24 @@
 
 ## Prerequisites
 
-- Godot 4.6.1 — installed on Windows via winget (`godot` or `godot_console` in PATH after shell restart)
-- Godot 4 ARM64 — not yet installed on Jetson (LOW priority, Phase 1 task)
-- Python 3.10+ (Jetson: 3.10.12, Windows: 3.13.12)
-- Ollama 0.18.0 (Jetson: installed, running, Llama 3.2 3B on GPU)
+- Godot 4.6.1 — installed at `/usr/local/bin/godot`
+- Python 3.10+ (system: 3.10.12)
+- Ollama 0.18.0 (installed, running, Llama 3.2 3B on GPU)
 - Anthropic API Key (for Phase 3+ Forge Mode)
 
-## Development Workflow (Windows → Jetson)
+## Development Platform
 
-Development happens on a **Windows 11 laptop**. Deployment and play happen on the **Jetson Orin Nano**.
+Development and play happen directly on the **Jetson Orin Nano**. No separate build machine.
 
 ```bash
-# Push from Windows
-git push origin master
+# Pull latest from GitHub
+git pull origin master
 
-# Pull on Jetson
-ssh jetson "cd ~/dnd-dm && git pull origin master"
-
-# Or rsync for fast iteration (from WSL)
-rsync -avz --exclude='.git' --exclude='__pycache__' --exclude='.venv' \
-  /mnt/c/dev/dnd-dm/ jetson:~/dnd-dm/
+# Run the game
+godot --path game/
 ```
 
-See `specs/research/dev-workflow.md` for full SSH, VS Code Remote-SSH, Godot export, and rsync details.
+See `specs/research/dev-workflow.md` for full Git workflow, orchestrator setup, and Forge details.
 
 ## Project Structure
 
@@ -45,19 +40,19 @@ game_state/       # JSON game state files (Phase 2+)
 
 ### Phase 1 (Current — Godot Game, No AI)
 ```bash
-# Open in Godot editor (Windows)
-godot --path game/
+# Open in Godot editor
+godot --path game/ -e
 
 # Run the game
-godot --path game/ --main-scene scenes/main.tscn
+godot --path game/
 
-# Export for ARM64 Linux (Jetson) from Windows Godot editor
-godot --path game/ --export-release "Linux/ARM64"
+# Run headless (validation)
+godot --path game/ --headless --quit
 ```
 
 ### Phase 2 (Local LLM Integration)
 ```bash
-# On Jetson — Start Ollama
+# Start Ollama (if not already running)
 ollama serve
 
 # Pull the model
@@ -76,7 +71,7 @@ pytest orchestrator/tests/
 
 ### Phase 3 (Forge Mode)
 ```bash
-# On Jetson — Set API key
+# Set API key
 export ANTHROPIC_API_KEY="sk-ant-..."
 
 # Start persistent Claude Code CLI session for Forge Mode
@@ -98,4 +93,3 @@ claude -p "Generate a crypt-themed dungeon for a level 3 party" --output-format 
 - **No game logic in client** — Godot renders JSON. Orchestrator + LLM decide everything.
 - **Test integration points** — orchestrator API, LLM routing, forge pipeline, JSON schema validation
 - **Data-driven content** — CSV/JSON for game data, .tres for Godot resources
-- **Never copy venvs** between Windows and Jetson — always create fresh per platform

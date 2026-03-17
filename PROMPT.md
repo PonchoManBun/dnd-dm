@@ -4,7 +4,7 @@
 
 **The Welcome Wench** (TWW) is a single-player 2D pixel art turn-based tactical RPG with an AI Dungeon Master. A **local LLM** (Llama 3.2 3B on Ollama) handles real-time DM duties — narration, combat text, freeform NPC conversation, contextual choices. **Claude** (via a persistent CLI session) generates high-quality content on demand in "Forge Mode" — dungeon maps, monsters, items, quest arcs. **Godot 4** renders the world. A **Python/FastAPI orchestrator** coordinates everything with a deterministic D&D 5e rules engine.
 
-**Development:** Windows 11 laptop. **Deployment/play:** Jetson Orin Nano (8GB). See `specs/research/dev-workflow.md`.
+**Platform:** Jetson Orin Nano (8GB) — development and play. See `specs/research/dev-workflow.md`.
 
 ## Current Phase: Phase 1 — Standalone Godot Game
 
@@ -34,7 +34,7 @@
 - **Real-time DM:** Ollama + Llama 3.2 3B (Q4_K_M)
 - **Forge (on-demand):** Claude Code CLI (persistent session with /clear + forge/CLAUDE.md)
 - **Rules:** D&D 5e SRD (markdown files in `rules/`)
-- **Hardware:** Jetson Orin Nano (8GB) — runs game; Windows 11 laptop — development
+- **Platform:** Jetson Orin Nano (8GB) — development and play
 
 ## Architecture Principles
 
@@ -91,6 +91,6 @@ See `specs/research/` for research documents:
 - `godot-file-formats.md` — File format AI editability
 - `jetson-setup.md` — Hardware/software setup
 - `mcp-forge-design.md` — MCP/Forge architecture options
-- `dev-workflow.md` — Windows → Jetson development workflow
+- `dev-workflow.md` — Jetson development workflow
 
 See `specs/reference/` for the full 20-document GDD archive.

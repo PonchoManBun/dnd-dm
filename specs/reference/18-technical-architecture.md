@@ -143,5 +143,5 @@ POST /forge/trigger — Manually trigger forge generation (dev/debug only)
 - **Godot 4:** ARM64 Linux build from godotengine.org
 - **Python:** 3.10+ with FastAPI, Ollama SDK
 - **Ollama:** Docker via jetson-containers or native install (pin to 0.5.7 if GPU issues)
-- **Development:** Two-machine workflow — develop on Windows 11 laptop, deploy to Jetson (see `specs/research/dev-workflow.md`)
+- **Development:** Direct development on Jetson Orin Nano (see `specs/research/dev-workflow.md`)
 - **Performance mode:** `sudo nvpmodel -m 0 && sudo jetson_clocks`

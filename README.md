@@ -2,7 +2,7 @@
 
 A single-player 2D pixel art turn-based tactical RPG with a **dual-model AI Dungeon Master**.
 
-A local LLM (Llama 3.2 3B) handles real-time DM duties — narration, freeform NPC conversation, choices. Claude generates high-quality content on demand via Forge Mode — dungeons, monsters, items, quest arcs. Godot 4 renders the world. Developed on Windows 11 laptop, deployed on Jetson Orin Nano.
+A local LLM (Llama 3.2 3B) handles real-time DM duties — narration, freeform NPC conversation, choices. Claude generates high-quality content on demand via Forge Mode — dungeons, monsters, items, quest arcs. Godot 4 renders the world. Developed and played on Jetson Orin Nano.
 
 ## Tech Stack
 
@@ -11,8 +11,7 @@ A local LLM (Llama 3.2 3B) handles real-time DM duties — narration, freeform N
 - **Real-time DM:** Ollama + Llama 3.2 3B
 - **Forge:** Claude Code CLI (persistent session)
 - **Rules:** D&D 5e SRD (markdown)
-- **Development:** Windows 11 laptop
-- **Deployment:** Jetson Orin Nano (8GB)
+- **Platform:** Jetson Orin Nano (8GB) — development and play
 
 ## Development Phases
 

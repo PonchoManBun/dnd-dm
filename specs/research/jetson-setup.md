@@ -170,4 +170,4 @@ sudo swapon /mnt/nvme/swapfile
 
 ## 6. Development Workflow
 
-TWW uses a **two-machine workflow**: develop on Windows 11 laptop, deploy and play on Jetson. See `specs/research/dev-workflow.md` for full details on SSH, git, rsync, VS Code Remote-SSH, and Godot ARM64 export.
+TWW is developed and played directly on the Jetson Orin Nano. See `specs/research/dev-workflow.md` for Git workflow, orchestrator setup, and Forge details.

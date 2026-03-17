@@ -70,5 +70,5 @@
 
 - **GitHub Issues** for task tracking
 - **Phases** map to GitHub milestones
-- **Two-machine workflow** — develop on Windows 11 laptop, deploy/play on Jetson Orin Nano (see `specs/research/dev-workflow.md`)
+- **Direct development** on Jetson Orin Nano (see `specs/research/dev-workflow.md`)
 - **User role** — Game designer. Claude Code builds code. Local LLM handles runtime.
