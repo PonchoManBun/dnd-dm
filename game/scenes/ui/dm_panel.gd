@@ -130,6 +130,7 @@ func _build_ui() -> void:
 
 	# -- Free-text input --
 	_input_field = LineEdit.new()
+	_input_field.focus_mode = Control.FOCUS_CLICK  # Never auto-grab keyboard focus
 	_input_field.placeholder_text = "Say something..."
 	_input_field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_input_field.add_theme_font_size_override("font_size", 14)
@@ -273,6 +274,13 @@ func _on_text_submitted(text: String) -> void:
 
 	if NarrativeManager:
 		NarrativeManager.submit_input(text)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		if _input_field.has_focus():
+			_input_field.release_focus()
+			get_viewport().set_input_as_handled()
 
 
 func _on_narrative_cleared() -> void:

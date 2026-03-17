@@ -86,6 +86,8 @@ func _ready() -> void:
 	dm_panel.anchor_top = 0.0
 	dm_panel.anchor_bottom = 1.0
 	ui_layer.add_child(dm_panel)
+	# Ensure no UI element steals keyboard focus on startup
+	dm_panel.get_viewport().gui_release_focus()
 
 	# -- Initiative Tracker (top-left) --
 	initiative_tracker = InitiativeTracker.new()
