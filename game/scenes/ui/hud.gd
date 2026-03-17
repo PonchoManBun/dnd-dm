@@ -37,6 +37,7 @@ func _ready() -> void:
 	World.world_initialized.connect(_on_world_initialized)
 	World.turn_ended.connect(_on_turn_ended)
 
+	inventory_button.focus_mode = Control.FOCUS_NONE
 	inventory_button.pressed.connect(_on_inventory_button_pressed)
 
 	mouse_entered.connect(_on_mouse_entered)

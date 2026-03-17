@@ -86,8 +86,6 @@ func _ready() -> void:
 	dm_panel.anchor_top = 0.0
 	dm_panel.anchor_bottom = 1.0
 	ui_layer.add_child(dm_panel)
-	# Ensure no UI element steals keyboard focus on startup
-	dm_panel.get_viewport().gui_release_focus()
 
 	# -- Initiative Tracker (top-left) --
 	initiative_tracker = InitiativeTracker.new()
@@ -136,6 +134,9 @@ func _ready() -> void:
 			var array := ItemSelection._from_selections(selections)
 			_handle_player_action(PlayerDropAction.new(array))
 	)
+
+	# Release all GUI focus after everything is set up (deferred to next frame)
+	get_viewport().gui_release_focus.call_deferred()
 
 
 func _initialize() -> void:
@@ -761,6 +762,8 @@ func _update_reticle() -> void:
 
 
 func _should_show_reticle() -> bool:
+	if not srd_reference:
+		return false
 	return not (World.game_over or Modals.has_visible_modals() or srd_reference.visible)
 
 
