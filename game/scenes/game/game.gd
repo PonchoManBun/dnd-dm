@@ -306,7 +306,8 @@ func _check_player_input() -> BaseAction:
 
 	if Input.is_action_just_pressed("end_turn") and World.game_mode.is_combat():
 		get_viewport().set_input_as_handled()
-		return PlayerEndTurnAction.new()
+		var end_turn_script: GDScript = load("res://src/actions/player_end_turn_action.gd")
+		return end_turn_script.new()
 
 	if Input.is_action_just_pressed("pick_up_item"):
 		get_viewport().set_input_as_handled()

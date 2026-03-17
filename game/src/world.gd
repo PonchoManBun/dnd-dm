@@ -280,10 +280,6 @@ func apply_player_action(action: BaseAction) -> ActionResult:
 ## Validate whether a combat action is allowed given remaining resources.
 ## Returns empty string if allowed, or a reason string if blocked.
 func _validate_combat_action(cs: CombatState, action: BaseAction) -> String:
-	# Allow end-turn action always
-	if action is PlayerEndTurnAction:
-		return ""
-
 	# Check if the action requires movement
 	if action is PlayerAttackMoveAction:
 		var dir: Vector2i = (action as PlayerAttackMoveAction).direction
