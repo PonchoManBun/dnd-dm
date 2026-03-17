@@ -8,6 +8,11 @@ extends RefCounted
 static var _visited_rooms: Dictionary = {}
 
 
+## Access NarrativeManager autoload from static context (can't use global name in static funcs).
+static func _nm() -> Node:
+	return Engine.get_main_loop().root.get_node("/root/NarrativeManager")
+
+
 static func clear() -> void:
 	_visited_rooms.clear()
 
@@ -64,8 +69,8 @@ static func check_room_entry(map: Map, player_pos: Vector2i, dungeon_floor: Dung
 static func _fire_narrative(room_data: DungeonLoader.RoomData) -> void:
 	# Add room name as header
 	var header := "[b]%s[/b]" % room_data.name
-	NarrativeManager.add_narrative(header)
-	NarrativeManager.add_narrative(room_data.narrative)
+	_nm().add_narrative(header)
+	_nm().add_narrative(room_data.narrative)
 
 	# Also log to the regular message system
 	World.message_logged.emit(
@@ -88,7 +93,7 @@ static func _fire_trap(trap_data: Dictionary) -> void:
 			dc
 		)
 		if save_result.success:
-			NarrativeManager.add_combat_narrative(
+			_nm().add_combat_narrative(
 				"[color=green]You dodge the %s! (DEX save: %s)[/color]" % [
 					trap_type.replace("_", " "), save_result.roll.description
 				]
@@ -98,7 +103,7 @@ static func _fire_trap(trap_data: Dictionary) -> void:
 			World.player.hp = maxi(0, World.player.hp - damage)
 			if World.player.character_data:
 				World.player.character_data.current_hp = World.player.hp
-			NarrativeManager.add_combat_narrative(
+			_nm().add_combat_narrative(
 				"[color=red]The %s hits you for %d damage! (DEX save: %s)[/color]" % [
 					trap_type.replace("_", " "), damage, save_result.roll.description
 				]
@@ -106,13 +111,13 @@ static func _fire_trap(trap_data: Dictionary) -> void:
 	else:
 		# Legacy: simple 50% dodge chance
 		if Dice.chance(0.5):
-			NarrativeManager.add_combat_narrative(
+			_nm().add_combat_narrative(
 				"[color=green]You dodge the trap![/color]"
 			)
 		else:
 			var damage := Dice.roll(damage_dice, damage_sides)
 			World.player.hp = maxi(0, World.player.hp - damage)
-			NarrativeManager.add_combat_narrative(
+			_nm().add_combat_narrative(
 				"[color=red]The trap hits you for %d damage![/color]" % damage
 			)
 
@@ -122,7 +127,7 @@ static func _fire_choices(room_data: DungeonLoader.RoomData) -> void:
 	for choice: Dictionary in room_data.choices:
 		choice_texts.append(choice.get("text", "???"))
 
-	NarrativeManager.present_choices(choice_texts, func(index: int) -> void:
+	_nm().present_choices(choice_texts, func(index: int) -> void:
 		_handle_choice(room_data, index)
 	)
 
@@ -136,7 +141,7 @@ static func _handle_choice(room_data: DungeonLoader.RoomData, choice_index: int)
 
 	match action:
 		"combat":
-			NarrativeManager.add_narrative("[color=yellow]You charge into battle![/color]")
+			_nm().add_narrative("[color=yellow]You charge into battle![/color]")
 		"stealth_check":
 			var dc: int = choice.get("dc", 15)
 			if World.player.character_data:
@@ -146,15 +151,15 @@ static func _handle_choice(room_data: DungeonLoader.RoomData, choice_index: int)
 					dc
 				)
 				if result.success:
-					NarrativeManager.add_narrative(
+					_nm().add_narrative(
 						"[color=green]You slip past unnoticed! (Stealth: %s)[/color]" % result.roll.description
 					)
 				else:
-					NarrativeManager.add_narrative(
+					_nm().add_narrative(
 						"[color=red]You're spotted! (Stealth: %s)[/color]" % result.roll.description
 					)
 			else:
-				NarrativeManager.add_narrative("[color=yellow]You attempt to sneak past...[/color]")
+				_nm().add_narrative("[color=yellow]You attempt to sneak past...[/color]")
 		"persuasion_check":
 			var dc: int = choice.get("dc", 15)
 			if World.player.character_data:
@@ -164,17 +169,17 @@ static func _handle_choice(room_data: DungeonLoader.RoomData, choice_index: int)
 					dc
 				)
 				if result.success:
-					NarrativeManager.add_narrative(
+					_nm().add_narrative(
 						"[color=green]The creature accepts your offering! (Persuasion: %s)[/color]" % result.roll.description
 					)
 				else:
-					NarrativeManager.add_narrative(
+					_nm().add_narrative(
 						"[color=red]The creature is unimpressed and attacks! (Persuasion: %s)[/color]" % result.roll.description
 					)
 			else:
-				NarrativeManager.add_narrative("[color=yellow]You try to negotiate...[/color]")
+				_nm().add_narrative("[color=yellow]You try to negotiate...[/color]")
 		_:
-			NarrativeManager.add_narrative("You proceed cautiously.")
+			_nm().add_narrative("You proceed cautiously.")
 
 
 ## Check if a room's monsters are all dead and fire on_clear events.
@@ -192,10 +197,10 @@ static func check_room_cleared(map: Map, room_data: DungeonLoader.RoomData) -> v
 	# All clear
 	var narrative: String = room_data.on_clear.get("narrative", "")
 	if narrative:
-		NarrativeManager.add_narrative(narrative)
+		_nm().add_narrative(narrative)
 
 	if room_data.on_clear.get("victory", false):
-		NarrativeManager.add_narrative("[color=gold][b]VICTORY! You have completed the dungeon![/b][/color]")
+		_nm().add_narrative("[color=gold][b]VICTORY! You have completed the dungeon![/b][/color]")
 		World.message_logged.emit(
 			"[color=cyan]Congratulations! You've conquered the dungeon![/color]",
 			LogMessages.Level.GREAT
