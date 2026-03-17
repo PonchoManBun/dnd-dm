@@ -85,6 +85,32 @@ cd forge/
 claude -p "Generate a crypt-themed dungeon for a level 3 party" --output-format json
 ```
 
+## Automated Playtesting
+
+Two-tier testing validates the game works:
+
+### Tier 1: Fast Heuristic (crash/stuck detection)
+```bash
+# Setup + launch + run automated playtest
+scripts/monitor.sh setup && scripts/monitor.sh launch --skip-menu
+sleep 5 && scripts/playtest.sh --max-turns 20
+scripts/monitor.sh kill
+# Results in /tmp/playtest_log.json, errors in /tmp/godot-stderr.log
+```
+
+### Tier 2: Deep AI — the-player agent
+Spawns a Claude agent that reads PNG screenshots + JSON state each turn, reasons about strategy, and reports bugs humans (and Tier 1) would miss.
+```python
+# Read the prompt template
+# scripts/the_player_prompt.md
+Agent(description="the-player: smart playtest", prompt=<prompt from template>)
+```
+
+### Protected files (do NOT modify during bug fixes)
+- `scripts/playtest.sh`, `scripts/playtest_brain.py`
+- `scripts/the_player_prompt.md`, `scripts/monitor.sh`
+- `game/src/debug_monitor.gd`
+
 ## Key Conventions
 
 - **GDScript** — strictly typed, `class_name` declarations, gdtoolkit linting

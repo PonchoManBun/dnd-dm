@@ -19,13 +19,14 @@ STDOUT_LOG="/tmp/godot-stdout.log"
 # Source e2e helpers for send_key
 source "$SCRIPT_DIR/jetson_e2e.sh"
 
-MAX_TURNS="${1:-500}"
+MAX_TURNS="${1:-20}"
 if [[ "${1:-}" == "--max-turns" ]]; then
-    MAX_TURNS="${2:-500}"
+    MAX_TURNS="${2:-20}"
 fi
 
 POLL_INTERVAL=2.5  # seconds between action cycles
 STUCK_THRESHOLD=10 # consecutive same-state polls before declaring stuck
+TIMEOUT_SECONDS=600 # 10 minute hard limit
 
 # --- State tracking ---
 last_turn=""
@@ -103,6 +104,14 @@ PYEOF
 cycle=0
 while true; do
     cycle=$((cycle + 1))
+
+    # Check timeout (10 min hard limit)
+    elapsed=$(( $(date +%s) - run_start ))
+    if [ "$elapsed" -ge "$TIMEOUT_SECONDS" ]; then
+        echo "==> Timeout after ${TIMEOUT_SECONDS}s"
+        result="timeout"
+        break
+    fi
 
     # Check if godot is still running
     if ! check_godot_alive; then
