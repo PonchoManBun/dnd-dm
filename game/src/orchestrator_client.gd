@@ -53,6 +53,13 @@ func _ready() -> void:
 	_health_timer.timeout.connect(_check_health)
 	add_child(_health_timer)
 
+	# Wire free-text input from NarrativeManager to orchestrator
+	if _nm and _nm.has_signal("player_input_submitted"):
+		_nm.player_input_submitted.connect(_on_player_input)
+
+	# Auto-narrate on room entry when offline
+	World.map_changed.connect(_on_map_changed)
+
 	# Check orchestrator health on startup
 	_check_health()
 
@@ -459,45 +466,73 @@ func _handle_npc_choice(npc_id: String, mode: String, choices: Array[String], in
 	send_npc_speak(npc_id, choice_text)
 
 
+## Handle free-text player input — send to orchestrator as a "speak" action.
+func _on_player_input(text: String) -> void:
+	if text.strip_edges().is_empty():
+		return
+	# Parse speaker/target context from the text if present
+	var clean_text := text
+	var speak_target := ""
+
+	# Extract [Speaking to: X] prefix if present
+	var to_match := RegEx.new()
+	to_match.compile("\\[Speaking to: (.+?)\\] (.*)")
+	var to_result := to_match.search(clean_text)
+	if to_result:
+		speak_target = to_result.get_string(1)
+		clean_text = to_result.get_string(2)
+
+	# Extract [Speaking as: X] prefix if present
+	var as_match := RegEx.new()
+	as_match.compile("\\[Speaking as: (.+?)\\] (.*)")
+	var as_result := as_match.search(clean_text)
+	if as_result:
+		# Include speaker context in the message
+		clean_text = as_result.get_string(2)
+
+	send_action("speak", speak_target, clean_text)
+
+
 ## Generate a local fallback response when the orchestrator is unavailable.
-## This preserves Phase 1 behavior — the game remains playable without the backend.
+## Uses game state to produce context-aware narration and choices.
 func _handle_fallback(action_type: String, target: String, message: String) -> void:
 	var narration := ""
 	var choices: Array[String] = []
 
 	match action_type:
-		"look":
-			narration = "You look around carefully, taking in your surroundings."
-			choices = ["Move forward", "Check inventory", "Rest"]
-		"move":
-			narration = "You move cautiously through the area."
-			choices = ["Look around", "Continue forward", "Go back"]
+		"speak":
+			if not target.is_empty():
+				narration = "You address %s." % target
+				if not message.is_empty():
+					narration += " \"%s\"" % message
+				narration += "\n[color=#888888](DM is offline — no LLM response available)[/color]"
+			else:
+				narration = "You speak aloud."
+				if not message.is_empty():
+					narration += " \"%s\"" % message
+				narration += "\n[color=#888888](DM is offline — no LLM response available)[/color]"
+			choices = _build_context_choices()
 		"attack":
 			if not target.is_empty():
 				narration = "You attack %s!" % target
 			else:
 				narration = "You swing your weapon at the enemy!"
-			choices = ["Attack again", "Defend", "Retreat"]
-		"speak":
-			if not target.is_empty():
-				narration = "You address %s." % target
-				if not message.is_empty():
-					narration += ' "%s"' % message
-			else:
-				narration = "You speak aloud."
-			choices = ["Ask a question", "Look around", "Move on"]
 		"rest":
 			narration = "You take a moment to rest and gather your strength."
-			choices = ["Continue exploring", "Check inventory", "Look around"]
+			choices = _build_context_choices()
 		"interact":
 			if not target.is_empty():
 				narration = "You examine %s closely." % target
 			else:
 				narration = "You interact with the object."
-			choices = ["Look around", "Move on", "Check inventory"]
+			choices = _build_context_choices()
 		_:
 			narration = "You consider your next move."
-			choices = ["Look around", "Move forward", "Check inventory"]
+			choices = _build_context_choices()
+
+	# In combat, don't present DM choices — combat uses the action economy
+	if World.game_mode.is_combat():
+		choices = []
 
 	# Relay to NarrativeManager
 	if _nm:
@@ -508,3 +543,84 @@ func _handle_fallback(action_type: String, target: String, message: String) -> v
 			)
 
 	response_received.emit(narration, choices)
+
+
+## Auto-narrate on room/map entry when orchestrator is offline.
+func _on_map_changed(map: Map) -> void:
+	if orchestrator_available or not map or not _nm:
+		return
+
+	# Build a brief room-entry narration from map data
+	var parts: Array[String] = []
+
+	# Map identity
+	if map.depth == 1:
+		parts.append("You enter the first level of the dungeon.")
+	else:
+		parts.append("You descend to depth %d." % map.depth)
+
+	# Monster count
+	var monsters := map.get_monsters()
+	var hostile_count := 0
+	for m: Monster in monsters:
+		if not World.party.is_party_member(m) and m != World.player:
+			hostile_count += 1
+	if hostile_count == 1:
+		parts.append("You sense a creature lurking nearby.")
+	elif hostile_count > 1:
+		parts.append("You sense %d creatures lurking in the shadows." % hostile_count)
+
+	# Stairs
+	if map.has_stairs_down():
+		parts.append("A stairway leads further down.")
+	if map.has_stairs_up():
+		parts.append("Stairs lead back up.")
+
+	var narration := "[color=#6cb4c4]%s[/color]" % " ".join(parts)
+	_nm.add_narrative(narration)
+
+	# Present context-aware choices
+	var choices := _build_context_choices()
+	if choices.size() > 0:
+		_nm.present_choices(choices, func(index: int) -> void:
+			send_action("custom", "", choices[index])
+		)
+
+
+## Build context-aware choices based on current game state.
+func _build_context_choices() -> Array[String]:
+	var choices: Array[String] = []
+
+	if not World.current_map:
+		return ["Look around", "Check inventory"]
+
+	var player_pos := World.current_map.find_monster_position(World.player) if World.player else Utils.INVALID_POS
+
+	# Check for nearby monsters
+	var visible_monsters := World.current_map.get_visible_monsters()
+	var non_party_monsters: Array[Monster] = []
+	for m: Monster in visible_monsters:
+		if not World.party.is_party_member(m):
+			non_party_monsters.append(m)
+
+	if non_party_monsters.size() > 0:
+		choices.append("Approach %s" % non_party_monsters[0].name)
+
+	# Check for items at feet
+	if player_pos != Utils.INVALID_POS:
+		var items := World.current_map.get_items(player_pos)
+		if items.size() > 0:
+			choices.append("Pick up %s" % items[0].name)
+
+	# Check for stairs
+	if World.current_map.has_stairs_down():
+		choices.append("Descend deeper")
+	if World.current_map.has_stairs_up():
+		choices.append("Go back up")
+
+	# Always offer these
+	choices.append("Look around")
+	if choices.size() < 4:
+		choices.append("Check for traps")
+
+	return choices

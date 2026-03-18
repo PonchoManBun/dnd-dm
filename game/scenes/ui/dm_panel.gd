@@ -155,14 +155,19 @@ func _connect_signals() -> void:
 	NarrativeManager.narrative_added.connect(_on_narrative_added)
 	NarrativeManager.choices_presented.connect(_on_choices_presented)
 	NarrativeManager.narrative_cleared.connect(_on_narrative_cleared)
+	NarrativeManager.choices_cleared.connect(_on_choices_cleared)
 
-	# Connect to orchestrator thinking signals
+	# Connect to orchestrator signals
 	var oc: Node = Engine.get_main_loop().root.get_node_or_null("/root/OrchestratorClient")
 	if oc:
 		if oc.has_signal("thinking_started"):
 			oc.thinking_started.connect(_on_thinking_started)
 		if oc.has_signal("thinking_finished"):
 			oc.thinking_finished.connect(_on_thinking_finished)
+		if oc.has_signal("orchestrator_status_changed"):
+			oc.orchestrator_status_changed.connect(_on_orchestrator_status_changed)
+			# Set initial status
+			_update_header(oc.get("orchestrator_available") == true)
 
 	# Refresh dropdowns when the world state changes
 	World.turn_ended.connect(_on_turn_ended_refresh)
@@ -270,6 +275,10 @@ func _on_narrative_cleared() -> void:
 	_clear_choices()
 
 
+func _on_choices_cleared() -> void:
+	_clear_choices()
+
+
 func _scroll_to_bottom() -> void:
 	# Wait a frame for layout to update, then scroll to the bottom
 	await get_tree().process_frame
@@ -291,6 +300,19 @@ func _on_thinking_started() -> void:
 
 func _on_thinking_finished() -> void:
 	_thinking_label.visible = false
+
+
+func _on_orchestrator_status_changed(available: bool) -> void:
+	_update_header(available)
+
+
+func _update_header(orchestrator_online: bool) -> void:
+	if orchestrator_online:
+		_header_label.text = "Dungeon Master"
+		_header_label.add_theme_color_override("font_color", UIColors.TEXT_HEADER)
+	else:
+		_header_label.text = "Dungeon Master [local]"
+		_header_label.add_theme_color_override("font_color", UIColors.TEXT_DIM)
 
 
 ## Populate "Speaking as" with the player name + all companion names.

@@ -9,6 +9,7 @@ signal choices_presented(choices: Array[String])
 signal choice_selected(index: int, text: String)
 signal player_input_submitted(text: String)
 signal narrative_cleared
+signal choices_cleared
 signal thinking_started
 signal thinking_finished
 
@@ -43,6 +44,10 @@ var _narrative_data: Dictionary = {}
 func _ready() -> void:
 	_load_narrative_data()
 	_add_initial_narratives()
+	# Clear stale choices/narratives on scene transitions
+	World.map_changed.connect(_on_map_changed)
+	World.game_mode.combat_started.connect(_on_combat_started)
+	World.game_mode.combat_ended.connect(_on_combat_ended)
 
 
 ## Load narrative content from the JSON data file.
@@ -208,3 +213,36 @@ func get_history() -> Array[String]:
 ## Whether we are currently waiting for a player choice.
 func is_awaiting_choice() -> bool:
 	return _awaiting_choice
+
+
+## Clear all context — narrative history, pending choices, and callbacks.
+## Called on scene transitions to prevent stale tavern choices in the dungeon.
+func clear_context() -> void:
+	_queue.clear()
+	_history.clear()
+	_awaiting_choice = false
+	_current_on_choice = Callable()
+	narrative_cleared.emit()
+
+
+func _on_map_changed(_map: Map) -> void:
+	clear_context()
+	Log.i("NarrativeManager: cleared context on map change")
+
+
+func _on_combat_started(_combatants: Array[Monster]) -> void:
+	# Clear exploration choices when combat begins, but keep narrative history
+	_awaiting_choice = false
+	_current_on_choice = Callable()
+	choices_cleared.emit()
+	add_combat_narrative("Initiative rolled! Combat begins!")
+
+
+func _on_combat_ended(victory: bool) -> void:
+	_awaiting_choice = false
+	_current_on_choice = Callable()
+	choices_cleared.emit()
+	if victory:
+		add_combat_narrative("The battle is won!")
+	else:
+		add_combat_narrative("The party has fallen...")
