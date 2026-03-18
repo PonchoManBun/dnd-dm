@@ -121,5 +121,12 @@ func _on_archetype_selected(archetype_id: int) -> void:
 	get_tree().change_scene_to_file("res://scenes/game/game.tscn")
 
 
+func _on_restart_button_pressed() -> void:
+	# Delete save and start fresh, straight to the tavern
+	if AutoSave.save_exists():
+		AutoSave.delete_save()
+	get_tree().change_scene_to_file("res://scenes/tavern/tavern.tscn")
+
+
 func _on_quit_button_pressed() -> void:
 	get_tree().quit()
