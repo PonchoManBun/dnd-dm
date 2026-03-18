@@ -11,7 +11,6 @@ signal text_submitted(text: String)
 const PANEL_WIDTH := 156
 const SCROLL_SPEED := 4.0
 
-var _scroll_container: ScrollContainer
 var _narrative_label: RichTextLabel
 var _choices_container: VBoxContainer
 var _input_field: LineEdit
@@ -30,7 +29,7 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	# Configure the panel container itself
+	# Configure the panel container itself — sized by anchors/offsets in game.gd
 	custom_minimum_size = Vector2(PANEL_WIDTH, 0)
 	size_flags_horizontal = Control.SIZE_FILL
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -38,8 +37,9 @@ func _build_ui() -> void:
 	# Panel style with gold left border
 	add_theme_stylebox_override("panel", UIStyles.side_panel())
 
-	# Main vertical layout
+	# Main vertical layout — zero min width so panel respects anchor sizing
 	_vbox = VBoxContainer.new()
+	_vbox.custom_minimum_size = Vector2(0, 0)
 	_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_vbox.add_theme_constant_override("separation", 4)
@@ -48,6 +48,7 @@ func _build_ui() -> void:
 	# -- Header --
 	_header_label = Label.new()
 	_header_label.text = "Dungeon Master"
+	_header_label.clip_text = true
 	_header_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_header_label.add_theme_color_override("font_color", UIColors.TEXT_HEADER)
 	_header_label.add_theme_font_size_override("font_size", 16)
@@ -57,26 +58,13 @@ func _build_ui() -> void:
 	var sep := UIStyles.h_separator(2)
 	_vbox.add_child(sep)
 
-	# -- Scroll container for narrative text --
-	_scroll_container = ScrollContainer.new()
-	_scroll_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_scroll_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
-
-	# Style the scrollbar to match the game theme
-	var scroll_style := StyleBoxFlat.new()
-	scroll_style.bg_color = Color(0.0, 0.0, 0.0, 0.0)
-	_scroll_container.add_theme_stylebox_override("panel", scroll_style)
-	_vbox.add_child(_scroll_container)
-
-	# Narrative rich text label inside scroll container
+	# -- Narrative text (uses RichTextLabel's built-in scrollbar) --
 	_narrative_label = RichTextLabel.new()
 	_narrative_label.bbcode_enabled = true
-	_narrative_label.fit_content = true
-	_narrative_label.scroll_active = false
+	_narrative_label.scroll_active = true
+	_narrative_label.scroll_following = true
 	_narrative_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_narrative_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_narrative_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_narrative_label.add_theme_color_override("default_color", UIColors.TEXT_PRIMARY)
 	_narrative_label.add_theme_font_size_override("normal_font_size", 16)
 	_narrative_label.add_theme_font_size_override("bold_font_size", 16)
@@ -84,7 +72,7 @@ func _build_ui() -> void:
 	_narrative_label.add_theme_font_size_override("bold_italics_font_size", 16)
 	_narrative_label.add_theme_constant_override("line_separation", 2)
 	_narrative_label.text = ""
-	_scroll_container.add_child(_narrative_label)
+	_vbox.add_child(_narrative_label)
 
 	# -- Choices container --
 	_choices_container = VBoxContainer.new()
@@ -109,6 +97,7 @@ func _build_ui() -> void:
 	speaker_row.add_child(as_label)
 
 	_speaking_as = OptionButton.new()
+	_speaking_as.clip_text = true
 	_speaking_as.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_speaking_as.add_theme_font_size_override("font_size", 14)
 	_speaking_as.add_theme_color_override("font_color", UIColors.TEXT_PRIMARY)
@@ -122,6 +111,7 @@ func _build_ui() -> void:
 	speaker_row.add_child(to_label)
 
 	_speaking_to = OptionButton.new()
+	_speaking_to.clip_text = true
 	_speaking_to.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_speaking_to.add_theme_font_size_override("font_size", 14)
 	_speaking_to.add_theme_color_override("font_color", UIColors.TEXT_PRIMARY)
@@ -201,6 +191,7 @@ func _on_choices_presented(choices: Array[String]) -> void:
 	for i: int in range(choices.size()):
 		var button := Button.new()
 		button.text = "%d. %s" % [i + 1, choices[i]]
+		button.clip_text = true
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.add_theme_font_size_override("font_size", 16)
@@ -264,7 +255,7 @@ func _on_narrative_cleared() -> void:
 func _scroll_to_bottom() -> void:
 	# Wait a frame for layout to update, then scroll to the bottom
 	await get_tree().process_frame
-	_scroll_container.scroll_vertical = int(_scroll_container.get_v_scroll_bar().max_value)
+	_narrative_label.scroll_to_line(_narrative_label.get_line_count() - 1)
 
 
 func _on_turn_ended_refresh() -> void:
