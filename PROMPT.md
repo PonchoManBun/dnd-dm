@@ -6,18 +6,27 @@
 
 **Platform:** Jetson Orin Nano (8GB) — development and play. See `specs/research/dev-workflow.md`.
 
-## Current Phase: Phase 1 — Standalone Godot Game
+## Current Phase: Phase 1 (Extended) — Standalone Godot Game + Party System
 
-**Goal:** Playable game with hardcoded content, no AI.
+**Goal:** Playable game with hardcoded content, no AI. The original Phase 1 objectives are all complete. Phase 1 is being extended to add a BG3-style party/companion system before advancing to Phase 2.
 
-### Objectives
-1. Fork and adapt statico/godot-roguelike-example base game
-2. Adapt D20 combat to D&D 5e SRD rules
-3. Add DM panel UI (narrative text, choices, free-text input)
-4. Hardcoded test dungeon with hand-authored content
-5. Basic character creation flow (race, class, ability scores)
-6. Save/load system
-7. Hybrid combat model (roguelike exploration + tactical D&D 5e combat)
+### Original Objectives (Complete)
+1. ~~Fork and adapt statico/godot-roguelike-example base game~~
+2. ~~Adapt D20 combat to D&D 5e SRD rules~~
+3. ~~Add DM panel UI (narrative text, choices, free-text input)~~
+4. ~~Hardcoded test dungeon with hand-authored content~~
+5. ~~Basic character creation flow (race, class, ability scores)~~
+6. ~~Save/load system~~
+7. ~~Hybrid combat model (roguelike exploration + tactical D&D 5e combat)~~
+
+### Extension Objectives (In Progress)
+8. BG3-style party/companion system (up to 3 companions + player character)
+9. NPC recruitment — any NPC anywhere can be recruited via conversation
+10. Companion stat block to character sheet conversion (DndMonsterFactory stat block to CharacterData)
+11. Companion XP tracking (separate per character)
+12. Party-aware combat (player controls all party members)
+13. Dialogue UI with speaker selection dropdown (who is speaking, who they're speaking to)
+14. Encounter balance for party of 4 (standard D&D 5e XP budgets)
 
 ### Phase 1 is done when:
 - The game runs in Godot with a playable dungeon loop
@@ -25,7 +34,15 @@
 - Combat uses SRD action economy (movement + action + bonus + reaction)
 - DM panel displays narrative text, choices, and free-text input
 - Game can save and load state
+- Player can recruit up to 3 NPC companions into a party
+- Companions have full character sheets converted from stat blocks
+- Party members are controllable in combat (player controls all)
+- Encounter balance accounts for party of 4
 - **No AI** — all content is hardcoded. LLM integration is Phase 2.
+
+### Additional Infrastructure Done
+- **Forge Mode** is set up: validated schemas, forge/CLAUDE.md, validation script, schema reference files, prompt templates, 8 slash commands, design guide
+- **Automated playtest system** exists: monitor.sh, playtest.sh, playtest_brain.py, the-player agent with two-tier workflow
 
 ## Tech Stack
 
@@ -67,7 +84,7 @@ Every NPC is a **freeform conversational agent** powered by the local LLM. No me
 Claude Code is the developer. Work is managed through phases, tasks, and agents:
 
 1. **Start of phase:** Read this file for context, `@fix_plan.md` for the task list, and `specs/phase-N-*/` for specs.
-2. **Work through tasks** in priority order (HIGH → MEDIUM → LOW). Each task is a vertical slice — implement, test, verify, mark done.
+2. **Work through tasks** in priority order (HIGH -> MEDIUM -> LOW). Each task is a vertical slice — implement, test, verify, mark done.
 3. **Use agents** for parallel work where tasks are independent (e.g., research in one agent, coding in another).
 4. **Track progress** by checking off tasks in `@fix_plan.md` as they complete.
 5. **Phase complete** when all HIGH and MEDIUM tasks are done. Update `@fix_plan.md`, advance phase references in this file and `CLAUDE.md`.

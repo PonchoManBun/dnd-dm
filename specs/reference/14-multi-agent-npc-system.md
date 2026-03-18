@@ -4,175 +4,146 @@
 
 **Every NPC is a live conversational agent. No menu trees. No canned dialogue.**
 
-When you talk to the barkeep, the blacksmith, or a random guard, the local LLM generates their dialogue in real-time based on their personality, knowledge, and relationship with you. You can negotiate prices, bluff your way past guards, ask for directions, flirt, threaten, or say anything you want. NPCs respond naturally. This is a core differentiator — not a side feature.
+When you talk to the barkeep, the mysterious traveler, or a retired adventurer, the local LLM generates their dialogue in real-time based on their personality, knowledge, and relationship with you. You can say anything via the free-text input in the DM panel. This is a core differentiator — not a side feature.
 
-## Architecture
+## Current Architecture
 
-NPCs use a **hybrid approach**: deterministic state machines in GDScript for movement/scheduling + **freeform LLM conversation** for all dialogue and personality expression.
+NPC behavior is split across two very different contexts: **tavern NPCs** (fixed positions, hardcoded dialogue with LLM overlay) and **dungeon monsters** (behavior tree AI). The originally planned GDScript state machines (IDLE, PATROL, ALERT, INTERACT, FLEE, COMBAT) are **not implemented** as described.
 
-```
-DM Orchestrator
-├── Faction System (deterministic logic)
-│   ├── Faction: Thieves' Guild
-│   │   ├── NPC: Dagger Nell (fence)
-│   │   └── NPC: Whisper (informant)
-│   ├── Faction: Town Guard
-│   │   ├── NPC: Captain Holt (commander)
-│   │   └── NPC: Recruit Tam (patrol)
-│   └── Independent NPCs
-│       ├── NPC: Barkeep Marta (tavern owner)
-│       └── NPC: Old Gren (hermit)
-│
-├── Local LLM → dialogue generation, personality expression
-└── Forge (Claude) → NPC profile creation, faction arc design
-```
+### Tavern NPCs (Fixed Position, Dialogue-Focused)
 
-## NPC Behavior: State Machines + Freeform LLM Conversation
+Tavern NPCs are placed at fixed grid positions and do not move. They are defined in the tavern scene (`tavern.gd`):
 
-### GDScript State Machine (Movement & Scheduling)
+| NPC | Position | Sprite | Character |
+|-----|----------|--------|-----------|
+| Barkeep Marta | (12, 13) | `player-25` | Tavern owner, warm, gossip |
+| Old Tom | (10, 3) | `player-31` | Retired adventurer, grizzled veteran |
+| Elara the Quiet | (17, 5) | `player-4` | Mysterious hooded traveler |
 
-Each NPC has a finite state machine implemented in GDScript that handles **non-dialogue behavior**:
+Tavern NPCs use a **bump-to-interact** system:
+- Walking into an NPC's tile triggers a conversation
+- First interaction: full greeting from NPC profile + hardcoded choice buttons
+- Repeat interactions: cycling varied acknowledgments + same choices
+- If the orchestrator is available, interactions are sent as `speak` actions for freeform LLM dialogue
 
-```
-States: IDLE → PATROL → ALERT → INTERACT → FLEE → COMBAT
-```
+### Dungeon Monsters (Behavior Tree AI)
 
-Transitions are based on game events, not LLM decisions:
-- Player enters detection radius → IDLE → ALERT
-- Player initiates conversation → ALERT → INTERACT
-- NPC health below threshold → COMBAT → FLEE
-- Time of day changes → IDLE → PATROL (if daytime shopkeeper)
+Dungeon creatures use `MonsterAI` behavior trees (`game/src/monster_ai.gd`) with four behavior profiles:
 
-The state machine handles: movement, pathfinding, animations, positioning. **All dialogue is LLM-generated.**
+- **AGGRESSIVE:** Full behavior tree — check hostility, check visibility, then try ranged combat (equip/load/fire), melee combat with weapon-seeking (find/pathfind/pickup/equip), or basic melee attack + chase. Falls back to random movement or idle.
+- **FEARFUL:** Flees from the player when visible.
+- **CURIOUS:** Moves toward the player when visible.
+- **PASSIVE:** 50% chance to move randomly, otherwise idle.
 
-### Freeform LLM Conversation (All Dialogue)
+The behavior tree system includes:
+- `BTSequence` / `BTSelector` composite nodes (AND/OR logic)
+- Condition checks: `CheckPlayerVisible`, `CheckHostileToPlayer`, `CheckRandomChance`, `CheckIntelligentEnough`
+- Actions: `AttackPlayer`, `MoveTowardPlayer`, `FleeFromPlayer`, `MoveRandomly`, `FireAtPlayer`
+- Equipment management: `CheckHasRangedWeapon`, `CheckAndEquipRangedWeapon`, `FindNearbyMeleeWeapon`, `MoveToAndPickupWeapon`, `EquipMeleeWeapon`
 
-When the player interacts with an NPC, the local LLM generates **freeform dialogue** using the NPC's personality profile. There are no dialogue trees, no menu options (beyond the standard "Do something else..." free-text input). The player can say anything, and the NPC responds in character.
+Monsters do **not** have freeform LLM conversation — they are purely mechanical combatants driven by behavior trees.
 
-**Example conversation types:**
-- **Negotiation:** "Can you knock 10 gold off the price?" → Barkeep responds based on disposition, personality, how much the player has bought before
-- **Information gathering:** "What do you know about the crypt?" → NPC shares (or withholds) based on their knowledge and trust
-- **Bluffing:** "I'm with the town guard, let me through." → NPC evaluates based on player's charisma, the situation, their personality
-- **Social:** "How's business?" → NPC chats naturally, reveals personality, may drop hints
+## Freeform LLM Conversation
 
-**Orchestrator builds the NPC context prompt:**
-```
-NPC: Barkeep Marta
-Role: tavern owner, information broker
-Personality: warm, gossipy, shrewd businesswoman
-Knowledge: [events she's witnessed from her NPC state file]
-Disposition toward player: [friendly/neutral/hostile, based on faction + past interactions]
-Current state: INTERACT
-Player said: "What do you know about the crypt?"
-```
+When the player interacts with an NPC and the orchestrator is available, the conversation is handled by the LLM:
 
-**Local LLM generates:** Freeform dialogue, emotional tone, hints or misdirection based on personality. The player can respond with anything — the LLM continues the conversation naturally.
+1. Godot sends a `speak` action with the NPC's ID and profile data
+2. The orchestrator's `handle_action()` looks up the NPC profile via `npc_context.get_npc_profile()`
+3. `prompt_builder.build_dm_prompt()` includes NPC context in the prompt:
+   ```
+   NPC: Barkeep Marta
+   Role: tavern owner and barkeep
+   Personality: Warm but shrewd. Knows everyone's business...
+   Knows: Local rumors, adventurer gossip, cellar problems...
+   ```
+4. The local LLM generates dialogue in character
+5. The response is displayed in the DM panel
 
-### Forge-Generated NPC Profiles
+**Conversation types supported:**
+- **Information gathering:** "What do you know about the crypt?"
+- **Social:** "How's business?"
+- **Negotiation:** "Can you give me a discount?"
+- **Free-text:** The player can type anything via the DM panel input field
 
-When a new significant NPC is needed, Forge (Claude) creates the full profile:
+### NPC Profiles (npc_context.py)
 
-```json
-{
-  "name": "Barkeep Marta",
-  "role": "tavern_owner",
-  "race": "human",
-  "personality": ["warm", "gossipy", "shrewd"],
-  "goals": ["run profitable tavern", "protect regulars", "collect secrets"],
-  "knowledge_base": ["local rumors", "traveler stories", "thieves guild dealings"],
-  "disposition_default": "friendly",
-  "dialogue_style": "colloquial, uses food metaphors, calls everyone 'love'",
-  "secrets": ["knows thieves guild fence location", "saw the murder"],
-  "schedule": {
-    "morning": "cleaning tavern",
-    "afternoon": "serving customers",
-    "evening": "busy service, gossip hour",
-    "night": "closing up, counting coins"
-  }
+NPC profiles are managed by `orchestrator/engine/npc_context.py`:
+
+```python
+DEFAULT_NPC_PROFILES = {
+    "marta": {
+        "name": "Barkeep Marta",
+        "role": "tavern owner and barkeep",
+        "personality": "Warm but shrewd. Knows everyone's business...",
+        "knowledge": "Local rumors, adventurer gossip, cellar problems...",
+    },
+    "old_tom": {
+        "name": "Old Tom",
+        "role": "retired adventurer and tavern regular",
+        "personality": "Grizzled veteran who tells tall tales...",
+        "knowledge": "Old dungeon layouts, monster weaknesses...",
+    },
+    "elara": {
+        "name": "Elara the Quiet",
+        "role": "mysterious hooded traveler",
+        "personality": "Speaks rarely but precisely. Observant...",
+        "knowledge": "Arcane lore, regional geography, hidden passages...",
+    },
 }
 ```
+
+Profiles can also be loaded from a JSON file. The lookup supports exact IDs, normalized names, and display name matching.
 
 ## Faction System
 
-### Deterministic Logic (Orchestrator)
+### Current Implementation
 
-Factions operate on mechanical rules, not LLM creativity:
+The faction system is basic. `World.faction_affinities` tracks numeric reputation per faction type:
 
-- **Reputation scores** — Player actions adjust numeric reputation per faction
-- **Relationship matrix** — Faction-to-faction dispositions (allied, neutral, hostile)
-- **Threshold triggers** — At certain reputation levels, faction behavior changes
-- **Resource tracking** — Members, territory, gold (simplified)
-
-```python
-# Example: faction reputation change
-if player_killed_guard:
-    factions["town_guard"].reputation -= 20
-    factions["thieves_guild"].reputation += 5  # enemy of my enemy
-
-    if factions["town_guard"].reputation < -50:
-        trigger_event("town_guard_hostile")  # guards attack on sight
-```
-
-### Forge-Designed Arcs (Claude)
-
-Claude generates the **narrative arcs** for faction conflicts during Forge Mode:
-
-- What happens when the thieves' guild gains power?
-- What quest does the town guard offer to regain control?
-- How do faction conflicts intertwine with the main story?
-
-These arcs are written as JSON quest data that the orchestrator loads and advances based on deterministic triggers.
-
-## NPC Memory: JSON State Files
-
-Each significant NPC has a JSON state file:
-
-```json
-{
-  "npc_id": "barkeep_marta",
-  "met_player": true,
-  "interactions": [
-    {"turn": 42, "summary": "Player asked about crypt, Marta warned about undead"},
-    {"turn": 67, "summary": "Player returned injured, Marta offered free healing potion"}
-  ],
-  "disposition": 15,
-  "knowledge": [
-    "Player is investigating the crypt",
-    "Player defeated the skeleton patrol"
-  ],
-  "flags": {
-    "told_about_secret_passage": false,
-    "offered_discount": true
-  }
+```gdscript
+var faction_affinities: Dictionary = {
+    Factions.Type.HUMAN: 100,
+    Factions.Type.CRITTERS: -30,
+    Factions.Type.MONSTERS: -100,
+    Factions.Type.UNDEAD: -100,
 }
 ```
 
-The orchestrator loads the relevant NPC state file and includes it in the local LLM's context when the player interacts with that NPC. The LLM uses this memory to generate contextually appropriate dialogue.
+Faction affinities are:
+- Stored on `World` and serialized in save files via `GameStateSerializer`
+- Used by monsters to determine hostility (`is_hostile_to()`)
+- Modified during gameplay (e.g., attacking a faction member changes affinity)
+
+### What's Not Implemented
+
+- Per-NPC state files with interaction history and flags
+- Faction-to-faction relationship matrix
+- Reputation threshold triggers (e.g., guards attack on sight below -50)
+- Faction resource tracking (members, territory, gold)
+- Cross-death faction reputation persistence
+- Forge-designed faction narrative arcs
+
+## Companion NPCs
+
+**Planned:** A BG3-style companion system where NPCs can join the player's party as controllable characters:
+
+- Companions would have their own `CharacterData` with class, level, and equipment
+- In combat, companions take individual turns in initiative order
+- Companions track XP separately
+- When a companion first earns XP, they receive their first player class
+- The game continues as long as any companion is alive
+- A speaker selection dropdown in the HUD would allow choosing which character speaks during NPC dialogue
+
+This system is **not yet implemented**.
+
+## NPC Memory
+
+**Not yet implemented.** The planned per-NPC JSON state files with interaction history, disposition tracking, and knowledge flags are not built. Currently, tavern NPC interactions track only a per-session count to vary repeat greetings.
 
 ## Event System
 
-### World Events (Deterministic)
-
-The orchestrator broadcasts events as they happen:
-
-- Combat outcomes, deaths, quest completions
-- Faction reputation changes
-- Time passage, location changes
-
-### NPC Reactions (Hybrid)
-
-Each NPC's state machine checks relevant events:
-- Guard NPC sees player steal → state transition to COMBAT (deterministic)
-- Barkeep hears about player's heroism → disposition increase (deterministic)
-- Next dialogue: LLM references the event naturally (creative)
+**Not yet implemented as described.** The game has signals for effects, messages, and game state changes, but no formal event broadcast system that NPCs subscribe to for reactions. The behavior tree AI responds to the game state directly (player visibility, hostility) rather than to events.
 
 ## Cross-Death Persistence
 
-NPC state files persist across permadeath. The world log continues. When a new player character enters:
-
-- NPCs remember previous characters via their state files
-- Disposition resets to default (new person, no relationship)
-- Knowledge persists ("Your predecessor owed me 50 gold...")
-- Faction reputations carry forward as world state
-
-The local LLM generates the cross-death references using the NPC's stored knowledge of the previous character.
+**Partially implemented.** The memorial wall in the tavern reads from `user://memorial.json` to display fallen heroes, but no system currently writes to this file. NPC state files and cross-death knowledge persistence are planned but not built.

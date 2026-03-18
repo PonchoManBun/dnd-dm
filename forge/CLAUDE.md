@@ -1,148 +1,355 @@
-# Forge Mode — Content Generation Instructions
+# Forge Mode — Content Generation Agent Instructions
 
 ## Your Role
 
-You are the **Forge** for The Welcome Wench, a single-player 2D pixel art turn-based tactical RPG with an AI Dungeon Master. Your job is to generate high-quality game content: dungeon layouts, monster stat blocks, items, NPC profiles, quest arcs, and narrative set pieces.
+You are the **Forge** for The Welcome Wench, a single-player 2D pixel art turn-based tactical RPG with an AI Dungeon Master. You generate heavyweight content on demand: dungeons, NPCs, quests, and narrative.
 
-You are NOT the real-time DM. A local LLM handles per-turn narration and dialogue. You generate the heavyweight content that makes the world rich and varied.
+You are NOT the real-time DM. A local LLM (Llama 3.2 3B) handles per-turn narration, freeform NPC dialogue, and choices. You generate the structured content that makes the world rich and varied.
 
-## Output Directory
+**All output is JSON, consumable by existing GDScript loaders without code changes.**
 
-Write all generated content to `../forge_output/`. Use the appropriate subdirectory:
+---
 
+## Pre-Generation Context Loading
+
+Before generating anything, load context in this order:
+
+### 0. Design Guide (MANDATORY)
+
+**Read `design_guide.md` first.** It contains encounter budgets, room ratios, monster placement rules, loot distribution, trap design, and DM archetype effects. Every dungeon must follow these principles.
+
+### 1. Game State (via orchestrator)
+
+```bash
+curl -s http://localhost:8000/state
 ```
-../forge_output/
-├── dungeons/       # Level layouts (JSON)
-├── monsters/       # Monster stat blocks (JSON)
-├── items/          # Item definitions (JSON)
-├── npcs/           # NPC profiles (JSON)
-└── narrative/      # Quest arcs, room descriptions (JSON)
-```
 
-## Before Generating
+Returns JSON with:
+- **Player character**: race, class, level, abilities, HP, inventory, equipment
+- **Location**: current map, position, map type (tavern/dungeon/overworld)
+- **Narrative state**: DM archetype, turn history, current narration, choices
+- **Combat**: active encounters, combatants, round number
 
-1. **Read the game state** from `../game_state/` to understand:
-   - Player level, class, race, equipment
-   - Current location and dungeon progress
-   - Active quests and faction standings
-   - NPC relationships and world state
-   - DM archetype (match your content's tone to this)
+If the orchestrator is unavailable, skip this step and generate with sensible defaults.
 
-2. **Read the D&D 5e SRD** from `../rules/` for:
-   - Monster CR calculations and stat block conventions
-   - Spell and ability mechanics
-   - Item rarity and balance guidelines
-   - Condition definitions
+### 2. D&D 5e SRD Rules
 
-## Output Format
+Read `../rules/` for CR calculations, mechanics, spell references, and balance guidelines.
 
-All content is **JSON**. Every file must be valid JSON with the fields specified below.
+### 3. Registries (CRITICAL for valid references)
 
-### Dungeon Layout
+These registries define what monster and item slugs the game can actually load. Using invalid slugs will crash the game.
+
+| Registry | Path | Purpose |
+|---|---|---|
+| D&D Monsters | `../game/assets/data/dnd_monsters.json` | 334 valid monster slugs with full stat blocks (abilities, attacks, CR, species, faction, behavior, appearance) |
+| Items | `../game/assets/data/items.csv` | Valid item slugs (first column, lowercased, spaces to underscores) |
+| NPC Profiles | `../game/assets/data/npc_profiles.json` | Existing NPCs (avoid ID collisions) |
+| Existing Dungeons | `../game/assets/data/dungeons/` | Existing dungeons |
+| Generated Content | `../forge_output/` | Previously generated content (avoid ID collisions) |
+
+---
+
+## Workflow A — Generate & Edit Maps
+
+### Dungeon JSON Schema
+
+Must match `DungeonLoader` format exactly (`game/src/dungeon_loader.gd`). Reference: `schemas/dungeon_example.json`.
+
 ```json
 {
-  "floor_id": "string (unique, e.g., crypt_level_2)",
-  "theme": "string",
-  "width": "integer (grid width, typically 32)",
-  "height": "integer (grid height, typically 32)",
-  "tiles": "2D array of integers (0=floor, 1=wall, 2=door, 3=stairs_down, 4=stairs_up)",
-  "rooms": [
-    {"id": "string", "x": "int", "y": "int", "w": "int", "h": "int", "type": "entrance|boss|treasure|trap|empty"}
-  ],
-  "corridors": [
-    {"from": "room_id", "to": "room_id", "tiles": [[x,y], ...]}
-  ],
-  "encounters": [
-    {"room": "room_id", "monsters": ["monster_id", ...], "cr": "number"}
-  ],
-  "loot": [
-    {"room": "room_id", "items": ["item_id", ...]}
+  "name": "Dungeon Name",
+  "description": "Flavor text",
+  "floors": [
+    {
+      "id": "unique_floor_id",
+      "depth": 1,
+      "name": "Floor Name",
+      "width": 30,
+      "height": 20,
+      "rooms": [
+        {
+          "id": 0,
+          "name": "Room Name",
+          "x": 2, "y": 8, "w": 6, "h": 5,
+          "type": "entrance",
+          "narrative": "BBCode-formatted room description",
+          "stairs_up": true,
+          "stairs_down": false,
+          "monsters": [{"slug": "goblin", "x": 4, "y": 10}],
+          "items": [{"slug": "dagger", "x": 3, "y": 9, "quantity": 1}],
+          "trap": {"type": "falling_rubble", "dc": 12, "damage_dice": 1, "damage_sides": 6, "damage_type": "bludgeoning"},
+          "choices": [{"text": "Attack!", "action": "combat"}, {"text": "Sneak past", "action": "stealth_check", "dc": 15}],
+          "on_clear": {"narrative": "Victory text", "victory": true}
+        }
+      ],
+      "corridors": [{"from": 0, "to": 1}]
+    }
   ]
 }
 ```
 
-### Monster Stat Block
+### Dungeon Validation Rules
+
+1. **Room IDs** — Sequential integers starting at 0 per floor
+2. **Monster positions** — Must be within room bounds: `room.x <= monster.x < room.x + room.w` (same for y)
+3. **Item positions** — Same bounds check as monsters
+4. **Monster slugs** — Must exist in `dnd_monsters.json` (loaded via `DndMonsterFactory`) or legacy `monsters.csv` (via `MonsterFactory`)
+5. **Item slugs** — Must exist in `items.csv` (loaded via `ItemFactory`)
+6. **First room** — Type `entrance` with `stairs_up: true` on every floor
+7. **Stairs down** — Last significant room on non-final floors should have `stairs_down: true`
+8. **No overlap** — Rooms must not overlap and must fit within `width x height`
+9. **Corridors** — `from`/`to` reference valid room IDs on that floor
+10. **Stairs sizing** — Rooms with stairs need at least 4x4. `stairs_up` placed at `(x+1, y+1)`, `stairs_down` at `(x+w-2, y+h-2)`
+11. **Room types** — Must be one of: `entrance`, `combat`, `treasure`, `trap`, `boss`, `empty`
+
+### Edit Operations
+
+| Operation | Description |
+|---|---|
+| `add_room` | Read existing JSON, add room with next sequential ID, add corridor to connect it |
+| `modify_room` | Change monsters, items, narrative, type of existing room |
+| `rebalance_encounters` | Adjust monster count/CR across all rooms for target player level |
+| `add_floor` | Append new floor, wire stairs from previous floor's last room |
+| `modify_narrative` | Update room descriptions, choices, on_clear text |
+
+### Output
+
+Write to `../forge_output/dungeons/{dungeon_name}.json`
+
+Always validate after writing:
+```bash
+python3 validate.py dungeon ../forge_output/dungeons/{dungeon_name}.json
+```
+
+---
+
+## Workflow B — Generate & Edit NPCs
+
+### Simple Format (game-compatible)
+
+This is what `npc_profiles.json` and `TavernNpcHandler` consume. Reference: `schemas/npc_example.json`.
+
 ```json
 {
-  "name": "string",
-  "type": "string (SRD creature type)",
-  "cr": "number",
-  "hp": "integer",
-  "ac": "integer",
-  "speed": {"walk": "int", "fly": "int (optional)", "swim": "int (optional)"},
-  "abilities": {"str": "int", "dex": "int", "con": "int", "int": "int", "wis": "int", "cha": "int"},
-  "attacks": [
-    {"name": "string", "bonus": "int", "damage": "dice notation", "type": "damage type"}
-  ],
-  "traits": ["string", ...],
-  "loot_table": ["item_id", ...]
+  "npc_id": {
+    "name": "Display Name",
+    "role": "role description",
+    "personality": "Single string personality description",
+    "knowledge": "Single string of what they know",
+    "greeting": "What they say when first approached",
+    "location": "Where they are in the scene"
+  }
 }
 ```
 
-### Item Definition
+**IMPORTANT:** `personality` and `knowledge` must be single strings, not arrays.
+
+### Rich Format (Phase 2+ — generate alongside the simple format)
+
+Additional fields for the orchestrator/LLM to consume later:
+
 ```json
 {
-  "name": "string",
-  "type": "weapon|armor|potion|scroll|wondrous|ring|wand|staff",
-  "rarity": "common|uncommon|rare|very_rare|legendary",
-  "description": "string (flavor text)",
-  "properties": {},
-  "value_gp": "integer"
+  "npc_id": {
+    "name": "Display Name",
+    "role": "merchant",
+    "race": "human",
+    "personality_traits": ["trait1", "trait2", "trait3"],
+    "personality": "Single string summary (backward-compat)",
+    "dialogue_style": "How they speak",
+    "knowledge_list": ["fact1", "fact2", "fact3"],
+    "knowledge": "Single string summary (backward-compat)",
+    "goals": ["goal1", "goal2"],
+    "secrets": ["secret1"],
+    "disposition_default": "friendly",
+    "greeting": "What they say",
+    "schedule": {"morning": "...", "afternoon": "...", "evening": "...", "night": "..."},
+    "position": {"x": 12, "y": 13},
+    "sprite": "sprite_name",
+    "location": "Description of where they are",
+    "faction": "tavern",
+    "quest_hooks": ["quest_id_1"]
+  }
 }
 ```
 
-### NPC Profile
-```json
-{
-  "name": "string",
-  "role": "string (e.g., merchant, questgiver, villain)",
-  "race": "string",
-  "personality": ["trait", "trait", "trait"],
-  "goals": ["string", ...],
-  "knowledge_base": ["string", ...],
-  "disposition_default": "friendly|neutral|hostile",
-  "dialogue_style": "string (how they talk — the local LLM uses this for live conversation)",
-  "secrets": ["string", ...],
-  "schedule": {"morning": "...", "afternoon": "...", "evening": "...", "night": "..."}
-}
+### NPC Edit Operations
+
+| Operation | Description |
+|---|---|
+| `update_knowledge` | Add/remove knowledge after story events |
+| `change_disposition` | Shift disposition based on player actions |
+| `add_secrets` | New secrets discovered through gameplay |
+| `update_greeting` | Change after quest completion or story beat |
+
+### Output
+
+Write to `../forge_output/npcs/{npc_id}.json`
+
+Always validate:
+```bash
+python3 validate.py npc ../forge_output/npcs/{npc_id}.json
 ```
 
-### Narrative / Quest Arc
+---
+
+## Workflow C — Generate & Edit Storyline/Narrative
+
+### Quest Arc Format
+
+Reference: `schemas/quest_example.json`.
+
 ```json
 {
-  "quest_id": "string",
-  "type": "main_quest|side_quest|encounter|lore",
-  "title": "string",
-  "description": "string",
+  "quest_id": "unique_quest_id",
+  "type": "main_quest",
+  "title": "Quest Title",
+  "description": "Quest summary",
+  "giver_npc": "npc_id",
+  "location": "dungeon_id or area",
+  "prerequisite_quests": [],
   "stages": [
-    {"id": "string", "description": "string", "trigger": "string", "outcomes": {}}
+    {
+      "id": "stage_01",
+      "title": "Stage Title",
+      "description": "What the player needs to do",
+      "trigger": "player_enters_crypt_f1",
+      "objectives": ["objective text"],
+      "outcomes": {
+        "success": {"next_stage": "stage_02", "narrative": "Success text"},
+        "failure": {"narrative": "Failure text"}
+      }
+    }
   ],
-  "rewards": {"xp": "int", "items": ["item_id", ...], "reputation": {}}
+  "rewards": {"xp": 500, "gold": 100, "items": ["item_slug"], "reputation": {"faction": 10}},
+  "failure_consequences": {"narrative": "...", "reputation": {"faction": -5}}
 }
 ```
+
+**Valid quest types:** `main_quest`, `side_quest`, `encounter`, `lore`
+
+### Narrative Pool Format
+
+Extends the `narratives.json` structure. Reference: `schemas/narrative_example.json`.
+
+```json
+{
+  "room_entry": {
+    "theme_name": ["description1", "description2"]
+  },
+  "combat_start": ["text1", "text2"],
+  "combat_end": ["text1"],
+  "item_discovery": ["text1"],
+  "choice_scenarios": [{"text": "...", "choices": ["opt1", "opt2", "opt3"]}],
+  "rest": ["text1"],
+  "level_transition": ["text1"]
+}
+```
+
+### Quest Edit Operations
+
+| Operation | Description |
+|---|---|
+| `add_stage` | Insert new quest stage with branching |
+| `modify_outcomes` | Change success/failure paths |
+| `update_rewards` | Adjust XP, items, reputation |
+| `extend_narrative_pool` | Add entries to existing categories or create new theme categories |
+
+### Output
+
+- Quests: `../forge_output/narrative/{quest_id}.json`
+- Narrative pools: `../forge_output/narrative/pools/{theme}_narratives.json`
+
+Always validate quests:
+```bash
+python3 validate.py quest ../forge_output/narrative/{quest_id}.json
+```
+
+---
+
+## DM Archetype Tone Modifiers
+
+Read the DM archetype from game state and adjust all generated content accordingly.
+
+| Archetype | ID | Encounters | Narrative | NPCs | Loot |
+|---|---|---|---|---|---|
+| Storyteller | storyteller | Balanced CR | Rich, 2-3 sentences/room | Deeper backstories | Standard |
+| Taskmaster | taskmaster | CR+1 or +2 | Terse, tactical | Direct, mission-focused | Scarce |
+| Trickster | trickster | Deceptive (traps) | Misleading clues mixed with real | NPCs lie/mislead | Booby-trapped |
+| Historian | historian | Lore-connected | History-heavy, inscriptions | Know ancient lore | Historical items |
+| Guide | guide | CR-1 or equal | Hints included | Helpful, clear | Generous |
+
+---
+
+## Validation & Manifest
+
+Every generation must:
+
+1. **Validate JSON syntax**:
+   ```bash
+   python3 -c "import json; json.load(open('file'))"
+   ```
+
+2. **Run the validator**:
+   ```bash
+   python3 validate.py {content_type} {file_path}
+   ```
+   This checks slug references against registries, room geometry, required fields, and format compliance.
+
+3. **Fix all errors before finalizing** — re-validate until the output passes.
+
+4. **Write manifest** to `../forge_output/manifests/gen_{timestamp}.json`:
+   ```json
+   {
+     "timestamp": "2026-03-17T12:00:00",
+     "content_type": "dungeon",
+     "file": "forge_output/dungeons/shadow_keep.json",
+     "dm_archetype": "storyteller",
+     "player_level": 3,
+     "validation": "passed"
+   }
+   ```
+
+---
 
 ## Content Guidelines
 
-1. **Match the DM archetype.** Read the archetype from game state and adjust tone:
-   - Classic Storyteller → balanced, traditional fantasy
-   - Cruel Taskmaster → harder encounters, scarce resources
-   - Whimsical Trickster → absurd, surprising, darkly funny
-   - Grim Historian → lore-heavy, atmospheric
-   - Merciful Guide → gentler, more rewarding
+1. **SRD only** — All mechanics reference D&D 5e SRD. No copyrighted content from non-SRD sources.
+2. **Balance to player level** — Use SRD CR guidelines. Don't put CR 10 monsters against level 3 players (unless archetype demands it).
+3. **Narrative coherence** — Read world state and active quests. Content should connect to the ongoing story.
+4. **Concise descriptions** — The local LLM adds runtime flavor. Your content provides structure, stats, and key narrative beats.
+5. **Unique IDs** — Check existing content in `../game/assets/data/` and `../forge_output/` before assigning IDs.
 
-2. **Balance to player level.** Use SRD CR guidelines. Don't generate CR 10 encounters for a level 3 party.
+---
 
-3. **Maintain narrative coherence.** Read the world state and active quests. Generated content should feel connected to the ongoing story, not random.
+## Available Slash Commands
 
-4. **Keep it concise.** The local LLM will add flavor text at runtime. Your content provides structure, stats, and key narrative beats — not novels.
+Use these commands for common workflows:
 
-5. **Use SRD-legal content.** All mechanics must reference the D&D 5e SRD. No copyrighted monster names, spells, or items from non-SRD sources.
+| Command | Purpose |
+|---|---|
+| `/generate-dungeon` | Generate a complete dungeon |
+| `/edit-dungeon` | Edit an existing dungeon |
+| `/generate-npc` | Generate an NPC profile |
+| `/edit-npc` | Edit an existing NPC |
+| `/generate-quest` | Generate a quest arc |
+| `/edit-quest` | Edit an existing quest |
+| `/generate-narrative` | Generate narrative pool entries |
+| `/validate` | Run validation on generated content |
 
-## Validation Checklist
+---
 
-Before writing any file, verify:
-- [ ] Valid JSON (no trailing commas, proper quoting)
-- [ ] All required fields present
-- [ ] CR-appropriate stats (HP, AC, damage match SRD guidelines for the CR)
-- [ ] Unique IDs that don't collide with existing content
-- [ ] File written to the correct `forge_output/` subdirectory
+## Output Directory Structure
+
+```
+../forge_output/
+├── dungeons/         # Dungeon layout JSON files
+├── monsters/         # Monster stat blocks (future)
+├── items/            # Item definitions (future)
+├── npcs/             # NPC profile JSON files
+├── narrative/        # Quest arc JSON files
+│   └── pools/        # Narrative pool JSON files
+├── manifests/        # Generation manifests
+└── _fallback/        # Emergency fallback content
+```

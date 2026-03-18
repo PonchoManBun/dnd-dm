@@ -1,0 +1,46 @@
+{
+  "quest_id": "crypt_of_the_fallen",
+  "type": "main_quest",
+  "title": "The Crypt of the Fallen",
+  "description": "Investigate the ancient crypt beneath the ruined chapel. Strange noises have been heard, and the dead may not rest easy.",
+  "giver_npc": "old_tom",
+  "location": "test_crypt",
+  "prerequisite_quests": [],
+  "stages": [
+    {
+      "id": "stage_01",
+      "title": "Enter the Crypt",
+      "description": "Descend into the crypt and explore the upper level.",
+      "trigger": "player_enters_crypt_f1",
+      "objectives": ["Enter the Crypt of the Fallen", "Explore the Upper Crypt"],
+      "outcomes": {
+        "success": {"next_stage": "stage_02", "narrative": "You've made it past the upper crypt. The stairs lead deeper into darkness."},
+        "failure": {"narrative": "You retreat from the crypt, but the mystery remains unsolved."}
+      }
+    },
+    {
+      "id": "stage_02",
+      "title": "Descend Deeper",
+      "description": "Navigate the lower crypts and find the source of the disturbance.",
+      "trigger": "player_enters_crypt_f2",
+      "objectives": ["Reach the Lower Crypts", "Find evidence of what disturbs the dead"],
+      "outcomes": {
+        "success": {"next_stage": "stage_03", "narrative": "The dark shrine reveals the source — something powerful lurks below."},
+        "failure": {"narrative": "The undead overwhelm you. Perhaps you need to prepare better."}
+      }
+    },
+    {
+      "id": "stage_03",
+      "title": "Confront the Guardian",
+      "description": "Defeat the ogre guardian in the crypt's deepest chamber.",
+      "trigger": "player_enters_crypt_f3_boss",
+      "objectives": ["Defeat the Ogre Guardian", "Escape the Crypt"],
+      "outcomes": {
+        "success": {"next_stage": null, "narrative": "The ogre falls and the portal flares to life. The crypt's dark influence is broken — for now."},
+        "failure": {"narrative": "The ogre proves too powerful. You barely escape with your life."}
+      }
+    }
+  ],
+  "rewards": {"xp": 500, "gold": 100, "items": ["longsword"], "reputation": {"tavern": 10}},
+  "failure_consequences": {"narrative": "The disturbances continue. Marta grows more worried.", "reputation": {"tavern": -5}}
+}

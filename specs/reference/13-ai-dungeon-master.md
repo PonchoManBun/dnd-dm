@@ -2,7 +2,7 @@
 
 ## Role
 
-The AI DM is not a feature — it **is** the game engine. But unlike the original design where a single Claude instance handled everything in real-time, the DM is now a **dual-model system**:
+The AI DM is not a feature — it **is** the game engine. The DM is a **dual-model system**:
 
 - **Local LLM (Ollama, Llama 3.2 3B):** Handles every player turn in real-time (~20-43 tok/s). Fast, cheap, always available.
 - **Claude (via persistent CLI session):** On-demand "Forge Mode" for high-quality content generation. Player-action-triggered (10-60 sec, player waits). Expensive but excellent.
@@ -11,115 +11,159 @@ The **DM Orchestrator** (Python/FastAPI) coordinates both models and runs the de
 
 ## DM Archetypes
 
-At game start, the player chooses a DM personality. Archetypes are implemented as **prompt templates** for the local LLM:
+At game start, the player chooses a DM personality via the **DMSelection** screen (`dm_selection.gd`). Five archetypes are available, each with its own selection UI entry and prompt template:
 
-| Archetype | Style | Prompt Emphasis |
-|-----------|-------|-----------------|
-| **Classic Storyteller** | Balanced narrative and challenge | Default template |
-| **Cruel Taskmaster** | Harder encounters, fewer drops, more ambushes | Emphasize danger, scarcity |
-| **Whimsical Trickster** | Chaotic encounters, absurd NPCs, dark humor | Emphasize surprises, humor |
-| **Grim Historian** | Lore-heavy, deep world-building | Emphasize history, description |
-| **Merciful Guide** | Easier, more hints, generous loot | Emphasize help, encouragement |
+| Archetype | Style | Prompt Template File |
+|-----------|-------|---------------------|
+| **The Storyteller** | Rich narrative, character-focused encounters, dramatic moments | `orchestrator/prompts/storyteller.txt` |
+| **The Taskmaster** | Tactical challenges, smart enemies, high stakes | `orchestrator/prompts/taskmaster.txt` |
+| **The Trickster** | Surprises, traps, hidden secrets, misdirection | `orchestrator/prompts/trickster.txt` |
+| **The Historian** | Deep lore, environmental storytelling, knowledge rewards | `orchestrator/prompts/historian.txt` |
+| **The Guide** | Helpful hints, clear explanations, newcomer-friendly | `orchestrator/prompts/guide.txt` |
 
-The archetype prompt is prepended to every local LLM call. Claude Forge uses the same archetype context when generating content.
+### Selection UI
+
+The `DMSelection` class (`game/scenes/menu/dm_selection.gd`) builds the selection screen programmatically with:
+- Left panel: 5 archetype buttons with icon and name
+- Right panel: Selected archetype description (flavor text + gameplay effect)
+- Navigation: Back (returns to character creation) and Confirm buttons
+- The selected archetype ID is stored via `World.set_meta("dm_archetype", archetype_id)`
+
+### Prompt Templates
+
+Each archetype has a `.txt` template in `orchestrator/prompts/`. The template is loaded by `prompt_builder.py` via `load_archetype_prompt()` and includes a `{max_response_tokens}` placeholder that gets filled with the computed response budget. The archetype prompt is prepended as the system message in every local LLM call.
 
 ## The DM Response Cycle
 
-This is the core game loop, now routed through the orchestrator:
+The core game loop is routed through the orchestrator (`orchestrator/routes/action.py`):
 
 ```
 Player Action (Godot)
-       │
-       ▼
-DM Orchestrator (Python)
-       │
-       ├─── 1. Parse action type
-       ├─── 2. Load relevant game state
-       ├─── 3. Apply deterministic rules:
-       │         - Dice rolls (d20, damage dice)
-       │         - Combat math (attack vs AC, damage calc)
-       │         - SRD rule lookups (conditions, spells)
-       │         - Inventory changes, HP tracking
-       ├─── 4. Send context + results to local LLM
-       │         (rules outcome, game state, archetype prompt)
-       │
-       ▼
-Local LLM (Ollama)
-       │
-       ├─── 5. Generate narration for the action
-       ├─── 6. Generate contextual choices
-       ├─── 7. (If applicable) Generate NPC dialogue
-       │
-       ▼
+       |
+       v
+DM Orchestrator (POST /action)
+       |
+       +--- 1. Parse action type (ActionType enum)
+       +--- 2. Load current game state (in-memory GameState)
+       +--- 3. Apply deterministic rules:
+       |         - Attack rolls (resolve_attack with d20 + mod vs AC)
+       |         - Damage rolls (weapon dice + modifier, crit doubles dice)
+       |         - Spell resolution (resolve_spell with slot consumption)
+       |         - Rest mechanics (short rest: hit dice, long rest: full restore)
+       |         - Movement resolution
+       +--- 4. Build prompt (prompt_builder.build_dm_prompt)
+       |         - System prompt: archetype template
+       |         - User prompt: state summary + history + NPC context + action
+       |
+       v
+Local LLM (Ollama chat API)
+       |
+       +--- 5. Generate narration + choices
+       |         (parsed via NARRATION:/CHOICES: format)
+       |
+       v
 DM Orchestrator
-       │
-       ├─── 8. Validate LLM output, merge with rules results
-       ├─── 9. Update game state JSON
-       ├─── 10. Check escalation triggers (→ Forge if needed)
-       │
-       ▼
-Response (Godot)
-       │
-       ├─── Narrative text in DM panel
-       ├─── Game state updates (HP, position, inventory)
-       ├─── Contextual choices
-       └─── Animations / effects
+       |
+       +--- 6. Parse LLM output (parse_llm_response)
+       +--- 7. Update game state (narrative history, turn number)
+       +--- 8. Fallback to template narration if LLM unavailable
+       |
+       v
+Response (DmResponse JSON to Godot)
+       +--- narration: DM text
+       +--- choices: contextual action options
+       +--- state_delta: HP changes, custom data
+       +--- combat_log: mechanical results
+       +--- error/fallback flags
 ```
+
+### Template Fallback
+
+When the LLM is unavailable (connection error, timeout, model not found), the orchestrator falls back to `template_fallback.py` which generates basic narration and choices from templates. This ensures the game remains playable without Ollama running.
 
 ### What's Deterministic vs What's AI
 
 | System | Handler | Why |
 |--------|---------|-----|
-| Dice rolls | **Orchestrator** (Python `random`) | Must be fair, reproducible |
-| Attack resolution (d20 + mod vs AC) | **Orchestrator** | Rules are unambiguous |
+| Dice rolls | **Orchestrator** (Python dice module) | Must be fair, reproducible |
+| Attack resolution (d20 + mod vs AC) | **Orchestrator** (rules engine) | Rules are unambiguous |
 | Damage calculation | **Orchestrator** | Arithmetic, not creative |
-| Condition effects (poisoned, prone) | **Orchestrator** | SRD lookup |
-| Spell mechanics | **Orchestrator** | SRD lookup + dice |
+| Condition effects (poisoned, prone) | **GDScript RulesEngine** (client-side) | SRD lookup, speed modifiers |
+| Spell mechanics | **Orchestrator** (spells module) | SRD lookup + dice + slot tracking |
+| Rest mechanics | **Orchestrator** | Hit dice, HP restore, slot restore |
 | Narration / flavor text | **Local LLM** | Creative, contextual |
 | NPC dialogue (freeform conversation) | **Local LLM** | Creative, personality-driven |
 | Contextual choices | **Local LLM** | Requires game understanding |
-| Room descriptions | **Local LLM** | Creative, thematic |
 | Dungeon layouts | **Forge (Claude)** | Complex, needs quality |
 | Monster design | **Forge (Claude)** | Needs D&D balance knowledge |
 | Quest arcs | **Forge (Claude)** | Needs narrative coherence |
 | Item creation | **Forge (Claude)** | Needs game balance |
 
-## Escalation Rules: When Does the Orchestrator Call Forge?
+## Forge Mode
 
-The local LLM handles moment-to-moment gameplay. Forge Mode is triggered for heavyweight content generation:
+Forge Mode uses a persistent Claude Code CLI session with `/clear` + `forge/CLAUDE.md` for context. The `forge/` directory contains its own `CLAUDE.md` with content generation instructions.
 
-| Trigger | What Forge Generates |
-|---------|---------------------|
-| Player enters a new dungeon floor | Dungeon layout, encounters, loot |
-| Player reaches a major story beat | Quest arc continuation, NPC changes |
-| New NPC needs full profile | Personality, dialogue style, behavior |
-| Boss encounter preparation | Boss stats, lair actions, narrative |
-| Player levels up (complex choices) | Class feature descriptions, options |
-| World event (faction conflict escalates) | Faction state changes, consequences |
+### Forge Output
 
-Forge is **player-action-triggered** — when the player takes an action that needs new content (e.g., descending stairs), the game shows a "Generating..." indicator while a persistent Claude Code CLI session produces the content. The orchestrator sends the request, waits for completion, then resumes gameplay with the new content loaded.
+The `forge_output/` directory exists with the following structure:
+```
+forge_output/
++-- dungeons/      # Generated dungeon layouts (JSON)
++-- monsters/      # Monster stat blocks
++-- items/         # Item definitions
++-- npcs/          # NPC profiles
++-- narrative/     # Quest arcs, room descriptions
++-- manifests/     # Generation tracking
++-- _fallback/     # Fallback content
+```
+
+### Forge Integration Status
+
+Forge triggers are **not yet wired into live gameplay**. The forge directory has tools and the output directory structure exists, but the orchestrator does not currently call Forge during game sessions. The `/forge/trigger` endpoint mentioned in early designs is **not implemented**. Content generation via Forge is currently done manually outside of gameplay sessions.
+
+**Planned:** Orchestrator escalation logic that detects triggers (new dungeon floor, boss encounter, level-up) and invokes Forge to generate content while showing a "Generating..." indicator.
 
 ## DM Input Options
 
 The player always sees:
 
-- **Contextual choices** — Local LLM suggests actions appropriate to the situation
-- **"Do something else..."** — Free-text input. Type anything. The DM will adjudicate it.
-
-This is what makes TWW a D&D game, not a menu-driven RPG. The player can always try something creative. The local LLM evaluates free-text input and the orchestrator resolves the mechanics.
-
-## Level-Up Narration
-
-The local LLM narrates level-ups in character, using the DM archetype's voice. Forge provides the class feature descriptions and mechanical options. The orchestrator merges both into the level-up flow.
+- **Contextual choices** — LLM-generated or template-based action options, presented as numbered buttons in the DM panel
+- **Free-text input** — A "Say something..." text field at the bottom of the DM panel for freeform input
 
 ## Context Management
 
-The local LLM has limited context (2048 tokens). The orchestrator manages what goes into each prompt:
+The local LLM has a 2048 token context window. Context management is handled by two modules:
 
-1. **System prompt** — DM archetype + SRD rules summary (~300 tokens)
-2. **Current state** — Player stats, location, active conditions (~200 tokens)
-3. **Recent history** — Last 3-5 exchanges (~500-800 tokens)
-4. **Action context** — Current action + dice results (~200 tokens)
-5. **Remaining** — Available for LLM response (~500-800 tokens)
+### prompt_builder.py
 
-Important context that doesn't fit is summarized. The orchestrator compresses older conversation history into bullet-point summaries.
+Assembles the complete prompt from components:
+
+1. **System prompt** — Archetype template with response budget (~300 tokens)
+2. **State summary** — Player name, level, race, class, HP, AC, conditions, location (~200 tokens)
+3. **NPC context** — NPC name, role, personality, knowledge (when in conversation)
+4. **History** — Recent exchanges, compressed via context_manager
+5. **Action context** — Current action type, target, direction, dice results
+
+Token budget: `CONTEXT_WINDOW (2048) - SYSTEM_PROMPT_BUDGET (300) - RESPONSE_BUDGET (600)` = ~1148 tokens for state + history + action + NPC context.
+
+### context_manager.py
+
+Manages conversation history within the token budget:
+
+- **Sliding window:** Keeps the 5 most recent exchanges (`MAX_RECENT_EXCHANGES`)
+- **Compression:** Exchanges older than 3 turns (`COMPRESS_AFTER`) are compressed to bullet-point summaries (first sentence of response + truncated action)
+- **Trimming:** If still over budget after compression, oldest compressed exchanges are dropped
+- **Token estimation:** ~4 characters per token approximation
+
+### NPC Context (npc_context.py)
+
+NPC profiles are managed by the `npc_context` module:
+
+- Default profiles for 3 tavern NPCs: Barkeep Marta, Old Tom, Elara the Quiet
+- Each profile includes: name, role, personality, knowledge
+- Profiles can be loaded from a JSON file or fall back to hardcoded defaults
+- When the player speaks to an NPC, the profile is included in the LLM prompt
+
+## Level-Up Narration
+
+**Not yet implemented.** Level tracking exists in `CharacterData` with XP thresholds and class feature tables, but there is no automated level-up narration flow.

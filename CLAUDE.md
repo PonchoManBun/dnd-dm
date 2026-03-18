@@ -54,4 +54,4 @@ No external plugins or loop runners. Claude Code manages all development directl
 
 ## Current Phase
 
-Phase 1: Standalone Godot Game — playable game with hardcoded content, no AI. See `PROMPT.md` for objectives and `@fix_plan.md` for tasks.
+Phase 1 (Extended): Standalone Godot Game + Party System — original Phase 1 objectives are complete. Now adding BG3-style party/companion system before advancing to Phase 2. See `PROMPT.md` for objectives and `@fix_plan.md` for tasks.

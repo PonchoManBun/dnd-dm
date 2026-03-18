@@ -1,0 +1,178 @@
+{
+  "aboleth": {
+    "name": "Aboleth",
+    "slug": "aboleth",
+    "species": "aberration",
+    "size": "Large",
+    "faction": "monsters",
+    "behavior": "aggressive",
+    "appearance": "elemental-40",
+    "cr": 10,
+    "str": 21,
+    "dex": 9,
+    "con": 15,
+    "int": 18,
+    "wis": 15,
+    "cha": 18,
+    "max_hp": 135,
+    "hit_dice": "18d10",
+    "ac": 17,
+    "speed": 10,
+    "proficiency_bonus": 4,
+    "xp": 5900,
+    "sight_radius": 24,
+    "hit_particles_color": "#ff3333",
+    "ac_note": "natural armor",
+    "attacks": [
+      {
+        "name": "Tentacle",
+        "type": "melee",
+        "ability": "str",
+        "dice": 2,
+        "sides": 6,
+        "damage_type": "bludgeoning"
+      },
+      {
+        "name": "Tail",
+        "type": "melee",
+        "ability": "str",
+        "dice": 3,
+        "sides": 6,
+        "damage_type": "bludgeoning"
+      }
+    ],
+    "special": [
+      "amphibious",
+      "mucous_cloud",
+      "probing_telepathy"
+    ]
+  },
+  "acolyte": {
+    "name": "Acolyte",
+    "slug": "acolyte",
+    "species": "humanoid",
+    "size": "Medium",
+    "faction": "monsters",
+    "behavior": "aggressive",
+    "appearance": "player-25,player-31,player-4",
+    "cr": 0.25,
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 14,
+    "cha": 11,
+    "max_hp": 9,
+    "hit_dice": "2d8",
+    "ac": 10,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "xp": 50,
+    "sight_radius": 8,
+    "hit_particles_color": "#ff3333",
+    "attacks": [
+      {
+        "name": "Club",
+        "type": "melee",
+        "ability": "str",
+        "dice": 1,
+        "sides": 4,
+        "damage_type": "bludgeoning"
+      }
+    ],
+    "special": [
+      "spellcasting"
+    ]
+  },
+  "goblin": {
+    "name": "Goblin",
+    "slug": "goblin",
+    "species": "humanoid",
+    "size": "Small",
+    "faction": "monsters",
+    "behavior": "aggressive",
+    "appearance": "player-25,player-31,player-4",
+    "cr": 0.25,
+    "str": 8,
+    "dex": 14,
+    "con": 10,
+    "int": 10,
+    "wis": 8,
+    "cha": 8,
+    "max_hp": 7,
+    "hit_dice": "2d6",
+    "ac": 15,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "xp": 50,
+    "sight_radius": 12,
+    "hit_particles_color": "#ff3333",
+    "ac_note": "leather armor, shield",
+    "attacks": [
+      {
+        "name": "Scimitar",
+        "type": "melee",
+        "ability": "dex",
+        "dice": 1,
+        "sides": 6,
+        "damage_type": "slashing"
+      },
+      {
+        "name": "Shortbow",
+        "type": "ranged",
+        "ability": "dex",
+        "dice": 1,
+        "sides": 6,
+        "damage_type": "piercing",
+        "range": 16
+      }
+    ],
+    "special": [
+      "nimble_escape"
+    ]
+  },
+  "ogre": {
+    "name": "Ogre",
+    "slug": "ogre",
+    "species": "giant",
+    "size": "Large",
+    "faction": "monsters",
+    "behavior": "aggressive",
+    "appearance": "player-4",
+    "cr": 2,
+    "str": 19,
+    "dex": 8,
+    "con": 16,
+    "int": 5,
+    "wis": 7,
+    "cha": 7,
+    "max_hp": 59,
+    "hit_dice": "7d10",
+    "ac": 11,
+    "speed": 40,
+    "proficiency_bonus": 2,
+    "xp": 450,
+    "sight_radius": 12,
+    "hit_particles_color": "#ff3333",
+    "ac_note": "hide armor",
+    "attacks": [
+      {
+        "name": "Greatclub",
+        "type": "melee",
+        "ability": "str",
+        "dice": 2,
+        "sides": 8,
+        "damage_type": "bludgeoning"
+      },
+      {
+        "name": "Javelin",
+        "type": "ranged",
+        "ability": "dex",
+        "dice": 2,
+        "sides": 6,
+        "damage_type": "piercing",
+        "range": 6
+      }
+    ]
+  }
+}

@@ -11,11 +11,11 @@
 - [x] All Phase 0 research and specs complete
 - [x] PROMPT.md, CLAUDE.md, @AGENT.md updated for Phase 1
 - [x] 5e-database integration: 334 monsters, 12 classes, 9 races (MIT, single source of truth)
-- [x] All docs migrated from Windows→Jetson workflow to Jetson-only development
+- [x] All docs migrated from Windows->Jetson workflow to Jetson-only development
 
 ---
 
-## Phase 1 Tasks (Standalone Godot Game — No AI)
+## COMPLETED — Phase 1 Tasks (Standalone Godot Game — No AI)
 
 ### HIGH — Must complete
 
@@ -55,6 +55,53 @@
 - [x] Death/permadeath flow (immersive death screen with eulogy, memorial stats, fade-in)
 - [x] Install Godot 4 ARM64 on Jetson for on-device testing (Godot 4.6.1 at /usr/local/bin/godot)
 - [x] Fix class_name/autoload conflicts blocking Jetson (AutoSave, NarrativeManager)
+
+---
+
+## COMPLETED — Forge Mode Setup
+
+- [x] Forge CLAUDE.md rewrite with validated schemas
+- [x] Validation script (forge/validate.py)
+- [x] Schema reference files
+- [x] Prompt templates
+- [x] Forge slash commands (8 skills)
+- [x] Design guide (forge/design_guide.md)
+
+---
+
+## COMPLETED — Phase 2 Preparation (Partial)
+
+- [x] Orchestrator implemented (FastAPI, routes, rules engine)
+- [x] Ollama integration (client, prompt builder, context manager)
+- [x] NPC dialogue via LLM (npc_context.py, speak action route)
+- [x] Automated playtest system (monitor.sh, playtest.sh, playtest_brain.py, the-player agent)
+- [ ] Wire Forge into orchestrator (trigger forge generation during gameplay)
+
+---
+
+## Phase 1 Extension — Party System
+
+### HIGH — Must complete
+
+- [ ] Party data model (companion slots in game state, party array in CharacterData or new PartyState)
+- [ ] NPC recruitment system (conversation action to recruit, NPC acceptance logic)
+- [ ] Stat block to character sheet conversion (DndMonsterFactory stat block to CharacterData)
+- [ ] Companion combat integration (player controls all party members in combat mode)
+- [ ] Party-aware death/game-over (game continues if any companion alive)
+- [ ] Dialogue UI — speaker selection dropdown (who is speaking, who they're speaking to)
+
+### MEDIUM — Should complete
+
+- [ ] Companion XP tracking (separate per character, class assignment on first XP)
+- [ ] Companion equipment management (shared inventory, individual equipment)
+- [ ] Party formation (companions follow player during exploration)
+- [ ] Update encounter balance for party of 4 (standard D&D 5e XP budgets)
+
+### LOW — Nice to have
+
+- [ ] Companion AI during non-combat (follow behavior, idle animations)
+- [ ] Companion dismissal and re-recruitment
+- [ ] Companion quest hooks (personal quests per companion)
 
 ---
 
