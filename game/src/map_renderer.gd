@@ -180,19 +180,19 @@ func render_ground(map: Map) -> void:
 			var cell: MapCell = map.cells[x][y]
 			var terrain := cell.terrain
 
+			if not god_mode and not map.was_seen(pos):
+				continue
+
+			# Add hint tiles around seen non-empty terrain
 			if terrain.type != Terrain.Type.EMPTY:
-				# Add hint tiles for surrounding tiles up to 4 spaces away
-				for dx in range(-4, 5):  # from -4 to 4
-					for dy in range(-4, 5):  # from -4 to 4
-						if abs(dx) + abs(dy) <= 3:  # Check if within 3 spaces
+				for dx in range(-4, 5):
+					for dy in range(-4, 5):
+						if abs(dx) + abs(dy) <= 3:
 							var hint_pos := Vector2i(x + dx, y + dy)
 							if map.is_in_bounds(hint_pos):
 								hints_layer.set_cell(
 									hint_pos, 0, WorldTiles.get_coords(&"floor-7-nsew")
 								)
-
-			if not god_mode and not map.was_seen(pos):
-				continue
 
 			var tile: StringName
 
