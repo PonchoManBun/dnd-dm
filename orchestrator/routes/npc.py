@@ -39,7 +39,7 @@ _ollama: OllamaClient | None = None
 def _get_ollama() -> OllamaClient:
     global _ollama
     if _ollama is None:
-        _ollama = OllamaClient()
+        _ollama = OllamaClient(num_ctx=1024)
     return _ollama
 
 

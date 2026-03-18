@@ -36,6 +36,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     else:
         load_npc_profiles()
         logger.info("Using default NPC profiles (game data not found)")
+
+    # Auto-select best LLM model and log GPU status
+    from orchestrator.engine.ollama_client import OllamaClient
+
+    client = OllamaClient()
+    try:
+        selected = await client.select_best_model()
+        logger.info("LLM model selected: %s", selected)
+        status = await client.check_gpu_status()
+        logger.info("Ollama GPU status: %s", status)
+    except Exception:
+        logger.warning("Could not check Ollama GPU status")
     yield
 
 

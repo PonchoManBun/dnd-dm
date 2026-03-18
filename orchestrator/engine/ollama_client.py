@@ -33,6 +33,10 @@ class OllamaModelNotFoundError(Exception):
 # Client
 # ---------------------------------------------------------------------------
 
+PREFERRED_MODEL = "llama3.2:3b"
+FALLBACK_MODEL = "gemma3:1b"
+
+
 class OllamaClient:
     """Async wrapper for Ollama API.
 
@@ -44,12 +48,16 @@ class OllamaClient:
     def __init__(
         self,
         base_url: str = "http://localhost:11434",
-        model: str = "llama3.2:3b",
+        model: str = "gemma3:1b",
         timeout: float = 30.0,
+        num_gpu: int = 999,
+        num_ctx: int = 2048,
     ) -> None:
         self.base_url: str = base_url.rstrip("/")
         self.model: str = model
         self.timeout: float = timeout
+        self.num_gpu: int = num_gpu
+        self.num_ctx: int = num_ctx
 
     # -- helpers ------------------------------------------------------------
 
@@ -139,6 +147,8 @@ class OllamaClient:
             "options": {
                 "num_predict": max_tokens,
                 "temperature": temperature,
+                "num_gpu": self.num_gpu,
+                "num_ctx": self.num_ctx,
             },
         }
         if system_prompt:
@@ -181,6 +191,8 @@ class OllamaClient:
             "options": {
                 "num_predict": max_tokens,
                 "temperature": temperature,
+                "num_gpu": self.num_gpu,
+                "num_ctx": self.num_ctx,
             },
         }
 
@@ -202,6 +214,38 @@ class OllamaClient:
     def is_within_budget(self, text: str, budget: int) -> bool:
         """Return ``True`` if *text* fits within *budget* tokens."""
         return self.estimate_tokens(text) <= budget
+
+    # -- GPU diagnostics ----------------------------------------------------
+
+    async def check_gpu_status(self) -> dict:
+        """Check GPU offload status for the loaded model."""
+        async with self._make_client() as client:
+            resp = await client.get("/api/ps")
+            resp.raise_for_status()
+        for m in resp.json().get("models", []):
+            if self.model in m.get("name", ""):
+                vram = m.get("size_vram", 0)
+                total = m.get("size", 1)
+                return {
+                    "model": m["name"],
+                    "gpu_percent": round(vram / total * 100, 1),
+                    "vram_mb": vram // (1024 * 1024),
+                }
+        return {"error": "not loaded"}
+
+    async def select_best_model(self) -> str:
+        """Try preferred model; if it fails, fall back to smaller model."""
+        try:
+            self.model = PREFERRED_MODEL
+            await self.generate_chat(
+                [{"role": "user", "content": "test"}], max_tokens=5
+            )
+            logger.info("Using preferred model: %s", self.model)
+            return self.model
+        except Exception:
+            self.model = FALLBACK_MODEL
+            logger.info("Fell back to model: %s", self.model)
+            return self.model
 
     # -- internal -----------------------------------------------------------
 
