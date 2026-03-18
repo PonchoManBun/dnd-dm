@@ -1,0 +1,34 @@
+{
+  "marta": {
+    "name": "Barkeep Marta",
+    "role": "tavern owner and barkeep",
+    "personality": "Warm but shrewd. Knows everyone's business. Protective of regulars. Speaks plainly with a hint of dry humor.",
+    "dialogue_style": "Plain-spoken with dry wit. Short sentences. Occasional sigh.",
+    "knowledge": "Local rumors, adventurer gossip, cellar problems, room rates, menu items. Knows about disappearances on the east road.",
+    "knowledge_tiers": {
+      "hostile": [],
+      "unfriendly": ["Room rates are 5 silver a night"],
+      "indifferent": ["Room rates are 5 silver a night", "The ale is fresh-brewed"],
+      "friendly": ["Strange noises from the cellar lately", "Disappearances on the east road"],
+      "helpful": ["The cellar connects to old crypt tunnels", "Saw a hooded figure lurking last week"]
+    },
+    "attitude_default": "friendly",
+    "greeting": "What can I get for you, traveler?",
+    "location": "Behind the bar counter",
+    "mode_prompts": {
+      "chatting": "Polishing a mug, eyeing the newcomer.",
+      "bartering": "Names fair prices but will haggle.",
+      "quest_giving": "Leans in conspiratorially, hushed tones."
+    },
+    "bartering_inventory": [
+      {"slug": "food_ration", "price_gp": 1, "quantity": 10},
+      {"slug": "apple", "price_gp": 1, "quantity": 5},
+      {"slug": "orange", "price_gp": 1, "quantity": 10}
+    ],
+    "quest_data": {
+      "quest_id": "cellar_clearing",
+      "brief": "Clear the creatures from the cellar",
+      "reward": "50gp and free room for a week"
+    }
+  }
+}

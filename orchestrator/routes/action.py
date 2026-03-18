@@ -264,6 +264,40 @@ async def handle_action(action: PlayerAction) -> DmResponse:
                 state_delta = StateDelta(custom=custom)
                 combat_log = [spell_result.description]
 
+    # --- Delegate NPC speech to dedicated NPC system ---
+    if action.action_type == ActionType.SPEAK and action.target:
+        try:
+            from orchestrator.engine.npc_context import get_npc_profile
+            from orchestrator.routes.npc import npc_speak, NpcSpeakRequest
+
+            # Only delegate if the target is a known NPC
+            if get_npc_profile(action.target) is not None:
+                npc_request = NpcSpeakRequest(
+                    npc_id=action.target,
+                    message=action.message or "Hello",
+                    speaker=state.character.name or "adventurer",
+                )
+                npc_response = await npc_speak(npc_request)
+                # Update game state
+                state.narrative.turn_number += 1
+                state.narrative.current_narration = npc_response.narration
+                state.narrative.current_choices = npc_response.choices
+                state.narrative.history.append({
+                    "turn": state.narrative.turn_number,
+                    "action": f"speak {action.target}: \"{action.message or ''}\"",
+                    "response": npc_response.narration[:200],
+                    "compressed": False,
+                })
+                return DmResponse(
+                    narration=npc_response.narration,
+                    choices=npc_response.choices,
+                    error=npc_response.error,
+                    fallback=npc_response.fallback,
+                )
+        except Exception as e:
+            logger.warning("NPC system delegation failed: %s, falling back to DM", e)
+            # Fall through to standard DM handling
+
     # --- Step 3 & 4: Build prompt and call LLM ---
     narration = ""
     choices: list[str] = []

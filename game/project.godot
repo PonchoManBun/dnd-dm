@@ -32,6 +32,7 @@ NarrativeManager="*res://src/narrative_manager.gd"
 AutoSave="*res://src/auto_save.gd"
 Audio="*res://src/audio_manager.gd"
 DebugMonitor="*res://src/debug_monitor.gd"
+OrchestratorClient="*res://src/orchestrator_client.gd"
 
 [debug]
 

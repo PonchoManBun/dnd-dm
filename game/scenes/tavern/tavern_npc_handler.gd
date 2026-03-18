@@ -51,9 +51,10 @@ func get_profile(npc_id: String) -> Dictionary:
 func handle_npc_interaction(npc_id: String) -> void:
 	var npc_profile: Dictionary = _npc_profiles.get(npc_id, {})
 
-	# Route to orchestrator if available
+	# Route to NPC system via dedicated endpoint when orchestrator is available
 	if _oc and _oc.orchestrator_available:
-		_oc.send_action("speak", npc_id, "", "", "", npc_profile)
+		var greeting: String = npc_profile.get("greeting", "Hello")
+		_oc.send_npc_speak(npc_id, greeting)
 		return
 
 	# Local handling

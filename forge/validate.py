@@ -23,6 +23,7 @@ ITEMS_PATH = PROJECT_ROOT / "game" / "assets" / "data" / "items.csv"
 
 VALID_ROOM_TYPES = {"entrance", "combat", "treasure", "trap", "boss", "empty"}
 VALID_QUEST_TYPES = {"main_quest", "side_quest", "encounter", "lore"}
+VALID_ATTITUDES = {"hostile", "unfriendly", "indifferent", "friendly", "helpful"}
 
 
 # ---------------------------------------------------------------------------
@@ -428,6 +429,8 @@ def validate_npc(file_path: str) -> ValidationResult:
         result.error("File contains no NPC profiles")
         return result
 
+    item_slugs = _load_item_slugs()
+
     for npc_id, profile in data.items():
         nctx = f"npc[{npc_id}]"
 
@@ -437,6 +440,67 @@ def validate_npc(file_path: str) -> ValidationResult:
 
         for field, expected_type in NPC_REQUIRED_FIELDS.items():
             _check_type(result, profile, field, expected_type, nctx)
+
+        # Validate new Phase 2 fields (optional, backward-compatible)
+        # attitude_default
+        if "attitude_default" in profile:
+            if not isinstance(profile["attitude_default"], str):
+                result.error(f"{nctx}: 'attitude_default' should be str")
+            elif profile["attitude_default"] not in VALID_ATTITUDES:
+                result.error(
+                    f"{nctx}: invalid attitude_default '{profile['attitude_default']}', "
+                    f"must be one of {sorted(VALID_ATTITUDES)}"
+                )
+
+        # knowledge_tiers
+        if "knowledge_tiers" in profile:
+            kt = profile["knowledge_tiers"]
+            if not isinstance(kt, dict):
+                result.error(f"{nctx}: 'knowledge_tiers' should be a dict")
+            else:
+                for tier_key in kt:
+                    if tier_key not in VALID_ATTITUDES:
+                        result.error(
+                            f"{nctx}: invalid knowledge_tiers key '{tier_key}', "
+                            f"must be one of {sorted(VALID_ATTITUDES)}"
+                        )
+                    elif not isinstance(kt[tier_key], list):
+                        result.error(
+                            f"{nctx}: knowledge_tiers['{tier_key}'] should be a list"
+                        )
+
+        # bartering_inventory
+        if "bartering_inventory" in profile:
+            inv = profile["bartering_inventory"]
+            if not isinstance(inv, list):
+                result.error(f"{nctx}: 'bartering_inventory' should be a list")
+            else:
+                for ii, item in enumerate(inv):
+                    ictx = f"{nctx}.bartering_inventory[{ii}]"
+                    if not isinstance(item, dict):
+                        result.error(f"{ictx}: must be a dict")
+                        continue
+                    _check_type(result, item, "slug", str, ictx)
+                    if "price_gp" in item:
+                        if not isinstance(item["price_gp"], (int, float)):
+                            result.error(f"{ictx}: 'price_gp' should be a number")
+                    # Validate slug against item registry
+                    if "slug" in item and item_slugs:
+                        if item["slug"] not in item_slugs:
+                            result.error(f"{ictx}: unknown item slug '{item['slug']}'")
+
+        # dialogue_style
+        _check_optional_type(result, profile, "dialogue_style", str, nctx)
+
+        # mode_prompts
+        if "mode_prompts" in profile:
+            mp = profile["mode_prompts"]
+            if not isinstance(mp, dict):
+                result.error(f"{nctx}: 'mode_prompts' should be a dict")
+            else:
+                for key, val in mp.items():
+                    if not isinstance(val, str):
+                        result.error(f"{nctx}: mode_prompts['{key}'] should be a str")
 
     return result
 

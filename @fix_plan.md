@@ -97,30 +97,41 @@ All HIGH and MEDIUM tasks complete. 3 LOW items deferred to Phase 2.
 
 ---
 
-## Phase 2 — Local LLM Integration
+## Phase 2 — Per-NPC LLM Agent System
 
-### HIGH — Must complete
+### HIGH — Complete
 
-- [ ] Godot HTTP client for orchestrator API (HTTPRequest nodes, response parsing)
-- [ ] Wire DM panel to orchestrator (replace hardcoded narratives with LLM responses)
-- [ ] Room entry narration via Ollama (trigger on room_entered signal)
-- [ ] Freeform NPC conversation via LLM (free-text input → orchestrator → Ollama → DM panel)
+- [x] OrchestratorClient autoload in project.godot + timeout fix (15→45s) + health re-check timer
+- [x] NPC agent data model (NpcAttitude, ConversationMode, NpcAgentState) + in-memory registry
+- [x] NPC profile schema migration (knowledge_tiers, attitude_default, dialogue_style, mode_prompts, bartering_inventory)
+- [x] NPC prompt builder (~135 token input, ~80 token output = 1-3s responses)
+- [x] Keyword-based mode detection (CHATTING, BARTERING, QUEST_GIVING, WARNING, REFUSING, RECRUITING)
+- [x] Knowledge gating by attitude tier (cumulative: FRIENDLY gets INDIFFERENT + FRIENDLY facts)
+- [x] Skill check → attitude shifts (Persuasion ±1, Intimidation → Unfriendly, Deception +1 temp / -2)
+- [x] NPC conversation endpoints (POST /npc/speak, POST /npc/skill_check, GET /npc/status, GET /npcs)
+- [x] SPEAK action delegation in /action endpoint (known NPCs route to NPC system, unknowns fall through)
+- [x] Godot client NPC integration (send_npc_speak, send_npc_skill_check, choice routing, thinking indicator)
+- [x] Character sync to orchestrator on game start
+- [x] NPC state persistence in GameState.npc_states
+- [x] Forge NPC schema docs + validator updates (knowledge_tiers, attitude_default, bartering_inventory)
+- [x] NPC profiles loaded on orchestrator startup with Forge merge
+- [x] All 358 tests passing
+
+### MEDIUM — Complete
+
+- [x] DM narrator agent (embellish Forge descriptions with sensory details, 3s timeout fallback)
+- [x] Thinking indicator in DM panel ("The DM ponders..." during LLM calls)
+- [x] Tavern NPC handler delegates to orchestrator when available, keeps hardcoded fallback
+
+### REMAINING — Deferred to later
+
 - [ ] Combat narration via LLM (hits, misses, kills, spell effects)
-- [ ] Context management in orchestrator (conversation history, world state summary)
-
-### MEDIUM — Should complete
-
-- [ ] Contextual choice generation (LLM suggests situational choices)
-- [ ] Tavern hub scene (rest, recruit, shop, quest board — LLM-powered NPCs)
-- [ ] NPC personality persistence (orchestrator tracks NPC conversation state)
+- [ ] Room entry narration via narrator agent (wire room_triggers.gd to orchestrator)
+- [ ] Forge NPC generation pipeline (persistent Claude CLI session, forge_client.py)
+- [ ] Streaming LLM responses (token-by-token display in DM panel)
 - [ ] Companion AI during non-combat (deferred from Phase 1)
-
-### LOW — Nice to have
-
 - [ ] Companion dismissal and re-recruitment (deferred from Phase 1)
 - [ ] Companion quest hooks (deferred from Phase 1)
-- [ ] DM archetype affects LLM prompt style (use stored archetype choice)
-- [ ] Streaming LLM responses (token-by-token display in DM panel)
 
 ---
 

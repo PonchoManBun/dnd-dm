@@ -30,6 +30,13 @@ from orchestrator.models.game_state import (
     load_game_state,
     save_game_state,
 )
+from orchestrator.models.npc_agent import (
+    ATTITUDE_DC,
+    ATTITUDE_ORDER,
+    ConversationMode,
+    NpcAgentState,
+    NpcAttitude,
+)
 
 __all__ = [
     # Enums
@@ -64,6 +71,12 @@ __all__ = [
     "DmResponse",
     "PlayerAction",
     "StateDelta",
+    # NPC Agent
+    "ATTITUDE_DC",
+    "ATTITUDE_ORDER",
+    "ConversationMode",
+    "NpcAgentState",
+    "NpcAttitude",
     # Persistence
     "load_game_state",
     "save_game_state",

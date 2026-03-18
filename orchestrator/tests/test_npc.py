@@ -166,7 +166,7 @@ class TestNpcProfileManagement:
         json_path = tmp_path / "npcs.json"
         json_path.write_text(json.dumps(custom_data), encoding="utf-8")
 
-        load_npc_profiles(json_path)
+        load_npc_profiles(json_path, merge_forge=False)
         assert list_npcs() == ["test_npc"]
         profile = get_npc_profile("test_npc")
         assert profile is not None
@@ -192,15 +192,16 @@ class TestNpcProfileManagement:
 
 
 class TestNpcConversationEndpoint:
-    """Tests for NPC conversation through the POST /action endpoint."""
+    """Tests for NPC conversation through the POST /action and /npc/speak endpoints."""
 
     @pytest.mark.asyncio
     async def test_speak_to_marta(self, fresh_state, mock_ollama):
-        """POST speak action targeting marta returns NPC-flavored narration."""
+        """POST speak action targeting marta delegates to NPC system."""
+        # Mock the NPC endpoint's Ollama client
         with patch(
-            "orchestrator.engine.prompt_builder.build_dm_prompt",
-            return_value=("system prompt", "user prompt"),
-        ) as mock_build:
+            "orchestrator.routes.npc._get_ollama",
+            return_value=mock_ollama,
+        ):
             transport = ASGITransport(app=app)
             async with AsyncClient(
                 transport=transport, base_url="http://test"
@@ -215,20 +216,15 @@ class TestNpcConversationEndpoint:
             assert response.status_code == 200
             data = response.json()
             assert data["narration"] != ""
-            assert data["error"] is None
-            # Verify that build_dm_prompt was called with NPC profile info
-            mock_build.assert_called_once()
-            call_kwargs = mock_build.call_args
-            assert call_kwargs.kwargs.get("npc_name") == "Barkeep Marta"
-            assert call_kwargs.kwargs.get("npc_profile") is not None
+            assert "Marta" in data["narration"]
 
     @pytest.mark.asyncio
     async def test_speak_to_old_tom(self, fresh_state, mock_ollama):
-        """POST speak action targeting old_tom looks up profile correctly."""
+        """POST speak action targeting old_tom delegates to NPC system."""
         with patch(
-            "orchestrator.engine.prompt_builder.build_dm_prompt",
-            return_value=("system prompt", "user prompt"),
-        ) as mock_build:
+            "orchestrator.routes.npc._get_ollama",
+            return_value=mock_ollama,
+        ):
             transport = ASGITransport(app=app)
             async with AsyncClient(
                 transport=transport, base_url="http://test"
@@ -241,12 +237,12 @@ class TestNpcConversationEndpoint:
                     },
                 )
             assert response.status_code == 200
-            call_kwargs = mock_build.call_args
-            assert call_kwargs.kwargs.get("npc_name") == "Old Tom"
+            data = response.json()
+            assert "Old Tom" in data["narration"]
 
     @pytest.mark.asyncio
     async def test_speak_to_unknown_npc(self, fresh_state, mock_ollama):
-        """POST speak to unknown NPC target still generates a response."""
+        """POST speak to unknown NPC target falls through to standard DM."""
         with patch(
             "orchestrator.engine.prompt_builder.build_dm_prompt",
             return_value=("system prompt", "user prompt"),
@@ -265,18 +261,19 @@ class TestNpcConversationEndpoint:
             assert response.status_code == 200
             data = response.json()
             assert data["narration"] != ""
-            # For unknown NPCs, npc_profile should be None, npc_name the raw target
+            # For unknown NPCs, falls through to standard DM handling
+            mock_build.assert_called_once()
             call_kwargs = mock_build.call_args
             assert call_kwargs.kwargs.get("npc_profile") is None
             assert call_kwargs.kwargs.get("npc_name") == "mysterious_stranger"
 
     @pytest.mark.asyncio
     async def test_speak_with_message(self, fresh_state, mock_ollama):
-        """POST speak with player message text passes it through."""
+        """POST speak with player message text passes it to NPC system."""
         with patch(
-            "orchestrator.engine.prompt_builder.build_dm_prompt",
-            return_value=("system prompt", "user prompt"),
-        ) as mock_build:
+            "orchestrator.routes.npc._get_ollama",
+            return_value=mock_ollama,
+        ):
             transport = ASGITransport(app=app)
             async with AsyncClient(
                 transport=transport, base_url="http://test"
@@ -292,10 +289,7 @@ class TestNpcConversationEndpoint:
             assert response.status_code == 200
             data = response.json()
             assert data["narration"] != ""
-            # Verify the action had the message
-            call_kwargs = mock_build.call_args
-            action_arg = call_kwargs.kwargs.get("action") or call_kwargs.args[1]
-            assert action_arg.message == "Tell me about the cellar."
+            assert "Marta" in data["narration"]
 
     @pytest.mark.asyncio
     async def test_speak_with_extra_profile_fallback(self, fresh_state, mock_ollama):
@@ -330,10 +324,10 @@ class TestNpcConversationEndpoint:
 
     @pytest.mark.asyncio
     async def test_speak_choices_returned(self, fresh_state, mock_ollama):
-        """Speak action returns parsed choices from LLM response."""
+        """Speak action targeting known NPC returns NPC-system choices."""
         with patch(
-            "orchestrator.engine.prompt_builder.build_dm_prompt",
-            return_value=("system prompt", "user prompt"),
+            "orchestrator.routes.npc._get_ollama",
+            return_value=mock_ollama,
         ):
             transport = ASGITransport(app=app)
             async with AsyncClient(
@@ -347,5 +341,6 @@ class TestNpcConversationEndpoint:
                     },
                 )
             data = response.json()
-            assert len(data["choices"]) == 3
-            assert "Ask about the cellar" in data["choices"]
+            # NPC system generates mode-based choices
+            assert len(data["choices"]) > 0
+            assert "End conversation" in data["choices"]

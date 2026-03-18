@@ -18,6 +18,7 @@ var _header_label: Label
 var _vbox: VBoxContainer
 var _speaking_as: OptionButton
 var _speaking_to: OptionButton
+var _thinking_label: Label
 
 
 func _ready() -> void:
@@ -73,6 +74,15 @@ func _build_ui() -> void:
 	_narrative_label.add_theme_constant_override("line_separation", 2)
 	_narrative_label.text = ""
 	_vbox.add_child(_narrative_label)
+
+	# -- Thinking indicator (hidden by default) --
+	_thinking_label = Label.new()
+	_thinking_label.text = "The DM ponders..."
+	_thinking_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_thinking_label.add_theme_color_override("font_color", UIColors.TEXT_DIM)
+	_thinking_label.add_theme_font_size_override("font_size", 14)
+	_thinking_label.visible = false
+	_vbox.add_child(_thinking_label)
 
 	# -- Choices container --
 	_choices_container = VBoxContainer.new()
@@ -145,6 +155,14 @@ func _connect_signals() -> void:
 	NarrativeManager.narrative_added.connect(_on_narrative_added)
 	NarrativeManager.choices_presented.connect(_on_choices_presented)
 	NarrativeManager.narrative_cleared.connect(_on_narrative_cleared)
+
+	# Connect to orchestrator thinking signals
+	var oc: Node = Engine.get_main_loop().root.get_node_or_null("/root/OrchestratorClient")
+	if oc:
+		if oc.has_signal("thinking_started"):
+			oc.thinking_started.connect(_on_thinking_started)
+		if oc.has_signal("thinking_finished"):
+			oc.thinking_finished.connect(_on_thinking_finished)
 
 	# Refresh dropdowns when the world state changes
 	World.turn_ended.connect(_on_turn_ended_refresh)
@@ -265,6 +283,14 @@ func _on_turn_ended_refresh() -> void:
 func _on_map_changed_refresh(_map: Map) -> void:
 	_refresh_speaker_options()
 	_refresh_target_options()
+
+
+func _on_thinking_started() -> void:
+	_thinking_label.visible = true
+
+
+func _on_thinking_finished() -> void:
+	_thinking_label.visible = false
 
 
 ## Populate "Speaking as" with the player name + all companion names.

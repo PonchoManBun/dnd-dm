@@ -126,9 +126,9 @@ python3 validate.py dungeon ../forge_output/dungeons/{dungeon_name}.json
 
 ## Workflow B — Generate & Edit NPCs
 
-### Simple Format (game-compatible)
+### Game-Compatible Format (required)
 
-This is what `npc_profiles.json` and `TavernNpcHandler` consume. Reference: `schemas/npc_example.json`.
+This is what `npc_profiles.json` and the NPC agent system consume. Reference: `schemas/npc_example.json`.
 
 ```json
 {
@@ -136,52 +136,62 @@ This is what `npc_profiles.json` and `TavernNpcHandler` consume. Reference: `sch
     "name": "Display Name",
     "role": "role description",
     "personality": "Single string personality description",
-    "knowledge": "Single string of what they know",
+    "dialogue_style": "How they speak — cadence, vocabulary, verbal tics",
+    "knowledge": "Single string of what they know (backward-compat fallback)",
+    "knowledge_tiers": {
+      "hostile": [],
+      "unfriendly": ["Minimal info"],
+      "indifferent": ["Basic facts"],
+      "friendly": ["Rumors and hints"],
+      "helpful": ["Secrets and critical info"]
+    },
+    "attitude_default": "indifferent",
     "greeting": "What they say when first approached",
-    "location": "Where they are in the scene"
+    "location": "Where they are in the scene",
+    "mode_prompts": {
+      "chatting": "Body language/scene-setting for casual talk",
+      "bartering": "How they handle trade",
+      "quest_giving": "How they present tasks",
+      "warning": "How they convey danger",
+      "recruiting": "How they consider joining"
+    },
+    "bartering_inventory": [
+      {"slug": "item_slug", "price_gp": 1, "quantity": 10}
+    ],
+    "quest_data": {
+      "quest_id": "unique_quest_id",
+      "brief": "One-line quest description",
+      "reward": "Reward description"
+    },
+    "quest_hooks": ["quest_id_reference"],
+    "recruitable": false,
+    "stat_block_slug": "commoner",
+    "recruitment_dc": 10,
+    "dnd_class": "FIGHTER"
   }
 }
 ```
 
-**IMPORTANT:** `personality` and `knowledge` must be single strings, not arrays.
-
-### Rich Format (Phase 2+ — generate alongside the simple format)
-
-Additional fields for the orchestrator/LLM to consume later:
-
-```json
-{
-  "npc_id": {
-    "name": "Display Name",
-    "role": "merchant",
-    "race": "human",
-    "personality_traits": ["trait1", "trait2", "trait3"],
-    "personality": "Single string summary (backward-compat)",
-    "dialogue_style": "How they speak",
-    "knowledge_list": ["fact1", "fact2", "fact3"],
-    "knowledge": "Single string summary (backward-compat)",
-    "goals": ["goal1", "goal2"],
-    "secrets": ["secret1"],
-    "disposition_default": "friendly",
-    "greeting": "What they say",
-    "schedule": {"morning": "...", "afternoon": "...", "evening": "...", "night": "..."},
-    "position": {"x": 12, "y": 13},
-    "sprite": "sprite_name",
-    "location": "Description of where they are",
-    "faction": "tavern",
-    "quest_hooks": ["quest_id_1"]
-  }
-}
-```
+**IMPORTANT RULES:**
+- `personality` and `knowledge` must be single strings (backward compatibility)
+- `knowledge_tiers` keys must be exactly: hostile, unfriendly, indifferent, friendly, helpful
+- `knowledge_tiers` values must be arrays of strings
+- `attitude_default` must be one of: hostile, unfriendly, indifferent, friendly, helpful
+- `bartering_inventory` slugs must exist in `items.csv`
+- `dialogue_style` guides the per-NPC LLM agent — be specific about speech patterns
+- Knowledge tiers are **cumulative**: friendly NPCs reveal indifferent + friendly facts
+- Narrator descriptions (room text, greeting context) should be 1-2 sentence **factual bases** — the DM narrator agent embellishes at runtime
 
 ### NPC Edit Operations
 
 | Operation | Description |
 |---|---|
-| `update_knowledge` | Add/remove knowledge after story events |
-| `change_disposition` | Shift disposition based on player actions |
-| `add_secrets` | New secrets discovered through gameplay |
+| `update_knowledge` | Add/remove knowledge tiers after story events |
+| `change_disposition` | Shift attitude_default based on player actions |
+| `add_secrets` | New secrets go in the `helpful` knowledge tier |
 | `update_greeting` | Change after quest completion or story beat |
+| `add_inventory` | Add items to bartering_inventory |
+| `add_quest` | Add quest_data or quest_hooks |
 
 ### Output
 

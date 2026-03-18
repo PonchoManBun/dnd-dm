@@ -1,0 +1,29 @@
+{
+  "elara": {
+    "name": "Elara the Quiet",
+    "role": "mysterious hooded traveler",
+    "personality": "Speaks rarely but precisely. Observant. Seems to know more than she lets on. Slight elvish accent.",
+    "dialogue_style": "Cryptic and precise. Never uses two words where one will do. Pauses before speaking.",
+    "knowledge": "Arcane lore, regional geography, hidden passages. Will hint at quest hooks but never give straight answers.",
+    "knowledge_tiers": {
+      "hostile": [],
+      "unfriendly": ["A cold stare is all you receive"],
+      "indifferent": ["The ley lines converge beneath this town", "The east road is watched"],
+      "friendly": ["Not all who vanish on the east road are dead", "There is old magic in the crypt"],
+      "helpful": ["The hooded figure serves a lich awakening below", "A ward stone in the crypt holds the binding"]
+    },
+    "attitude_default": "indifferent",
+    "greeting": "...",
+    "location": "Seated alone in the corner",
+    "mode_prompts": {
+      "chatting": "Watches from beneath her hood, pale eyes glinting.",
+      "warning": "Her voice drops to barely a whisper.",
+      "recruiting": "Considers you with an appraising look."
+    },
+    "recruitable": true,
+    "stat_block_slug": "mage",
+    "recruitment_dc": 14,
+    "dnd_class": "WIZARD",
+    "quest_hooks": ["east_road_investigation"]
+  }
+}

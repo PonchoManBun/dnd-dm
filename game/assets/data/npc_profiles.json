@@ -3,17 +3,55 @@
     "name": "Barkeep Marta",
     "role": "tavern owner and barkeep",
     "personality": "Warm but shrewd. Knows everyone's business. Protective of regulars. Speaks plainly with a hint of dry humor.",
+    "dialogue_style": "Plain-spoken with dry wit. Short sentences. Occasional sigh.",
     "knowledge": "Local rumors, adventurer gossip, cellar problems, room rates, menu items. Knows about disappearances on the east road.",
+    "knowledge_tiers": {
+      "hostile": [],
+      "unfriendly": ["Room rates are 5 silver a night"],
+      "indifferent": ["Room rates are 5 silver a night", "The ale is fresh-brewed"],
+      "friendly": ["Strange noises from the cellar lately", "Disappearances on the east road"],
+      "helpful": ["The cellar connects to old crypt tunnels", "Saw a hooded figure lurking last week"]
+    },
+    "attitude_default": "friendly",
     "greeting": "What can I get for you, traveler?",
-    "location": "Behind the bar counter"
+    "location": "Behind the bar counter",
+    "mode_prompts": {
+      "chatting": "Polishing a mug, eyeing the newcomer.",
+      "bartering": "Names fair prices but will haggle.",
+      "quest_giving": "Leans in conspiratorially, hushed tones."
+    },
+    "bartering_inventory": [
+      {"slug": "food_ration", "price_gp": 1, "quantity": 10},
+      {"slug": "apple", "price_gp": 1, "quantity": 5},
+      {"slug": "orange", "price_gp": 1, "quantity": 10}
+    ],
+    "quest_data": {
+      "quest_id": "cellar_clearing",
+      "brief": "Clear the creatures from the cellar",
+      "reward": "50gp and free room for a week"
+    }
   },
   "old_tom": {
     "name": "Old Tom",
     "role": "retired adventurer and tavern regular",
     "personality": "Grizzled veteran who tells tall tales. Drinks too much. Surprisingly sharp when sober. Nostalgic about his adventuring days.",
+    "dialogue_style": "Rambling storyteller. Starts sentences with 'Back in my day...' Gruff but warm.",
     "knowledge": "Old dungeon layouts, monster weaknesses, outdated adventuring tips. Claims to have fought a dragon once. Knows local history.",
+    "knowledge_tiers": {
+      "hostile": [],
+      "unfriendly": ["Leave me to my ale"],
+      "indifferent": ["The old crypt is north of town", "Bring fire when going underground"],
+      "friendly": ["Undead hate radiant damage", "The drake's lair had three exits"],
+      "helpful": ["Secret passage behind the altar in the crypt", "The old commander's sword is still down there"]
+    },
+    "attitude_default": "indifferent",
     "greeting": "Eh? Another young fool looking for glory? Pull up a chair.",
     "location": "Seated at a dining table",
+    "mode_prompts": {
+      "chatting": "Nursing his ale, eyes distant with memory.",
+      "warning": "Grabs your arm with surprising strength.",
+      "recruiting": "Straightens up, a glint of the old fire in his eyes."
+    },
     "recruitable": true,
     "stat_block_slug": "veteran",
     "recruitment_dc": 12,
@@ -23,12 +61,27 @@
     "name": "Elara the Quiet",
     "role": "mysterious hooded traveler",
     "personality": "Speaks rarely but precisely. Observant. Seems to know more than she lets on. Slight elvish accent.",
+    "dialogue_style": "Cryptic and precise. Never uses two words where one will do. Pauses before speaking.",
     "knowledge": "Arcane lore, regional geography, hidden passages. Will hint at quest hooks but never give straight answers.",
+    "knowledge_tiers": {
+      "hostile": [],
+      "unfriendly": ["A cold stare is all you receive"],
+      "indifferent": ["The ley lines converge beneath this town", "The east road is watched"],
+      "friendly": ["Not all who vanish on the east road are dead", "There is old magic in the crypt"],
+      "helpful": ["The hooded figure serves a lich awakening below", "A ward stone in the crypt holds the binding"]
+    },
+    "attitude_default": "indifferent",
     "greeting": "...",
     "location": "Seated alone in the corner",
+    "mode_prompts": {
+      "chatting": "Watches from beneath her hood, pale eyes glinting.",
+      "warning": "Her voice drops to barely a whisper.",
+      "recruiting": "Considers you with an appraising look."
+    },
     "recruitable": true,
     "stat_block_slug": "mage",
     "recruitment_dc": 14,
-    "dnd_class": "WIZARD"
+    "dnd_class": "WIZARD",
+    "quest_hooks": ["east_road_investigation"]
   }
 }

@@ -108,6 +108,7 @@ class GameState(BaseModel):
     combat: CombatState | None = None
     inventory: list[ItemState] = Field(default_factory=list)
     equipment: dict[EquipmentSlot, ItemState | None] = Field(default_factory=dict)
+    npc_states: dict[str, dict] = Field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------

@@ -9,6 +9,9 @@ signal request_started
 signal request_finished
 signal orchestrator_status_changed(available: bool)
 signal state_synced(state_data: Dictionary)
+signal npc_response_received(data: Dictionary)
+signal thinking_started
+signal thinking_finished
 
 ## Orchestrator base URL (Jetson runs on same machine, or dev machine runs locally)
 var base_url: String = "http://localhost:8000"
@@ -26,12 +29,14 @@ var _http_request: HTTPRequest
 var _sync_timer: Timer
 var _sync_interval: float = 5.0  # Sync every 5 seconds
 var _nm: Node  # NarrativeManager autoload (resolved at runtime to avoid ARM64 parse issues)
+var _health_timer: Timer
+var _health_interval: float = 30.0
 
 
 func _ready() -> void:
 	_nm = get_node_or_null("/root/NarrativeManager")
 	_http_request = HTTPRequest.new()
-	_http_request.timeout = 15.0  # 15 second timeout
+	_http_request.timeout = 45.0  # 45 second timeout
 	add_child(_http_request)
 
 	# Add sync timer
@@ -41,14 +46,68 @@ func _ready() -> void:
 	_sync_timer.timeout.connect(_on_sync_timer)
 	add_child(_sync_timer)
 
+	# Add health re-check timer for recovery
+	_health_timer = Timer.new()
+	_health_timer.wait_time = _health_interval
+	_health_timer.autostart = true
+	_health_timer.timeout.connect(_check_health)
+	add_child(_health_timer)
+
 	# Check orchestrator health on startup
 	_check_health()
+
+
+## Sync the player character to the orchestrator on game start.
+func sync_character() -> void:
+	if not orchestrator_available:
+		return
+
+	var player: Monster = World.player
+	if not player or not player.character_data:
+		return
+
+	var cd: CharacterData = player.character_data
+	var body := {
+		"name": cd.character_name,
+		"race": CharacterData.Race.keys()[cd.race].to_lower(),
+		"dnd_class": CharacterData.DndClass.keys()[cd.dnd_class].to_lower(),
+		"level": cd.level,
+		"max_hp": cd.max_hp,
+		"current_hp": cd.current_hp,
+		"strength": cd.strength,
+		"dexterity": cd.dexterity,
+		"constitution": cd.constitution,
+		"intelligence": cd.intelligence,
+		"wisdom": cd.wisdom,
+		"charisma": cd.charisma,
+	}
+
+	var json_body := JSON.stringify(body)
+	var headers := PackedStringArray(["Content-Type: application/json"])
+
+	var req := HTTPRequest.new()
+	req.timeout = 10.0
+	add_child(req)
+	req.request_completed.connect(
+		func(result: int, code: int, _headers: PackedStringArray, _body: PackedByteArray) -> void:
+			if result == HTTPRequest.RESULT_SUCCESS and (code == 200 or code == 201):
+				Log.i("OrchestratorClient: character synced to orchestrator")
+			else:
+				Log.w("OrchestratorClient: character sync failed (result=%d, code=%d)" % [result, code])
+			req.queue_free()
+	)
+
+	var err := req.request(base_url + "/character/create", headers, HTTPClient.METHOD_POST, json_body)
+	if err != OK:
+		Log.e("OrchestratorClient: failed to send character sync: %d" % err)
+		req.queue_free()
 
 
 ## Start periodic state syncing (call after character is created).
 func start_sync() -> void:
 	if orchestrator_available:
 		_sync_timer.start()
+		sync_character()
 
 
 ## Stop periodic state syncing.
@@ -121,6 +180,11 @@ func send_action(
 	if not extra.is_empty():
 		body["extra"] = extra
 
+	# Route NPC speech to dedicated endpoint
+	if action_type == "speak" and not target.is_empty() and orchestrator_available:
+		send_npc_speak(target, message if not message.is_empty() else "Hello")
+		return
+
 	if not orchestrator_available:
 		# Fallback: generate local response without HTTP
 		_handle_fallback(action_type, target, message)
@@ -135,7 +199,7 @@ func send_action(
 
 	# Create a fresh HTTPRequest for this call (the built-in one is single-use per request)
 	var req := HTTPRequest.new()
-	req.timeout = 15.0
+	req.timeout = 45.0
 	add_child(req)
 	req.request_completed.connect(
 		func(result: int, code: int, _headers: PackedStringArray, body_bytes: PackedByteArray) -> void:
@@ -149,6 +213,85 @@ func send_action(
 		_request_in_flight = false
 		request_finished.emit()
 		_handle_fallback(action_type, target, message)
+		req.queue_free()
+
+
+## Send a message to a specific NPC via the dedicated NPC endpoint.
+## Returns immediately; results come via npc_response_received signal.
+func send_npc_speak(npc_id: String, message: String, speaker: String = "adventurer") -> void:
+	if _request_in_flight:
+		Log.w("OrchestratorClient: request already in flight, ignoring")
+		return
+
+	if not orchestrator_available:
+		_handle_fallback("speak", npc_id, message)
+		return
+
+	_request_in_flight = true
+	request_started.emit()
+	thinking_started.emit()
+
+	var body := {
+		"npc_id": npc_id,
+		"message": message,
+		"speaker": speaker,
+	}
+	var json_body := JSON.stringify(body)
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	var url := base_url + "/npc/speak"
+
+	var req := HTTPRequest.new()
+	req.timeout = 45.0
+	add_child(req)
+	req.request_completed.connect(
+		func(result: int, code: int, _headers: PackedStringArray, body_bytes: PackedByteArray) -> void:
+			_on_npc_response(result, code, body_bytes)
+			req.queue_free()
+	)
+
+	var err := req.request(url, headers, HTTPClient.METHOD_POST, json_body)
+	if err != OK:
+		Log.e("OrchestratorClient: failed to send NPC request: %d" % err)
+		_request_in_flight = false
+		request_finished.emit()
+		thinking_finished.emit()
+		_handle_fallback("speak", npc_id, message)
+		req.queue_free()
+
+
+## Send a skill check against an NPC.
+func send_npc_skill_check(npc_id: String, skill: String) -> void:
+	if _request_in_flight:
+		Log.w("OrchestratorClient: request already in flight, ignoring")
+		return
+
+	if not orchestrator_available:
+		return
+
+	_request_in_flight = true
+	request_started.emit()
+	thinking_started.emit()
+
+	var body := {"npc_id": npc_id, "skill": skill}
+	var json_body := JSON.stringify(body)
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	var url := base_url + "/npc/skill_check"
+
+	var req := HTTPRequest.new()
+	req.timeout = 45.0
+	add_child(req)
+	req.request_completed.connect(
+		func(result: int, code: int, _headers: PackedStringArray, body_bytes: PackedByteArray) -> void:
+			_on_npc_response(result, code, body_bytes)
+			req.queue_free()
+	)
+
+	var err := req.request(url, headers, HTTPClient.METHOD_POST, json_body)
+	if err != OK:
+		Log.e("OrchestratorClient: failed to send skill check request: %d" % err)
+		_request_in_flight = false
+		request_finished.emit()
+		thinking_finished.emit()
 		req.queue_free()
 
 
@@ -250,6 +393,70 @@ func _on_action_response(result: int, code: int, body_bytes: PackedByteArray) ->
 			)
 
 	response_received.emit(narration, choices)
+
+
+## Handle the HTTP response from NPC endpoints.
+func _on_npc_response(result: int, code: int, body_bytes: PackedByteArray) -> void:
+	_request_in_flight = false
+	request_finished.emit()
+	thinking_finished.emit()
+
+	if result != HTTPRequest.RESULT_SUCCESS or code != 200:
+		Log.w("OrchestratorClient: NPC request failed (result=%d, code=%d)" % [result, code])
+		if result == HTTPRequest.RESULT_CANT_CONNECT or result == HTTPRequest.RESULT_CONNECTION_ERROR:
+			orchestrator_available = false
+			orchestrator_status_changed.emit(false)
+		return
+
+	var json := JSON.new()
+	var parse_err := json.parse(body_bytes.get_string_from_utf8())
+	if parse_err != OK:
+		Log.e("OrchestratorClient: failed to parse NPC response JSON")
+		return
+
+	var data: Dictionary = json.data
+	var narration: String = data.get("narration", "")
+	var raw_choices: Array = data.get("choices", [])
+	var choices: Array[String] = []
+	for choice: Variant in raw_choices:
+		choices.append(str(choice))
+
+	var npc_id: String = data.get("npc_id", "")
+	var mode: String = data.get("mode", "chatting")
+
+	# Relay to NarrativeManager
+	if not narration.is_empty() and _nm:
+		_nm.add_narrative(narration)
+		if choices.size() > 0:
+			_nm.present_choices(choices, func(index: int) -> void:
+				_handle_npc_choice(npc_id, mode, choices, index)
+			)
+
+	npc_response_received.emit(data)
+	response_received.emit(narration, choices)
+
+
+## Handle a choice selection during an NPC conversation.
+func _handle_npc_choice(npc_id: String, mode: String, choices: Array[String], index: int) -> void:
+	var choice_text: String = choices[index] if index < choices.size() else ""
+
+	# Check for skill check choices
+	if choice_text.begins_with("Try Persuasion"):
+		send_npc_skill_check(npc_id, "persuasion")
+		return
+	if choice_text.begins_with("Try Intimidation"):
+		send_npc_skill_check(npc_id, "intimidation")
+		return
+	if choice_text.begins_with("Make your case"):
+		send_npc_skill_check(npc_id, "persuasion")
+		return
+
+	# End conversation
+	if choice_text == "End conversation" or choice_text == "Walk away" or choice_text == "Leave":
+		return
+
+	# Otherwise, send the choice text as a new message to the NPC
+	send_npc_speak(npc_id, choice_text)
 
 
 ## Generate a local fallback response when the orchestrator is unavailable.

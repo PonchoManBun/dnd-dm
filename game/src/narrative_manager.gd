@@ -9,6 +9,8 @@ signal choices_presented(choices: Array[String])
 signal choice_selected(index: int, text: String)
 signal player_input_submitted(text: String)
 signal narrative_cleared
+signal thinking_started
+signal thinking_finished
 
 ## A single narrative entry with optional choices.
 class NarrativeEntry:
@@ -152,6 +154,16 @@ func submit_input(text: String) -> void:
 	player_input_submitted.emit(text)
 	# Echo the player's input in the narrative
 	add_narrative("[color=#6cb4c4]> %s[/color]" % text)
+
+
+## Show thinking indicator in the narrative.
+func show_thinking() -> void:
+	thinking_started.emit()
+
+
+## Hide thinking indicator.
+func hide_thinking() -> void:
+	thinking_finished.emit()
 
 
 ## Clear all narrative history.

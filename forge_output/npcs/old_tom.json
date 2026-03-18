@@ -1,0 +1,28 @@
+{
+  "old_tom": {
+    "name": "Old Tom",
+    "role": "retired adventurer and tavern regular",
+    "personality": "Grizzled veteran who tells tall tales. Drinks too much. Surprisingly sharp when sober. Nostalgic about his adventuring days.",
+    "dialogue_style": "Rambling storyteller. Starts sentences with 'Back in my day...' Gruff but warm.",
+    "knowledge": "Old dungeon layouts, monster weaknesses, outdated adventuring tips. Claims to have fought a dragon once. Knows local history.",
+    "knowledge_tiers": {
+      "hostile": [],
+      "unfriendly": ["Leave me to my ale"],
+      "indifferent": ["The old crypt is north of town", "Bring fire when going underground"],
+      "friendly": ["Undead hate radiant damage", "The drake's lair had three exits"],
+      "helpful": ["Secret passage behind the altar in the crypt", "The old commander's sword is still down there"]
+    },
+    "attitude_default": "indifferent",
+    "greeting": "Eh? Another young fool looking for glory? Pull up a chair.",
+    "location": "Seated at a dining table",
+    "mode_prompts": {
+      "chatting": "Nursing his ale, eyes distant with memory.",
+      "warning": "Grabs your arm with surprising strength.",
+      "recruiting": "Straightens up, a glint of the old fire in his eyes."
+    },
+    "recruitable": true,
+    "stat_block_slug": "veteran",
+    "recruitment_dc": 12,
+    "dnd_class": "FIGHTER"
+  }
+}
