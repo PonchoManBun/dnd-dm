@@ -297,9 +297,29 @@ Every generation must:
    ```
    This checks slug references against registries, room geometry, required fields, and format compliance.
 
-3. **Fix all errors before finalizing** — re-validate until the output passes.
+3. **For dungeons, run the simulator** (MANDATORY — this is the quality gate):
+   ```bash
+   python3 simulate.py {file_path} --level {player_level} --party-size {party_size} --runs 100 --json
+   ```
+   The simulator checks what the validator cannot:
+   - **Connectivity**: BFS flood fill — are all rooms reachable from the entrance?
+   - **Encounter balance**: XP budgets, difficulty ratings, CR vs party level violations
+   - **Monster placement**: Spacing from corridor entry points (melee 3+, ranged 4+, boss 5+)
+   - **Loot economy**: Item counts per room type, boss on_clear presence
+   - **Combat survival**: Monte Carlo simulation — does a standard party survive the dungeon?
 
-4. **Write manifest** to `../forge_output/manifests/gen_{timestamp}.json`:
+   **Target ranges**: Survival rate 50-95%, all rooms reachable, no errors. Warnings are acceptable.
+
+   If issues are found, fix the dungeon JSON and re-simulate. See `/generate-dungeon` step 9 for the fix-by-category guide. Max 3 fix iterations.
+
+   Optionally render a visual preview to check layout:
+   ```bash
+   python3 simulate.py {file_path} --render /tmp/{name}_preview.png --runs 1
+   ```
+
+4. **Fix all errors before finalizing** — re-validate and re-simulate until both pass.
+
+5. **Write manifest** to `../forge_output/manifests/gen_{timestamp}.json`:
    ```json
    {
      "timestamp": "2026-03-17T12:00:00",
@@ -307,7 +327,13 @@ Every generation must:
      "file": "forge_output/dungeons/shadow_keep.json",
      "dm_archetype": "storyteller",
      "player_level": 3,
-     "validation": "passed"
+     "validation": "passed",
+     "simulation": {
+       "verdict": "PLAYABLE",
+       "survival_rate": 0.87,
+       "deadliest_room": "F2R4 (Boss Chamber)",
+       "warnings": 2
+     }
    }
    ```
 
@@ -329,14 +355,15 @@ Use these commands for common workflows:
 
 | Command | Purpose |
 |---|---|
-| `/generate-dungeon` | Generate a complete dungeon |
-| `/edit-dungeon` | Edit an existing dungeon |
+| `/generate-dungeon` | Generate a complete dungeon (includes simulate-fix loop) |
+| `/edit-dungeon` | Edit an existing dungeon (runs simulation after edit) |
 | `/generate-npc` | Generate an NPC profile |
 | `/edit-npc` | Edit an existing NPC |
 | `/generate-quest` | Generate a quest arc |
 | `/edit-quest` | Edit an existing quest |
 | `/generate-narrative` | Generate narrative pool entries |
 | `/validate` | Run validation on generated content |
+| `/simulate` | Run dungeon simulation — playability, balance, render preview |
 
 ---
 

@@ -39,7 +39,7 @@ var stain_lifetime: int = -1  # How many turns the blood stain remains (-1 means
 func _init(
 	p_terrain: Terrain = null, p_obstacle: Obstacle = null, p_monster: Monster = null
 ) -> void:
-	terrain = p_terrain
+	terrain = p_terrain if p_terrain else Terrain.new()
 	obstacle = p_obstacle
 	monster = p_monster
 

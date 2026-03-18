@@ -26,5 +26,21 @@ Edit an existing dungeon file — add rooms, modify encounters, rebalance, add f
 5. **Write** updated JSON back to the same file
 
 6. **Validate**: Run `python3 validate.py dungeon {file}`
+   - Fix any schema errors and re-validate before proceeding
 
-7. **Fix any errors** and re-validate
+7. **Simulate**: Run the simulator to audit the edit's impact:
+   ```bash
+   python3 simulate.py {file} --level {player_level} --party-size 4 --runs 100 --json
+   ```
+   Check the JSON output for:
+   - **Connectivity**: Did the edit break any room connections? (new rooms need corridors)
+   - **Balance**: Did rebalancing hit the target difficulty? Is survival rate 50-95%?
+   - **Placement**: Are modified/added monsters properly spaced from corridor entries?
+   - **Loot**: Do modified rooms still meet loot expectations?
+
+   If issues are found, fix them in the JSON and re-simulate. Max 2 iterations.
+
+8. **Report** the before/after summary to the user:
+   - What changed (rooms added/modified, monsters adjusted, etc.)
+   - Simulation verdict and survival rate
+   - Any remaining warnings

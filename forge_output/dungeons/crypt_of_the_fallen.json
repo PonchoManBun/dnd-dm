@@ -81,19 +81,21 @@
           "w": 8,
           "h": 7,
           "type": "boss",
-          "narrative": "[color=red][b]GUARDIAN ENCOUNTER[/b][/color]\n\nA heavy iron door hangs ajar, revealing a reliquary lined with stone niches. Most are empty, their contents long plundered. But at the far end, a [color=cyan]skeleton in rusted chainmail[/color] stands motionless before the last sealed niche, its hollow eyes flickering with pale light. It raises a notched sword as you enter.\n\n[color=yellow]A knight of Saint Aldric, still guarding his post in death.[/color]",
+          "narrative": "[color=red][b]GUARDIAN ENCOUNTER[/b][/color]\n\nA heavy iron door hangs ajar, revealing a reliquary lined with stone niches. Most are empty, their contents long plundered. But at the far end, a [color=cyan]skeleton in rusted chainmail[/color] stands motionless before the last sealed niche, joined by a second skeletal figure crouching behind a toppled pillar. Their hollow eyes flicker with pale light as you enter.\n\n[color=yellow]The knights of Saint Aldric still guard their post in death.[/color]",
           "monsters": [
-            {"slug": "skeleton", "x": 25, "y": 6}
+            {"slug": "skeleton", "x": 25, "y": 6},
+            {"slug": "skeleton", "x": 24, "y": 8}
           ],
           "items": [
-            {"slug": "longsword", "x": 26, "y": 8}
+            {"slug": "longsword", "x": 26, "y": 8},
+            {"slug": "apple", "x": 22, "y": 5}
           ],
           "choices": [
             {"text": "Draw your weapon and fight!", "action": "combat"},
             {"text": "Kneel and invoke Saint Aldric's name.", "action": "persuasion_check", "dc": 12}
           ],
           "on_clear": {
-            "narrative": "[color=green]The skeletal guardian crumbles. In the niche behind it, you find stairs descending deeper into the crypt. Whatever darkness consumed this place lies below.[/color]"
+            "narrative": "[color=green]The skeletal guardians crumble to dust. In the niche behind them, you find stairs descending deeper into the crypt. Whatever darkness consumed this place lies below.[/color]"
           },
           "stairs_down": true
         }
@@ -134,13 +136,12 @@
           "w": 8,
           "h": 7,
           "type": "combat",
-          "narrative": "Six stone sarcophagi line this chamber in two rows, their lids carved with the likenesses of armored knights. Two lids have been pushed aside. [color=red]Faint scratching echoes[/color] from within the opened tombs — the rats have found their way down here too, nesting among the bones of the dead.",
+          "narrative": "Six stone sarcophagi line this chamber in two rows, their lids carved with the likenesses of armored knights. One lid has been pushed aside from within. [color=red]Bony hands grip the edge[/color] as a skeletal warrior drags itself free of its resting place, empty eyes burning with unholy purpose.",
           "monsters": [
-            {"slug": "giant_rat", "x": 14, "y": 7},
-            {"slug": "giant_rat", "x": 13, "y": 9}
+            {"slug": "skeleton", "x": 14, "y": 7}
           ],
           "items": [
-            {"slug": "arrow", "x": 11, "y": 6, "quantity": 3}
+            {"slug": "arrow", "x": 11, "y": 6, "quantity": 5}
           ]
         },
         {
@@ -151,14 +152,17 @@
           "w": 6,
           "h": 5,
           "type": "trap",
-          "narrative": "The ceiling here is fractured, [color=gray]spiderweb cracks radiating from a central point[/color] where something struck from above — or below. Loose stones and rubble litter the floor. The passage narrows dangerously, and dust sifts down with every footstep.",
+          "narrative": "The ceiling here is fractured, [color=gray]spiderweb cracks radiating from a central point[/color] where something struck from above. Loose stones and rubble litter the floor. The passage narrows dangerously, and dust sifts down with every footstep.",
           "trap": {
             "type": "falling_rubble",
             "dc": 12,
             "damage_dice": 1,
             "damage_sides": 6,
             "damage_type": "bludgeoning"
-          }
+          },
+          "items": [
+            {"slug": "banana", "x": 12, "y": 15}
+          ]
         },
         {
           "id": 3,
@@ -183,20 +187,22 @@
           "w": 8,
           "h": 7,
           "type": "boss",
-          "narrative": "[color=red][b]SHADOW ENCOUNTER[/b][/color]\n\nA dark altar dominates this chamber, carved from a single block of obsidian. Unholy runes pulse with [color=purple]faint violet light[/color] along its surface. As you approach, the torchlight dims and the temperature plummets. A [color=purple]formless darkness[/color] peels itself from the wall behind the altar — a shadow, the echo of a soul consumed by whatever corrupted this place.\n\n[color=yellow]The source of the crypt's corruption seems to lie even deeper below.[/color]",
+          "narrative": "[color=red][b]DARK SHRINE ENCOUNTER[/b][/color]\n\nA dark altar dominates this chamber, carved from a single block of obsidian. Unholy runes pulse with [color=purple]faint violet light[/color] along its surface. As you approach, the torchlight dims and the temperature plummets. A [color=red]shambling corpse[/color] in a tattered priest's robe rises from behind the altar, and a [color=red]skeletal acolyte[/color] kneels before it, rising to defend its corrupted master.\n\n[color=yellow]The source of the crypt's corruption lies even deeper below.[/color]",
           "monsters": [
-            {"slug": "shadow", "x": 25, "y": 6}
+            {"slug": "zombie", "x": 25, "y": 6},
+            {"slug": "skeleton", "x": 24, "y": 8}
           ],
           "items": [
-            {"slug": "orange_scroll", "x": 26, "y": 8}
+            {"slug": "orange_scroll", "x": 26, "y": 8},
+            {"slug": "food_ration", "x": 22, "y": 5}
           ],
           "choices": [
-            {"text": "Attack the shadow before it strikes!", "action": "combat"},
-            {"text": "Hurl your torch at it and run past.", "action": "stealth_check", "dc": 13},
+            {"text": "Attack the undead before they strike!", "action": "combat"},
+            {"text": "Hurl your torch at the zombie and run past.", "action": "stealth_check", "dc": 13},
             {"text": "Hold up a holy symbol and pray.", "action": "persuasion_check", "dc": 14}
           ],
           "on_clear": {
-            "narrative": "[color=green]The shadow dissipates with a thin wail. Behind the altar, a hidden staircase spirals downward. Cold air rises from below, carrying a faint, rhythmic sound — like breathing.[/color]"
+            "narrative": "[color=green]The undead crumble and the altar's violet light fades. Behind the altar, a hidden staircase spirals downward. Cold air rises from below, carrying a faint, rhythmic sound — like breathing.[/color]"
           },
           "stairs_down": true
         }
@@ -225,7 +231,10 @@
           "h": 5,
           "type": "entrance",
           "narrative": "The air here is [color=cyan]bitterly cold[/color]. Frost clings to the stone walls in crystalline patterns, and your breath mists before you. The stairs behind you feel distant, as though the crypt itself has swallowed you. Ahead, a deep rhythmic [color=gray]thud... thud... thud...[/color] reverberates through the stone — like a heartbeat.",
-          "stairs_up": true
+          "stairs_up": true,
+          "items": [
+            {"slug": "food_ration", "x": 4, "y": 9}
+          ]
         },
         {
           "id": 1,
@@ -235,7 +244,7 @@
           "w": 8,
           "h": 7,
           "type": "combat",
-          "narrative": "Two stone plinths flank the passage, each bearing the remains of an armored figure. These were the crypt's honor guard in life — elite knights sworn to protect what lies beyond. In death, one has risen as a [color=red]shambling corpse in dented plate[/color], its jaw hanging loose, its grip still locked around a notched blade.",
+          "narrative": "Two stone plinths flank the passage, each bearing the remains of an armored figure. These were the crypt's honor guard in life — elite knights sworn to protect what lies beyond. One has risen as a [color=red]shambling corpse in dented plate[/color], its jaw hanging loose, its grip still locked around a notched blade. The other lies still — for now.",
           "monsters": [
             {"slug": "zombie", "x": 14, "y": 8}
           ],
@@ -254,9 +263,9 @@
           "narrative": "Glowing sigils are carved into the floor of this small chamber, forming a [color=cyan]protective ward[/color] that was once meant to keep the darkness sealed below. The wards have cracked and faded, but some still hold a faint charge. [color=gray]Stepping on the wrong sigil could release the stored energy.[/color]",
           "trap": {
             "type": "glyph_of_warding",
-            "dc": 12,
-            "damage_dice": 2,
-            "damage_sides": 4,
+            "dc": 11,
+            "damage_dice": 1,
+            "damage_sides": 6,
             "damage_type": "radiant"
           },
           "items": [
@@ -280,27 +289,27 @@
         },
         {
           "id": 4,
-          "name": "The Crypt Heart — Ghoul's Sanctum",
+          "name": "The Crypt Heart — Sanctum of the Ghoul",
           "x": 19,
           "y": 2,
           "w": 10,
           "h": 8,
           "type": "boss",
-          "narrative": "[color=red][b]FINAL BOSS — THE GHOUL[/b][/color]\n\nThe heartbeat grows deafening as you enter a vast, vaulted chamber. At its center, a [color=red]gaunt, hunched figure[/color] crouches over a pile of gnawed bones — a ghoul, the source of the corruption that has seeped through the crypt. Its elongated claws scrape against stone as it turns to face you, lips pulled back from yellowed fangs.\n\nBehind it, a [color=cyan]shimmering portal[/color] pulses in an archway carved with the prayers of Saint Aldric — the way out, if you can reach it.\n\n[color=yellow]Defeat the Ghoul or find another way past to escape the Crypt of the Fallen![/color]",
+          "narrative": "[color=red][b]FINAL BOSS — THE FALLEN KNIGHT[/b][/color]\n\nThe heartbeat grows deafening as you enter a vast, vaulted chamber. At its center, a grand sarcophagus lies shattered open. The creature crouching over a pile of gnawed bones is no mere skeleton — a [color=red]ghoul[/color], the corrupted remains of the order's greatest champion. Its elongated claws scrape against stone as it turns to face you, lips pulled back from yellowed fangs, eyes burning with unholy hunger.\n\nBehind it, a [color=cyan]shimmering portal[/color] pulses in an archway carved with the prayers of Saint Aldric — the way out, if you can reach it.\n\n[color=yellow]Defeat the Fallen Knight to cleanse the Crypt and escape![/color]",
           "monsters": [
             {"slug": "ghoul", "x": 25, "y": 6}
           ],
           "items": [
             {"slug": "crested_helm", "x": 27, "y": 8},
-            {"slug": "food_ration", "x": 26, "y": 3}
+            {"slug": "longsword", "x": 26, "y": 3}
           ],
           "choices": [
             {"text": "Charge in and fight the ghoul!", "action": "combat"},
             {"text": "Hurl food from your pack to distract it, then dash for the portal.", "action": "stealth_check", "dc": 14},
-            {"text": "Invoke Saint Aldric's blessing to weaken the undead.", "action": "persuasion_check", "dc": 16}
+            {"text": "Invoke Saint Aldric's blessing to weaken the undead.", "action": "religion_check", "dc": 16}
           ],
           "on_clear": {
-            "narrative": "[color=green]The ghoul lets out a terrible shriek as it falls, its body crumbling to dust. The rhythmic heartbeat ceases. The frost melts from the walls. The portal behind flares with golden light — Saint Aldric's ward, restored at last.\n\nYou step through, leaving the Crypt of the Fallen behind. The darkness is broken. The dead may finally rest.[/color]",
+            "narrative": "[color=green]The ghoul lets out a terrible shriek as it crumbles to dust. The rhythmic heartbeat ceases. The frost melts from the walls and warmth returns to the stone. The portal behind the shattered sarcophagus flares with golden light — Saint Aldric's ward, restored at last.\n\nYou step through, leaving the Crypt of the Fallen behind. The darkness is broken. The dead may finally rest.[/color]",
             "victory": true
           }
         }

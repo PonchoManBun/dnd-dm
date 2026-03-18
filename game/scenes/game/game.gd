@@ -611,6 +611,8 @@ func _get_effect_callable(effect: ActionEffect) -> Callable:
 			await _handle_thrown_item_effect(effect as ThrownItemEffect)
 		elif effect is AreaOfEffectDamageEffect:
 			await _handle_aoe_effect(effect as AreaOfEffectDamageEffect)
+		elif effect is PickupEffect:
+			pass  # Pickup is handled by game logic; no visual effect needed
 		else:
 			Log.e("Unknown effect type: %s" % effect)
 
@@ -816,7 +818,7 @@ func _update_reticle() -> void:
 		return
 
 	var terrain := World.current_map.get_terrain(tile_pos)
-	if terrain.type == Terrain.Type.EMPTY:
+	if not terrain or terrain.type == Terrain.Type.EMPTY:
 		_hide_reticle()
 		return
 

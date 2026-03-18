@@ -372,7 +372,7 @@ func get_wall_tile(pos: Vector2i, map: Map) -> StringName:
 
 
 func is_wall_like(terrain: Terrain) -> bool:
-	return terrain.type == Terrain.Type.DUNGEON_WALL
+	return terrain and terrain.type == Terrain.Type.DUNGEON_WALL
 
 
 func get_obstacle_tile(obstacle: Obstacle) -> StringName:

@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-18T03:08:30",
+  "content_type": "dungeon",
+  "file": "forge_output/dungeons/crypt_of_the_fallen.json",
+  "dm_archetype": "storyteller",
+  "player_level": 1,
+  "party_size": 4,
+  "validation": "passed",
+  "simulation": {
+    "verdict": "PLAYABLE",
+    "survival_rate": 0.66,
+    "avg_hp_remaining_pct": 0.361,
+    "avg_deaths": 2.13,
+    "deadliest_room": "F2R4 (The Crypt Heart - Sanctum of the Ghoul)",
+    "deadliest_tpk_rate": 0.15,
+    "warnings": 2,
+    "iterations": 3
+  },
+  "design_notes": {
+    "theme": "Crumbling crypt beneath the ruined Chapel of Saint Aldric, undead-themed. Knights who guarded the chapel fell to a creeping darkness. The dead stir in their tombs and a ghoul -- the corrupted champion of the order -- waits at the heart of the crypt.",
+    "difficulty_curve": "wave",
+    "encounter_budget": "Standard 4-player, level 1: Easy=100, Medium=200, Hard=300, Deadly=400",
+    "monster_placement_review": [
+      "F1R0 (Shattered Vestibule): Safe entrance with dagger left by a previous adventurer. Rich Storyteller narrative about Saint Aldric frescoes.",
+      "F1R1 (Rat-Gnawed Cloister): 1 giant_rat nesting in the far corner of an old refectory. Easy encounter (25 adj XP). Rat positioned center-back of room, 4+ tiles from corridor entry.",
+      "F1R2 (Defiled Prayer Alcove): Trap room -- poison gas DC 10, 1d4 poison. Setback-tier trap, gentle for floor 1.",
+      "F1R3 (Monk's Quarters): Treasure room with food ration and arrows. Narrative: hidden supplies under an overturned cot.",
+      "F1R4 (The Sealed Reliquary): Floor 1 boss -- 2 skeletons guarding the last sealed niche. Easy (150 adj XP). Skeletons at back of room (x:25,y:6 and x:24,y:8), 5+ tiles from entrance. Stairs down behind them.",
+      "F2R0 (Ossuary Landing): Safe entrance with lore inscription. Orange as minor pickup.",
+      "F2R1 (Hall of Sarcophagi): 1 skeleton emerging from an opened sarcophagus. Easy (50 adj XP). Positioned center of room.",
+      "F2R2 (Collapsed Passage): Trap room -- falling rubble DC 12, 1d6 bludgeoning.",
+      "F2R3 (Knight Commander's Tomb): Treasure room -- bronze armor, soldier helm, food ration. The commander's gear, too heavy for previous looters.",
+      "F2R4 (The Shadow Shrine): Floor 2 boss -- zombie (corrupted priest) + skeleton (acolyte) at dark altar. Easy (150 adj XP). Monsters at back of room near altar. Stairs down behind altar.",
+      "F3R0 (The Cold Threshold): Safe entrance with escalating atmosphere. Frost and heartbeat motif. Food ration pickup.",
+      "F3R1 (The Fallen Honor Guard): 1 zombie -- risen honor guard in dented plate. Easy (50 adj XP). Positioned center of room.",
+      "F3R2 (Warded Antechamber): Trap room -- glyph of warding DC 11, 1d6 radiant. Failing wards that once sealed the crypt heart.",
+      "F3R3 (Saint Aldric's Reliquary): Best treasure room -- gold armor, tufted helm, gold. The true reliquary the skeleton on Floor 1 was guarding.",
+      "F3R4 (Sanctum of the Ghoul): FINAL BOSS -- ghoul (CR 1, 200 XP). Medium encounter. Ghoul at back of 10x8 room (x:25,y:6), 6+ tiles from entrance. Crested helm and longsword as boss loot. Portal escape as victory condition. Three choices: fight, stealth DC 14, religion DC 16."
+    ],
+    "loot_summary": "Floor 1: 1 dagger, 1 apple, 1 orange, 1 food ration, 5 arrows, 1 longsword, 1 apple (8 items, all common). Floor 2: 1 orange, 5 arrows, 1 banana, 1 bronze armor, 1 soldier helm, 1 food ration, 1 orange scroll, 1 food ration (9 items, mostly common with 1 uncommon). Floor 3: 1 food ration, 1 dagger, 1 green scroll, 1 gold armor, 1 tufted helm, 3 gold, 1 crested helm, 1 longsword (10 items, common through rare).",
+    "fixes_applied": [
+      "Iteration 1: Replaced shadow (CR 1/2) with zombie in Floor 2 boss -- shadow's Strength Drain was devastating level 1 parties (27% TPK in that room). Added second item to Floor 0 and Floor 1 boss rooms. Reduced Floor 1 combat from 2 skeletons to 1. Reduced Floor 2 combat from 2 zombies to 1. Reduced Floor 2 trap from 2d4 to 1d6 damage. Survival rose from 29% to 50%.",
+      "Iteration 2: Added giant_rat to Floor 1 boss to reach Medium difficulty. BACKFIRED -- survival dropped to 25% due to 3-monster multiplier making the room too punishing after cumulative attrition.",
+      "Iteration 3: Reverted Floor 1 boss to 2 monsters (zombie + skeleton). Reduced Floor 0 combat from 2 giant_rats to 1. Accepted Easy boss warnings on Floors 0-1 to preserve overall dungeon survivability. Final survival: 66%."
+    ]
+  }
+}

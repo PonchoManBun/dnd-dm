@@ -20,7 +20,13 @@ Run validation on generated content to ensure it matches game schemas.
    - If validation fails, list all errors clearly
    - Suggest fixes for common issues (invalid slugs, out-of-bounds positions, missing fields)
 
-4. **Optionally validate all**: If `$ARGUMENTS` is "all", validate everything in `../forge_output/`:
+4. **For dungeons, run simulation**:
+   ```bash
+   python3 simulate.py $FILE_PATH --level 1 --party-size 4 --runs 50
+   ```
+   Report simulation results alongside validation results.
+
+5. **Optionally validate all**: If `$ARGUMENTS` is "all", validate everything in `../forge_output/`:
    - All `.json` files in `dungeons/` as type `dungeon`
    - All `.json` files in `npcs/` as type `npc`
    - All `.json` files in `narrative/` (excluding `pools/`) as type `quest`

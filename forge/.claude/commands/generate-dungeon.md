@@ -44,17 +44,61 @@ Generate a complete dungeon JSON file matching the DungeonLoader schema.
    - **Environmental storytelling**: Every room tells part of the dungeon's story
    - **Loot scales with depth**: Common on floor 1, uncommon on floor 2, rare on floor 3
 
-7. **Post-generation review** — For each combat room, answer:
+7. **Write output** to `../forge_output/dungeons/{dungeon_name}.json`
+
+8. **Validate**: Run `python3 validate.py dungeon ../forge_output/dungeons/{dungeon_name}.json`
+   - If validation fails, fix schema errors and re-write. Do not proceed to simulation until validation passes.
+
+9. **Simulate & Fix Loop** — This is the core quality gate. Run the simulator, read its report, and fix issues iteratively:
+
+   ```bash
+   python3 simulate.py ../forge_output/dungeons/{dungeon_name}.json --level {player_level} --party-size {party_size} --runs 100 --json
+   ```
+
+   Parse the JSON output and check each category. Fix issues in the dungeon JSON directly, re-write, and re-simulate until clean. **Maximum 3 iterations** — if it still fails after 3 attempts, report the remaining issues to the user.
+
+   ### 9a. Connectivity
+   - If any room is unreachable: add or fix corridor definitions so all rooms connect
+   - If stairs_down is unreachable: ensure the room with stairs_down has a corridor path from entrance
+   - If cross-floor stairs are missing: add `stairs_down: true` to the last significant room on each non-final floor
+
+   ### 9b. Encounter Balance
+   - If survival rate < 50%: the dungeon is too hard. Reduce monster count or swap to lower CR creatures in the deadliest room(s)
+   - If survival rate > 95%: the dungeon may be too easy. Consider adding one more monster or upgrading CR in combat rooms
+   - If a boss room is rated "Easy" or "Safe": increase the boss CR or add minions until it reaches at least "Medium"
+   - If any encounter exceeds 1.5x Deadly threshold: remove a monster or swap to lower CR
+   - If CR 2+ monsters appear vs level 1 party: swap to CR 0.25-0.5 creatures unless it's a deliberate "run away" encounter
+
+   ### 9c. Monster Placement
+   - If a monster is < 2 tiles from a corridor entry: move it deeper into the room
+   - If a melee monster is < 3 tiles from entry: reposition to center or back of room
+   - If a ranged monster is < 4 tiles from entry: move to far wall
+   - If a boss monster is < 5 tiles from entry: move to center-back of the room
+
+   ### 9d. Loot Economy
+   - If a combat room has 0 items: add 1-2 items thematically appropriate to the monsters (weapons they carry, ammo)
+   - If a treasure room has < 2 items: add items scaled to floor depth
+   - If a boss room has < 2 items: add the floor's best item + consumables
+   - If a boss room is missing `on_clear`: add victory narrative and `"victory": true` for final boss
+
+   ### 9e. Render Check (optional but recommended)
+   After fixing, render the pixel map to visually verify room layout:
+   ```bash
+   python3 simulate.py ../forge_output/dungeons/{dungeon_name}.json --render /tmp/{dungeon_name}_preview.png --runs 1
+   ```
+   Read the image. Check that:
+   - Rooms are visually distinct (not merged or overlapping)
+   - Corridors connect the right rooms with clean L-shaped paths
+   - Entities (red=monsters, blue=items, green/yellow=stairs) are in sensible positions
+
+10. **Post-generation review** — For each combat room, answer:
    - Does each monster's position make narrative sense?
    - Can the party enter and see threats before engaging?
    - Is there tactical variety? (not just "3 goblins in a line")
    - Does the encounter XP fall within the target difficulty for this room?
    - Fix anything that doesn't pass review.
 
-8. **Write output** to `../forge_output/dungeons/{dungeon_name}.json`
-
-9. **Validate**: Run `python3 validate.py dungeon ../forge_output/dungeons/{dungeon_name}.json`
-
-10. **Fix any errors** and re-validate until clean
-
-11. **Write manifest** to `../forge_output/manifests/gen_{timestamp}.json` with design notes including monster placement rationale (see design guide section 10)
+11. **Write manifest** to `../forge_output/manifests/gen_{timestamp}.json` with design notes including:
+    - Monster placement rationale (see design guide section 10)
+    - Simulation results summary: survival rate, deadliest room, warning count
+    - Any fixes applied during the simulate-fix loop
