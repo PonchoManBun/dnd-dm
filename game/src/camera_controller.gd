@@ -29,14 +29,18 @@ func _ready() -> void:
 	# Enable position smoothing after a short delay
 	await get_tree().process_frame
 
-	# Get HUD reference and calculate offset
+	# Calculate camera offset to center player between both UI panels.
+	# Left HUD panel covers the left side, DM panel covers the right.
+	# Offset = (left_width - right_width) / 2 shifts the center point.
+	var left_width := 136.0  # HUD LeftPanel width
+	var right_width := 156.0  # DM Panel width
+	await get_tree().process_frame  # Wait for layout
 	var hud := get_tree().get_first_node_in_group("hud")
 	if hud:
 		var left_panel: Control = hud.get_node("%LeftPanel")
 		if left_panel:
-			# Get the actual width of the left panel
-			await get_tree().process_frame  # Wait for layout
-			hud_offset = left_panel.size.x / 2.0
+			left_width = left_panel.size.x
+	hud_offset = (left_width - right_width) / 2.0
 
 	# Wait for World initialization and connect to map changes
 	if not World.world_initialized.is_connected(_on_world_initialized):
