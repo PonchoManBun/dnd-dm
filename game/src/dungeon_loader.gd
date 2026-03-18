@@ -132,6 +132,8 @@ static func _carve_room(map: Map, room_data: RoomData) -> void:
 		for y in range(room_data.y, room_data.y + room_data.h):
 			if x >= 0 and x < map.width and y >= 0 and y < map.height:
 				var cell := map.get_cell(Vector2i(x, y))
+				if not cell.terrain:
+					cell.terrain = Terrain.new()
 				cell.terrain.type = Terrain.Type.DUNGEON_FLOOR
 				cell.area_type = MapCell.Type.ROOM
 				cell.room_id = room_data.id
@@ -148,6 +150,8 @@ static func _carve_corridor(map: Map, from_room: RoomData, to_room: RoomData) ->
 	while x != to_center.x:
 		if x >= 0 and x < map.width and from_center.y >= 0 and from_center.y < map.height:
 			var cell := map.get_cell(Vector2i(x, from_center.y))
+			if not cell.terrain:
+				cell.terrain = Terrain.new()
 			if cell.terrain.type == Terrain.Type.DUNGEON_WALL or cell.terrain.type == Terrain.Type.EMPTY:
 				cell.terrain.type = Terrain.Type.DUNGEON_FLOOR
 				cell.area_type = MapCell.Type.CORRIDOR
@@ -158,6 +162,8 @@ static func _carve_corridor(map: Map, from_room: RoomData, to_room: RoomData) ->
 	while y != to_center.y + y_dir:
 		if to_center.x >= 0 and to_center.x < map.width and y >= 0 and y < map.height:
 			var cell := map.get_cell(Vector2i(to_center.x, y))
+			if not cell.terrain:
+				cell.terrain = Terrain.new()
 			if cell.terrain.type == Terrain.Type.DUNGEON_WALL or cell.terrain.type == Terrain.Type.EMPTY:
 				cell.terrain.type = Terrain.Type.DUNGEON_FLOOR
 				cell.area_type = MapCell.Type.CORRIDOR

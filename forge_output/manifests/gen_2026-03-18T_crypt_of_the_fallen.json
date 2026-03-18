@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-18T12:00:00",
+  "content_type": "dungeon",
+  "file": "forge_output/dungeons/crypt_of_the_fallen.json",
+  "dm_archetype": "storyteller",
+  "player_level": 1,
+  "party_size": 1,
+  "validation": "passed",
+  "design_notes": {
+    "theme": "Corrupted crypt beneath the Chapel of Saint Aldric. A creeping darkness seeped up from below, killing the knights and monks who served there. The dead now stir, and a ghoul — the source of the corruption — nests at the crypt's heart.",
+    "narrative_continuity": {
+      "floor_1": "The Chapel Undercroft — monks' living quarters overrun by vermin, a skeletal knight still guarding the reliquary. Tells the story of the chapel's fall.",
+      "floor_2": "The Burial Vaults — the knights' tombs, now profaned. Rats nest in sarcophagi. A shadow lingers at an unholy altar, hinting at the corruption's source.",
+      "floor_3": "The Crypt Heart — the deepest sanctum. Broken wards, a risen honor guard, and the ghoul itself: the corruption that consumed Saint Aldric's faithful."
+    },
+    "difficulty_curve": "wave",
+    "encounter_budget": "Solo player, level 1: Easy=25 XP, Medium=50 XP, Hard=75 XP, Deadly=100 XP. By floor 3, player expected at level 2: Easy=50, Medium=100, Hard=150, Deadly=200.",
+    "monster_placement_review": [
+      "Floor 1, Room 0 (Shattered Vestibule): Safe entrance per Storyteller archetype. Rich narrative establishing the Chapel of Saint Aldric backstory. One dagger as environmental loot from a previous adventurer.",
+      "Floor 1, Room 1 (Rat-Gnawed Cloister): 1 giant_rat (CR 1/8, 25 XP = Easy). Rat nests in far corner of former dining hall among refuse. 4 tiles from entry — player sees it before engaging. Pack animal nesting behavior makes narrative sense.",
+      "Floor 1, Room 2 (Defiled Prayer Alcove): Trap room — poison gas from pressure plate (DC 10, 1d4 poison). Setback severity. Reward: orange (healing) for observant players. No monsters.",
+      "Floor 1, Room 3 (Monk's Quarters): Treasure room — food ration and arrows hidden under cot. Common items appropriate for floor 1 (80% common loot table).",
+      "Floor 1, Room 4 (The Sealed Reliquary): Boss — 1 skeleton (CR 1/4, 50 XP = Medium). Skeletal knight guarding the last sealed niche, positioned center-back (5 tiles from entry). Narrative: still fulfilling his duty in death. Choices: fight or invoke the saint's name (persuasion DC 12). Longsword drop makes sense — the knight's weapon. stairs_down here.",
+      "Floor 2, Room 0 (Ossuary Landing): Safe entrance. Environmental storytelling — inscribed warning. Orange as minor loot (previous explorer's supply).",
+      "Floor 2, Room 1 (Hall of Sarcophagi): 2 giant_rats (CR 1/8 each, 50 raw XP, x1.5 = 75 adj XP = Hard). Rats nesting in opened sarcophagi — pack animals clustered in center-back. Both 4+ tiles from entry. Appropriate escalation for floor 2.",
+      "Floor 2, Room 2 (Collapsed Passage): Trap room — falling rubble (DC 12, 1d6 bludgeoning). Dangerous severity for the floor. No monsters. Environmental description telegraphs danger.",
+      "Floor 2, Room 3 (Knight Commander's Tomb): Treasure room — bronze armor, soldier helm, food ration. Uncommon-tier items (floor 2 = 50% common, 40% uncommon). Named tomb adds lore depth.",
+      "Floor 2, Room 4 (The Shadow Shrine): Boss — 1 shadow (CR 1/2, 100 XP = Deadly for L1). Shadow manifests from wall behind obsidian altar, center-back (5 tiles from entry). Three choices including stealth and prayer options. Deadly is appropriate for a floor 2 boss with escape options. Orange scroll drop (utility item).",
+      "Floor 3, Room 0 (The Cold Threshold): Safe entrance. Environmental buildup — frost, heartbeat rhythm. Maximizes tension before final floor.",
+      "Floor 3, Room 1 (The Fallen Honor Guard): 1 zombie (CR 1/4, 50 XP = Medium for L1, Easy for L2). Risen honor guard on stone plinth. 5 tiles from entry. Player expected to be level 2 by now, so Medium becomes Easy. Dagger drop from the honor guard.",
+      "Floor 3, Room 2 (Warded Antechamber): Trap room — glyph of warding (DC 12, 2d4 radiant). Thematic: cracked protective wards. Green scroll reward for surviving/disarming.",
+      "Floor 3, Room 3 (Saint Aldric's Reliquary): Treasure room — gold armor, tufted helm, gold x3. Rare-tier items (floor 3 = 25% rare). Best non-boss loot in the dungeon. Narratively, this is what the chapel was protecting.",
+      "Floor 3, Room 4 (The Crypt Heart — Ghoul's Sanctum): Final boss — 1 ghoul (CR 1, 200 XP = Deadly for L1, Deadly for L2). Ghoul positioned center-back (6 tiles from entry). The source of the crypt's corruption. Three choices: fight, distract with food and run, or invoke Saint Aldric's blessing. Crested helm + food ration drops. Victory triggers dungeon completion and narrative resolution."
+    ],
+    "loot_summary": {
+      "floor_1": "1 dagger (common), 1 apple (common), 1 orange (common), 1 food ration (common), 5 arrows (common), 1 longsword (common) — 6 items, all common",
+      "floor_2": "1 orange (common), 3 arrows (common), 1 bronze armor (uncommon), 1 soldier helm (uncommon), 1 food ration (common), 1 orange scroll (uncommon) — 6 items, mixed common/uncommon",
+      "floor_3": "1 dagger (common), 1 green scroll (uncommon), 1 gold armor (rare), 1 tufted helm (uncommon), 3 gold (currency), 1 crested helm (rare), 1 food ration (common) — 7 items, mixed with rare boss-area loot",
+      "total": "19 items + currency across 3 floors, scaling from common to rare with depth"
+    },
+    "tactical_notes": {
+      "cover_and_chokepoints": "Corridor connections create natural chokepoints. Sarcophagi in Floor 2 Room 1 provide partial cover. Altar in Floor 2 boss room creates tactical terrain.",
+      "approach_distance": "All monsters placed 4+ tiles from nearest corridor connection point, preventing spawn-into-death. Boss monsters 5-6 tiles from entries.",
+      "escape_options": "Every boss room has non-combat choices (persuasion, stealth). Main path exits are never trapped."
+    }
+  }
+}

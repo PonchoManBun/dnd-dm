@@ -42,6 +42,7 @@ func _start_with_defaults() -> void:
 	data.initialize_class_features()
 	World.set_meta("player_character_data", data)
 	World.set_meta("dm_archetype", 0)
+	World.set_meta("use_test_dungeon", true)
 	get_tree().change_scene_to_file("res://scenes/game/game.tscn")
 
 

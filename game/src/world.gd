@@ -109,10 +109,8 @@ func initialize() -> void:
 	current_map = map
 
 	# Add the player to the main entrance
-	assert(
-		map.add_monster_at_stairs(player, Obstacle.Type.STAIRS_UP),
-		"Failed to add player to main entrance"
-	)
+	if not map.add_monster_at_stairs(player, Obstacle.Type.STAIRS_UP):
+		Log.e("Failed to add player to main entrance")
 
 	# Compute FOV before the first turn
 	update_vision()
@@ -150,10 +148,8 @@ func initialize_from_dungeon(path: String) -> void:
 	current_map = maps[current_floor_data.id]
 
 	# Add the player at the entrance (stairs_up position)
-	assert(
-		current_map.add_monster_at_stairs(player, Obstacle.Type.STAIRS_UP),
-		"Failed to add player to dungeon entrance"
-	)
+	if not current_map.add_monster_at_stairs(player, Obstacle.Type.STAIRS_UP):
+		Log.e("Failed to add player to dungeon entrance")
 
 	# Compute FOV before the first turn
 	update_vision()
@@ -545,10 +541,8 @@ func handle_level_transition(destination_level: String, coming_from_stairs: Obst
 		if coming_from_stairs == Obstacle.Type.STAIRS_UP
 		else Obstacle.Type.STAIRS_UP
 	)
-	assert(
-		current_map.add_monster_at_stairs(player, target_stairs_type),
-		"Failed to add player at stairs"
-	)
+	if not current_map.add_monster_at_stairs(player, target_stairs_type):
+		Log.e("Failed to add player at stairs")
 
 	# Update FOV for new position
 	var player_pos := current_map.find_monster_position(player)
