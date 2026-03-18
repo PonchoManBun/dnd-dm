@@ -22,3 +22,13 @@ game/screenshots/
 
 # Claude Code local config
 .claude/
+
+# Godot
+game/.godot/
+*.import
+
+# Playwright MCP (browser test artifacts)
+.playwright-mcp/
+
+# Logs
+logs/
