@@ -2,9 +2,9 @@ class_name VillageRenderer
 extends Node2D
 
 ## Renders the village using TileMapLayers.
-## 6 layers: ground (world: floor-2 grass, floor-1 stone), floor (world: floor-3 wood),
-## walls (world: wall-11), furniture (world: decor), decoration (indoor), objects (outdoor).
-## Supports both outdoor terrain and visible building interiors.
+## 6 layers: ground (world: floor-5 grass, floor-6 stone), floor (world: floor-16 wood),
+## walls (world: wall-4), furniture (world: decor), decoration (indoor), objects (outdoor).
+## Tile blocks matched to DawnLike Town.tmx reference.
 
 var ground_layer: TileMapLayer
 var floor_layer: TileMapLayer
@@ -14,18 +14,18 @@ var decoration_layer: TileMapLayer  # indoor-atlas items (shelves, beds, carpets
 var objects_layer: TileMapLayer
 var dust_motes: Array[Node2D] = []
 
-# Ground tile variants for visual variety — vibrant green grass (Floor block 2)
+# Ground tile — vibrant green grass (Floor block 5, matches Town.tmx)
 const _GROUND_VARIANTS: Array[StringName] = [
-	&"floor-2-nsew", &"floor-2-nsew", &"floor-2-nsew",
+	&"floor-5-nsew", &"floor-5-nsew", &"floor-5-nsew",
 ]
 
-# Floor tile variants for indoor variety — warm wood (Floor block 3)
+# Floor tile — warm wood planks (Floor block 16, matches Town.tmx)
 const _FLOOR_VARIANTS: Array[StringName] = [
-	&"floor-3-nsew", &"floor-3-nsew", &"floor-3-nsew",
+	&"floor-16-nsew", &"floor-16-nsew", &"floor-16-nsew",
 ]
 
-# Stone path tile — gray cobblestone (Floor block 1)
-const _STONE_PATH_TILE: StringName = &"floor-1-nsew"
+# Stone path tile — gray cobblestone (Floor block 6, no blue artifacts)
+const _STONE_PATH_TILE: StringName = &"floor-6-nsew"
 
 # Fallback furniture tile mappings (used when no tile_legend atlas info)
 const _FALLBACK_CHAR_TILES: Dictionary = {
@@ -122,19 +122,19 @@ func render_village(village_map: RefCounted) -> void:
 			var is_wall_like: bool = legend.get("wall_like", false) if not legend.is_empty() else (ch == "#")
 			var atlas: String = legend.get("atlas", "") if not legend.is_empty() else ""
 
-			# --- Layer 1: Ground (always render base terrain) ---
-			if atlas == "world" and legend.get("walkable", false) and not legend.get("wall_like", false):
-				# World-atlas walkable: grass (floor-2), stone paths (floor-1), dirt
-				var tile_sn := StringName(legend.get("tile_name", "floor-2-nsew"))
+			# --- Layer 1: Ground (base terrain — grass outside, wood inside) ---
+			var inside_building: bool = village_map.is_inside_building(pos)
+			if inside_building and not is_wall_like:
+				# Inside buildings: render wood floor directly on ground layer
+				ground_layer.set_cell(pos, 0, WorldTiles.get_coords(_get_floor_tile(pos)))
+			elif atlas == "world" and legend.get("walkable", false) and not is_wall_like:
+				# Outdoor world-atlas walkable: grass, stone paths
+				var tile_sn := StringName(legend.get("tile_name", "floor-5-nsew"))
 				if ch == "w":
 					tile_sn = _get_ground_tile(pos)
 				ground_layer.set_cell(pos, 0, WorldTiles.get_coords(tile_sn))
-			elif atlas == "outdoor" and legend.get("walkable", false):
-				# Legacy outdoor walkable tiles (keep for compatibility)
-				var tile_sn := StringName(legend.get("tile_name", "floor-2-nsew"))
-				ground_layer.set_cell(pos, 0, WorldTiles.get_coords(_get_ground_tile(pos)))
 			else:
-				# Everything else: render grass underneath as base
+				# Default: grass underneath everything
 				ground_layer.set_cell(pos, 0, WorldTiles.get_coords(_get_ground_tile(pos)))
 
 			# --- Layer 2: Floor (wood tiles inside buildings) ---
@@ -197,40 +197,40 @@ func _get_wall_tile(pos: Vector2i, village_map: RefCounted, map_w: int, map_h: i
 
 	# All four directions
 	if n and s and e and w:
-		return &"wall-11-nsew"
+		return &"wall-4-nsew"
 	# Three directions
 	if n and s and e and not w:
-		return &"wall-11-nse"
+		return &"wall-4-nse"
 	if n and s and not e and w:
-		return &"wall-11-nsw"
+		return &"wall-4-nsw"
 	if n and not s and e and w:
-		return &"wall-11-new"
+		return &"wall-4-new"
 	if not n and s and e and w:
-		return &"wall-11-sew"
+		return &"wall-4-sew"
 	# Two directions
 	if n and s and not e and not w:
-		return &"wall-11-ns"
+		return &"wall-4-ns"
 	if not n and not s and e and w:
-		return &"wall-11-ew"
+		return &"wall-4-ew"
 	if n and e and not s and not w:
-		return &"wall-11-ne"
+		return &"wall-4-ne"
 	if n and w and not s and not e:
-		return &"wall-11-nw"
+		return &"wall-4-nw"
 	if s and e and not n and not w:
-		return &"wall-11-se"
+		return &"wall-4-se"
 	if s and w and not n and not e:
-		return &"wall-11-sw"
+		return &"wall-4-sw"
 	# One direction
 	if not n and not s and not w and e:
-		return &"wall-11-ew"
+		return &"wall-4-ew"
 	if not n and not s and w and not e:
-		return &"wall-11-ew"
+		return &"wall-4-ew"
 	if n and not s and not e and not w:
-		return &"wall-11-n"
+		return &"wall-4-n"
 	if not n and s and not e and not w:
-		return &"wall-11-ns"
+		return &"wall-4-ns"
 
-	return &"wall-11-lone"
+	return &"wall-4-lone"
 
 
 func _spawn_dust_motes(village_map: RefCounted) -> void:

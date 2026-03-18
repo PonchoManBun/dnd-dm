@@ -80,8 +80,8 @@ const _FALLBACK_LAYOUT: Array[String] = [
 ]
 
 const _FALLBACK_LEGEND: Dictionary = {
-	"w": {"name": "grass", "walkable": true, "atlas": "world", "tile_name": "floor-2-nsew"},
-	"d": {"name": "dirt_path", "walkable": true, "atlas": "world", "tile_name": "floor-1-nsew"},
+	"w": {"name": "grass", "walkable": true, "atlas": "world", "tile_name": "floor-5-nsew"},
+	"d": {"name": "dirt_path", "walkable": true, "atlas": "world", "tile_name": "floor-6-nsew"},
 	"t": {"name": "tree", "walkable": false, "atlas": "outdoor", "tile_name": "tree0-0"},
 	"#": {"name": "wall", "walkable": false, "wall_like": true},
 	".": {"name": "floor", "walkable": true, "atlas": "indoor", "tile_name": "indoor-77"},

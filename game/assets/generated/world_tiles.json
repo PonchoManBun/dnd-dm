@@ -45,15 +45,15 @@
       48,
       16
     ],
-    "floor-1-nsew": [
+    "floor-16-nsew": [
       64,
       16
     ],
-    "floor-2-nsew": [
+    "floor-5-nsew": [
       80,
       16
     ],
-    "floor-3-nsew": [
+    "floor-6-nsew": [
       96,
       16
     ],
@@ -73,55 +73,55 @@
       48,
       32
     ],
-    "wall-11-ew": [
+    "wall-4-ew": [
       64,
       32
     ],
-    "wall-11-lone": [
+    "wall-4-lone": [
       80,
       32
     ],
-    "wall-11-n": [
+    "wall-4-n": [
       96,
       32
     ],
-    "wall-11-ne": [
+    "wall-4-ne": [
       0,
       48
     ],
-    "wall-11-new": [
+    "wall-4-new": [
       16,
       48
     ],
-    "wall-11-ns": [
+    "wall-4-ns": [
       32,
       48
     ],
-    "wall-11-nse": [
+    "wall-4-nse": [
       48,
       48
     ],
-    "wall-11-nsew": [
+    "wall-4-nsew": [
       64,
       48
     ],
-    "wall-11-nsw": [
+    "wall-4-nsw": [
       80,
       48
     ],
-    "wall-11-nw": [
+    "wall-4-nw": [
       96,
       48
     ],
-    "wall-11-se": [
+    "wall-4-se": [
       0,
       64
     ],
-    "wall-11-sew": [
+    "wall-4-sew": [
       16,
       64
     ],
-    "wall-11-sw": [
+    "wall-4-sw": [
       32,
       64
     ],
