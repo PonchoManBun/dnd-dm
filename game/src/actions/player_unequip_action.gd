@@ -5,7 +5,7 @@ var item: Item
 
 
 func _init(p_item: Item) -> void:
-	super(World.player)
+	super(World.active_character)
 	item = p_item
 
 

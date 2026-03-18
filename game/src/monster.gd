@@ -251,8 +251,12 @@ func get_next_step_towards_player(
 
 
 func is_hostile_to(other: Monster) -> bool:
-	# If dealing with the player, check their faction affinity
-	if other == World.player:
+	# Party members are never hostile to each other
+	if World.is_party_member(self) and World.is_party_member(other):
+		return false
+
+	# If dealing with a party member, check their faction affinity
+	if World.is_party_member(other):
 		if hates_player:
 			return true
 

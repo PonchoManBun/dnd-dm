@@ -13,6 +13,9 @@ var _throw_selection: Variant = null  # Track item being thrown
 var dm_panel: DMPanel
 var initiative_tracker: InitiativeTracker
 var srd_reference: SrdReference
+var character_sheet: CharacterSheet
+var pause_overlay: PauseOverlay
+var hotbar: Hotbar
 
 @onready var map_renderer: MapRenderer = %MapRenderer
 @onready var actors: Node2D = %Actors
@@ -81,20 +84,21 @@ func _ready() -> void:
 
 	# -- DM Panel (right side of screen) --
 	dm_panel = DMPanel.new()
-	var panel_ratio := 192.0 / 576.0  # ~1/3 of viewport width
+	var panel_ratio := 156.0 / 576.0
 	dm_panel.anchor_left = 1.0 - panel_ratio
 	dm_panel.anchor_right = 1.0
 	dm_panel.anchor_top = 0.0
 	dm_panel.anchor_bottom = 1.0
 	ui_layer.add_child(dm_panel)
 
-	# -- Initiative Tracker (top-left) --
+	# -- Initiative Tracker (top of game viewport, between HUD and DM panel) --
 	initiative_tracker = InitiativeTracker.new()
 	initiative_tracker.anchor_left = 0.0
 	initiative_tracker.anchor_top = 0.0
 	initiative_tracker.anchor_right = 0.0
 	initiative_tracker.anchor_bottom = 0.0
-	initiative_tracker.offset_left = 4.0
+	# Position after the left HUD panel
+	initiative_tracker.offset_left = 140.0
 	initiative_tracker.offset_top = 4.0
 	ui_layer.add_child(initiative_tracker)
 
@@ -106,6 +110,36 @@ func _ready() -> void:
 	srd_reference.anchor_bottom = 0.95
 	srd_reference.visible = false
 	ui_layer.add_child(srd_reference)
+
+	# -- Character Sheet (full-screen overlay, starts hidden) --
+	character_sheet = CharacterSheet.new()
+	character_sheet.anchor_left = 0.05
+	character_sheet.anchor_right = 0.95
+	character_sheet.anchor_top = 0.05
+	character_sheet.anchor_bottom = 0.95
+	character_sheet.visible = false
+	ui_layer.add_child(character_sheet)
+
+	# -- Pause Overlay (centered, starts hidden) --
+	pause_overlay = PauseOverlay.new()
+	pause_overlay.visible = false
+	ui_layer.add_child(pause_overlay)
+
+	# -- Hotbar (bottom-center of game viewport, shown in combat) --
+	hotbar = Hotbar.new()
+	# Position at bottom-center between HUD and DM panel
+	var hud_width := 136.0
+	var dm_width := 156.0
+	var game_area := 576.0 - hud_width - dm_width
+	var hotbar_x := hud_width + (game_area / 2.0)
+	hotbar.anchor_left = 0.0
+	hotbar.anchor_right = 0.0
+	hotbar.anchor_top = 1.0
+	hotbar.anchor_bottom = 1.0
+	hotbar.offset_left = hotbar_x - 80.0
+	hotbar.offset_top = -24.0
+	hotbar.offset_right = hotbar_x + 80.0
+	ui_layer.add_child(hotbar)
 
 	# -- Dungeon atmosphere: cold desaturated tint --
 	var canvas_mod := CanvasModulate.new()
@@ -211,14 +245,36 @@ func _on_game_over() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Pause overlay toggle (Esc) — highest priority when no modal is focused
+	if event.is_action_pressed("ui_cancel"):
+		# Don't intercept Esc if DM input field has focus (handled by dm_panel)
+		if dm_panel and dm_panel._input_field and dm_panel._input_field.has_focus():
+			pass  # Let dm_panel handle it
+		elif pause_overlay and not Modals.has_visible_modals():
+			get_viewport().set_input_as_handled()
+			pause_overlay.toggle()
+			return
+
+	# Block everything while pause overlay is open
+	if pause_overlay and pause_overlay.visible:
+		return
+
 	# SRD reference toggle works in any state
 	if srd_reference and event.is_action_pressed("help"):
 		get_viewport().set_input_as_handled()
 		srd_reference.toggle()
 		return
 
-	# Block all other game input while SRD panel is open
+	# Character sheet toggle (Shift+C)
+	if character_sheet and event.is_action_pressed("toggle_character_sheet"):
+		get_viewport().set_input_as_handled()
+		character_sheet.toggle()
+		return
+
+	# Block all other game input while overlays are open
 	if srd_reference and srd_reference.visible:
+		return
+	if character_sheet and character_sheet.visible:
 		return
 
 	if Modals.has_visible_modals():
@@ -312,7 +368,7 @@ func _check_player_input() -> BaseAction:
 
 	if Input.is_action_just_pressed("pick_up_item"):
 		get_viewport().set_input_as_handled()
-		var pos := World.current_map.find_monster_position(World.player)
+		var pos := World.current_map.find_monster_position(World.active_character)
 		var items := World.current_map.get_items(pos)
 		var selections: Array[ItemSelection] = []
 		for item in items:
@@ -484,7 +540,7 @@ func _update_actors() -> void:
 			actor.init(World.current_map.find_monster_position(monster))
 			actors.add_child(actor)
 
-			if monster == World.player:
+			if World.is_party_member(monster):
 				actor.add_to_group("player")
 
 		# Make sure the actor is visible
@@ -544,7 +600,7 @@ func _flush_effects_queue() -> void:
 		if not _is_effect_visible(effect):
 			continue
 
-		if effect is MoveEffect and effect.target == World.player:
+		if effect is MoveEffect and World.is_party_member(effect.target):
 			var callable := _get_effect_callable(effect)
 			await callable.call()
 
@@ -569,13 +625,13 @@ func _flush_effects_queue() -> void:
 	for effect in effects_queue:
 		if not _is_effect_visible(effect) or effect is ProjectileEffect:
 			continue
-		if effect is MoveEffect and effect.target == World.player:
+		if effect is MoveEffect and World.is_party_member(effect.target):
 			continue
 
 		var callable := _get_effect_callable(effect)
 		if effect is ProjectileEffect:
 			continue
-		elif effect.involves_player() and not World.player.is_dead and not fast_mode:
+		elif effect.involves_player() and not World.party.all_dead() and not fast_mode:
 			Log.d("Calling effect %s" % effect)
 			await callable.call()
 		else:
@@ -828,7 +884,13 @@ func _update_reticle() -> void:
 func _should_show_reticle() -> bool:
 	if not srd_reference:
 		return false
-	return not (World.game_over or Modals.has_visible_modals() or srd_reference.visible)
+	if World.game_over or Modals.has_visible_modals() or srd_reference.visible:
+		return false
+	if character_sheet and character_sheet.visible:
+		return false
+	if pause_overlay and pause_overlay.visible:
+		return false
+	return true
 
 
 func _hide_reticle() -> void:
@@ -869,7 +931,7 @@ func _get_hover_info(tile_pos: Vector2i, p_is_visible: bool, is_seen: bool) -> D
 	var terrain := World.current_map.get_terrain(tile_pos)
 	var cell := World.current_map.get_cell(tile_pos)
 
-	if monster == World.player:
+	if World.is_party_member(monster):
 		var text := monster.get_hover_info()
 		if not cell.area_effects.is_empty():
 			text += "\n[color=red]" + _get_area_effects_text(cell.area_effects) + "[/color]"
@@ -939,7 +1001,7 @@ func _clear_path_preview() -> void:
 func _draw_path_preview(tile_pos: Vector2i) -> void:
 	_clear_path_preview()
 
-	var player_pos := World.current_map.find_monster_position(World.player)
+	var player_pos := World.current_map.find_monster_position(World.active_character)
 	var path := Utils.calculate_trajectory(player_pos, tile_pos)
 
 	for pos in path:
@@ -968,13 +1030,13 @@ func _on_tile_attack_move(tile_pos: Vector2i) -> void:
 		return
 
 	# Get player's current position
-	var player_pos := World.current_map.find_monster_position(World.player)
+	var player_pos := World.current_map.find_monster_position(World.active_character)
 
 	# Check for visible hostile monsters
 	var visible_monsters := World.current_map.get_visible_monsters()
 	var hostile_visible := false
 	for visible_monster in visible_monsters:
-		if visible_monster != World.player and visible_monster.is_hostile_to(World.player):
+		if not World.is_party_member(visible_monster) and visible_monster.is_hostile_to(World.player):
 			hostile_visible = true
 			break
 
@@ -1027,7 +1089,7 @@ func _execute_movement_path(path: Array[Vector2i]) -> void:
 
 	hud.updates_enabled = false
 
-	var player_pos := World.current_map.find_monster_position(World.player)
+	var player_pos := World.current_map.find_monster_position(World.active_character)
 	var next_pos := path[0]
 	var move_dir := next_pos - player_pos
 
@@ -1052,7 +1114,7 @@ func _execute_movement_path(path: Array[Vector2i]) -> void:
 		# Check if we should continue (no hostiles appeared)
 		var visible_monsters := World.current_map.get_visible_monsters()
 		for monster in visible_monsters:
-			if monster != World.player and monster.is_hostile_to(World.player):
+			if not World.is_party_member(monster) and monster.is_hostile_to(World.player):
 				hud.updates_enabled = true
 				return
 		# Remove the first position and continue with the rest

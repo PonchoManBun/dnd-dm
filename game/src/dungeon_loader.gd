@@ -187,6 +187,7 @@ static func _populate_room(map: Map, room_data: RoomData) -> void:
 		cell.obstacle = stairs_down
 
 	# Place monsters
+	var placed_slugs: Array[StringName] = []
 	for monster_def: Dictionary in room_data.monsters:
 		var slug := StringName(monster_def.get("slug", ""))
 		var pos := Vector2i(monster_def.get("x", 0), monster_def.get("y", 0))
@@ -201,6 +202,28 @@ static func _populate_room(map: Map, room_data: RoomData) -> void:
 			var cell := map.get_cell(pos)
 			if cell.monster == null and cell.terrain.is_walkable():
 				cell.monster = monster
+				placed_slugs.append(slug)
+
+	# Scale encounters based on party size — add extra monsters for larger parties
+	if not placed_slugs.is_empty():
+		var extra_count := World.party.size() - 1  # 0 extra for solo, up to 3 extra for full party
+		for i in range(extra_count):
+			var slug: StringName = placed_slugs[i % placed_slugs.size()]
+			var extra_monster: Monster
+			if DndMonsterFactory.has_monster(slug):
+				extra_monster = DndMonsterFactory.create_monster(slug)
+			else:
+				extra_monster = MonsterFactory.create_monster(slug)
+			# Find a walkable cell in the room
+			for attempt in range(20):
+				var rx := room_data.x + 1 + (randi() % maxi(1, room_data.w - 2))
+				var ry := room_data.y + 1 + (randi() % maxi(1, room_data.h - 2))
+				var rpos := Vector2i(rx, ry)
+				if rpos.x >= 0 and rpos.x < map.width and rpos.y >= 0 and rpos.y < map.height:
+					var rcell := map.get_cell(rpos)
+					if rcell.monster == null and rcell.terrain.is_walkable():
+						rcell.monster = extra_monster
+						break
 
 	# Place items
 	for item_def: Dictionary in room_data.items:

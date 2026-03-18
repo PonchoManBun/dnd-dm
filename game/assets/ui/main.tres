@@ -45,73 +45,74 @@ region = Rect2(176, 152, 8, 8)
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_bsb0w"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_83hjx"]
-color = Color(0.2, 0.19, 0.2, 1)
+color = Color(0.30, 0.24, 0.16, 1)
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_hsqff"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2h76i"]
-bg_color = Color(0.1596, 0.4332, 0.57, 0.392157)
+bg_color = Color(0.30, 0.24, 0.16, 0.4)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0sq21"]
-bg_color = Color(0.1848, 0.5016, 0.66, 0.811765)
+bg_color = Color(0.40, 0.33, 0.22, 0.7)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_i0u8j"]
-bg_color = Color(1, 1, 1, 0.0980392)
+bg_color = Color(0.24, 0.19, 0.14, 0.3)
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_6df0r"]
-color = Color(0.109804, 0.12549, 0.141176, 1)
+color = Color(0.24, 0.17, 0.12, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u2fjp"]
-bg_color = Color(0.109804, 0.12549, 0.141176, 0.517647)
+bg_color = Color(0.12, 0.09, 0.07, 0.7)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1ch8r"]
-bg_color = Color(0.3024, 0.38232, 0.48, 1)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_owmve"]
-region = Rect2(80, 8, 32, 32)
-
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_f48vw"]
-content_margin_bottom = 5.0
-texture = SubResource("AtlasTexture_owmve")
-texture_margin_left = 7.0
-texture_margin_top = 5.0
-texture_margin_right = 7.0
-texture_margin_bottom = 6.0
+bg_color = Color(0.30, 0.55, 0.25, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fv3l0"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
 border_width_left = 8
 border_width_bottom = 8
-border_color = Color(0.447059, 0.509804, 0.588235, 0.929412)
+border_color = Color(0.40, 0.33, 0.22, 0.7)
 corner_detail = 1
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wsyue"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
 border_width_left = 8
 border_width_bottom = 8
-border_color = Color(0.5548, 0.63364, 0.73, 0.929412)
+border_color = Color(0.50, 0.42, 0.28, 0.8)
 corner_detail = 1
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_i8iek"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
 border_width_left = 8
 border_width_bottom = 8
-border_color = Color(0.2888, 0.32984, 0.38, 0.929412)
+border_color = Color(0.30, 0.24, 0.16, 0.8)
 corner_detail = 1
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qidnm"]
 content_margin_left = 5.0
-bg_color = Color(0.1092, 0.1246, 0.14, 0.721569)
+bg_color = Color(0.12, 0.09, 0.07, 0.5)
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_4m3ic"]
-color = Color(0.2, 0.188235, 0.2, 1)
+color = Color(0.30, 0.24, 0.16, 1)
 vertical = true
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxTexture_f48vw"]
+bg_color = Color(0.14, 0.11, 0.08, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.40, 0.33, 0.22, 0.8)
+content_margin_left = 6.0
+content_margin_top = 4.0
+content_margin_right = 6.0
+content_margin_bottom = 4.0
+
 [resource]
-Button/colors/font_color = Color(0.85098, 0.85098, 0.858824, 1)
-Button/colors/font_disabled_color = Color(0.8514, 0.8514, 0.86, 0.345098)
-Button/colors/font_outline_color = Color(0.1092, 0.1246, 0.14, 0.368627)
-Button/colors/font_pressed_color = Color(0.77, 0.77, 0.77, 1)
+Button/colors/font_color = Color(0.93, 0.88, 0.78, 1)
+Button/colors/font_disabled_color = Color(0.60, 0.55, 0.45, 0.5)
+Button/colors/font_outline_color = Color(0.24, 0.17, 0.12, 0.37)
+Button/colors/font_pressed_color = Color(0.77, 0.64, 0.31, 1)
 Button/constants/outline_size = 3
 Button/font_sizes/font_size = 16
 Button/styles/disabled = ExtResource("1_eqi05")
@@ -119,8 +120,8 @@ Button/styles/focus = ExtResource("2_wmho7")
 Button/styles/hover = ExtResource("2_bc1ba")
 Button/styles/normal = ExtResource("2_523h1")
 Button/styles/pressed = ExtResource("3_03w1d")
-CheckBox/colors/font_color = Color(0.85098, 0.85098, 0.858824, 1)
-CheckBox/colors/font_focus_color = Color(0.85098, 0.85098, 0.858824, 1)
+CheckBox/colors/font_color = Color(0.93, 0.88, 0.78, 1)
+CheckBox/colors/font_focus_color = Color(0.93, 0.88, 0.78, 1)
 CheckBox/constants/check_v_offset = 1
 CheckBox/constants/h_separation = 3
 CheckBox/icons/checked = SubResource("AtlasTexture_plvgv")
@@ -146,8 +147,8 @@ GridContainer/constants/v_separation = 4
 HBoxContainer/constants/separation = 4
 HSeparator/constants/separation = 4
 HSeparator/styles/separator = SubResource("StyleBoxLine_83hjx")
-ItemList/colors/font_color = Color(0.85098, 0.85098, 0.858824, 1)
-ItemList/colors/guide_color = Color(0.109804, 0.12549, 0.141176, 1)
+ItemList/colors/font_color = Color(0.93, 0.88, 0.78, 1)
+ItemList/colors/guide_color = Color(0.24, 0.17, 0.12, 1)
 ItemList/constants/h_separation = 3
 ItemList/constants/icon_margin = 3
 ItemList/constants/v_separation = 3
@@ -158,8 +159,8 @@ ItemList/styles/selected = SubResource("StyleBoxFlat_2h76i")
 ItemList/styles/selected_focus = SubResource("StyleBoxFlat_0sq21")
 ItemPanel/base_type = &"Panel"
 ItemPanel/styles/panel = ExtResource("5_ql21i")
-Label/colors/font_color = Color(0.852117, 0.8514, 0.86, 1)
-Label/colors/font_outline_color = Color(0.109804, 0.12549, 0.141176, 1)
+Label/colors/font_color = Color(0.93, 0.88, 0.78, 1)
+Label/colors/font_outline_color = Color(0.24, 0.17, 0.12, 1)
 Label/constants/outline_size = 3
 Label/font_sizes/font_size = 16
 LineEdit/font_sizes/font_size = 16
@@ -171,7 +172,7 @@ MarginContainer/constants/margin_right = 6
 MarginContainer/constants/margin_top = 6
 Panel/styles/panel = ExtResource("4_y85e7")
 PanelContainer/styles/panel = ExtResource("4_y85e7")
-PopupMenu/colors/font_color = Color(0.854902, 0.85098, 0.862745, 1)
+PopupMenu/colors/font_color = Color(0.93, 0.88, 0.78, 1)
 PopupMenu/constants/icon_max_width = 16
 PopupMenu/font_sizes/font_separator_size = 8
 PopupMenu/font_sizes/font_size = 16
@@ -179,13 +180,13 @@ PopupMenu/font_sizes/title_font_size = 16
 PopupMenu/styles/hover = SubResource("StyleBoxFlat_i0u8j")
 PopupMenu/styles/panel = ExtResource("4_y85e7")
 PopupMenu/styles/separator = SubResource("StyleBoxLine_6df0r")
-ProgressBar/colors/font_color = Color(0.85098, 0.85098, 0.858824, 1)
+ProgressBar/colors/font_color = Color(0.93, 0.88, 0.78, 1)
 ProgressBar/font_sizes/font_size = 16
 ProgressBar/styles/background = SubResource("StyleBoxFlat_u2fjp")
 ProgressBar/styles/fill = SubResource("StyleBoxFlat_1ch8r")
-RichTextLabel/colors/default_color = Color(0.85098, 0.85098, 0.858824, 1)
-RichTextLabel/colors/font_outline_color = Color(0.109804, 0.12549, 0.141176, 1)
-RichTextLabel/constants/line_separation = -2
+RichTextLabel/colors/default_color = Color(0.93, 0.88, 0.78, 1)
+RichTextLabel/colors/font_outline_color = Color(0.24, 0.17, 0.12, 1)
+RichTextLabel/constants/line_separation = 2
 RichTextLabel/constants/outline_size = 3
 RichTextLabel/font_sizes/bold_font_size = 16
 RichTextLabel/font_sizes/bold_italics_font_size = 16
@@ -193,12 +194,12 @@ RichTextLabel/font_sizes/italics_font_size = 16
 RichTextLabel/font_sizes/mono_font_size = 16
 RichTextLabel/font_sizes/normal_font_size = 16
 SubtleLabel/base_type = &"Label"
-SubtleLabel/colors/font_color = Color(0.434968, 0.510658, 0.545214, 1)
+SubtleLabel/colors/font_color = Color(0.60, 0.55, 0.45, 1)
 TabBar/colors/drop_mark_color = Color(1, 1, 1, 0)
-TabBar/colors/font_hovered_color = Color(0.95, 0.95, 0.95, 1)
-TabBar/colors/font_outline_color = Color(0.109804, 0.12549, 0.141176, 0.368627)
-TabBar/colors/font_selected_color = Color(0.85098, 0.85098, 0.858824, 1)
-TabBar/colors/font_unselected_color = Color(0.85098, 0.85098, 0.858824, 1)
+TabBar/colors/font_hovered_color = Color(0.95, 0.90, 0.80, 1)
+TabBar/colors/font_outline_color = Color(0.24, 0.17, 0.12, 0.37)
+TabBar/colors/font_selected_color = Color(0.95, 0.85, 0.60, 1)
+TabBar/colors/font_unselected_color = Color(0.93, 0.88, 0.78, 1)
 TabBar/styles/tab_disabled = ExtResource("14_b8vv6")
 TabBar/styles/tab_focus = ExtResource("2_wmho7")
 TabBar/styles/tab_hovered = ExtResource("14_8vk83")
@@ -207,7 +208,8 @@ TabBar/styles/tab_unselected = ExtResource("16_vk13a")
 TabContainer/font_sizes/font_size = 16
 TextEdit/font_sizes/font_size = 16
 TitleLabel/base_type = &"Label"
-TitleLabel/colors/font_outline_color = Color(0.109804, 0.12549, 0.141176, 1)
+TitleLabel/colors/font_color = Color(0.95, 0.85, 0.60, 1)
+TitleLabel/colors/font_outline_color = Color(0.24, 0.17, 0.12, 1)
 TitleLabel/constants/outline_size = 3
 TitleLabel/fonts/font = ExtResource("19_fx8rw")
 TooltipPanel/base_type = &"Panel"

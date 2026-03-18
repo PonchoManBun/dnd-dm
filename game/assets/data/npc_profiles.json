@@ -13,7 +13,11 @@
     "personality": "Grizzled veteran who tells tall tales. Drinks too much. Surprisingly sharp when sober. Nostalgic about his adventuring days.",
     "knowledge": "Old dungeon layouts, monster weaknesses, outdated adventuring tips. Claims to have fought a dragon once. Knows local history.",
     "greeting": "Eh? Another young fool looking for glory? Pull up a chair.",
-    "location": "Seated at a dining table"
+    "location": "Seated at a dining table",
+    "recruitable": true,
+    "stat_block_slug": "veteran",
+    "recruitment_dc": 12,
+    "dnd_class": "FIGHTER"
   },
   "elara": {
     "name": "Elara the Quiet",
@@ -21,6 +25,10 @@
     "personality": "Speaks rarely but precisely. Observant. Seems to know more than she lets on. Slight elvish accent.",
     "knowledge": "Arcane lore, regional geography, hidden passages. Will hint at quest hooks but never give straight answers.",
     "greeting": "...",
-    "location": "Seated alone in the corner"
+    "location": "Seated alone in the corner",
+    "recruitable": true,
+    "stat_block_slug": "mage",
+    "recruitment_dc": 14,
+    "dnd_class": "WIZARD"
   }
 }

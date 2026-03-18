@@ -29,8 +29,22 @@ var current_map: Map
 var current_turn: int
 var game_mode: GameMode = GameMode.new()
 
+# Party system
+var party: Party = Party.new()
+
 # Is the game over?
 var game_over: bool = false
+
+## Returns the currently-controlled character.
+## In combat: returns the active combatant if it's a party member.
+## In exploration: returns the player.
+var active_character: Monster:
+	get:
+		if game_mode.is_combat():
+			var active := game_mode.get_active_combatant()
+			if active and party.is_party_member(active.combatant):
+				return active.combatant
+		return player
 
 # Keep track of the max depth reached
 var max_depth: int = 1
@@ -71,6 +85,7 @@ func initialize() -> void:
 	game_over = false
 	game_mode = GameMode.new()
 	max_depth = 1
+	party = Party.new()
 
 	# Create a new world world_plan
 	world_plan = WorldPlan.new(WorldPlan.WorldType.NORMAL)
@@ -112,6 +127,11 @@ func initialize() -> void:
 	if not map.add_monster_at_stairs(player, Obstacle.Type.STAIRS_UP):
 		Log.e("Failed to add player to main entrance")
 
+	# Place any existing companions near the player
+	var player_start := map.find_monster_position(player)
+	if player_start != Utils.INVALID_POS:
+		_place_companions_near(player_start)
+
 	# Compute FOV before the first turn
 	update_vision()
 
@@ -150,6 +170,11 @@ func initialize_from_dungeon(path: String) -> void:
 	# Add the player at the entrance (stairs_up position)
 	if not current_map.add_monster_at_stairs(player, Obstacle.Type.STAIRS_UP):
 		Log.e("Failed to add player to dungeon entrance")
+
+	# Place any existing companions near the player
+	var player_start := current_map.find_monster_position(player)
+	if player_start != Utils.INVALID_POS:
+		_place_companions_near(player_start)
 
 	# Compute FOV before the first turn
 	update_vision()
@@ -235,7 +260,7 @@ func _generate_map(plan: WorldPlan.LevelPlan) -> Map:
 func apply_player_action(action: BaseAction) -> ActionResult:
 	# In combat, validate action economy before executing
 	if game_mode.is_combat():
-		var cs := game_mode.get_combat_state(player)
+		var cs := game_mode.get_combat_state(active_character)
 		if cs:
 			var block_reason := _validate_combat_action(cs, action)
 			if not block_reason.is_empty():
@@ -279,7 +304,7 @@ func _validate_combat_action(cs: CombatState, action: BaseAction) -> String:
 	# Check if the action requires movement
 	if action is PlayerAttackMoveAction:
 		var dir: Vector2i = (action as PlayerAttackMoveAction).direction
-		var player_pos := current_map.find_monster_position(player)
+		var player_pos := current_map.find_monster_position(active_character)
 		var target_pos := player_pos + dir
 		var target_monster := current_map.get_monster(target_pos)
 
@@ -342,6 +367,28 @@ func _apply_exploration_turn(result: ActionResult) -> void:
 			message_logged.emit(result.message, result.message_level)
 		return
 
+	# Move companions toward the player
+	var player_pos := current_map.find_monster_position(player)
+	if player_pos != Utils.INVALID_POS:
+		for companion in party.members:
+			if companion.is_dead:
+				continue
+			var comp_pos := current_map.find_monster_position(companion)
+			if comp_pos == Utils.INVALID_POS:
+				continue
+			var dist := comp_pos.distance_to(player_pos)
+			# Only follow if more than 2 tiles away
+			if dist > 2.0:
+				var step := Pathfinding.get_next_step(current_map, comp_pos, player_pos, true)
+				if step != Vector2i.ZERO:
+					var target_pos := comp_pos + step
+					var target_cell := current_map.get_cell(target_pos)
+					if target_cell.is_walkable() and not target_cell.monster:
+						current_map.get_cell(comp_pos).monster = null
+						target_cell.monster = companion
+						var move_effect := MoveEffect.new(companion, target_pos, comp_pos)
+						result.effects.append(move_effect)
+
 	# Accumulate energy for all monsters
 	for monster in current_map.get_monsters():
 		monster.energy += monster.get_speed()
@@ -353,7 +400,7 @@ func _apply_exploration_turn(result: ActionResult) -> void:
 	var monsters := current_map.get_monsters()
 	Log.d("Checking %d monsters for turns" % monsters.size())
 	for monster in monsters:
-		if monster == player:
+		if is_party_member(monster):
 			continue
 		if monster.energy >= Monster.SPEED_NORMAL:
 			var monster_action := monster.get_next_action(current_map)
@@ -393,18 +440,18 @@ func _apply_exploration_turn(result: ActionResult) -> void:
 	# Mark the turn as over
 	current_turn += 1
 
-	# Is the player dead?
-	if player.is_dead:
+	# Is the entire party dead?
+	if player.is_dead and party.all_dead():
 		game_over = true
 		game_ended.emit()
 
 
 func _apply_combat_player_turn(result: ActionResult) -> void:
-	# Tick player status effects only
-	player.tick_status_effects()
+	# Tick active character status effects
+	active_character.tick_status_effects()
 
 	# Consume action economy resources based on what the player did
-	var cs := game_mode.get_combat_state(player)
+	var cs := game_mode.get_combat_state(active_character)
 	if cs:
 		_consume_combat_resources(cs, result)
 
@@ -417,8 +464,8 @@ func _apply_combat_player_turn(result: ActionResult) -> void:
 	if result.message:
 		message_logged.emit(result.message, result.message_level)
 
-	# Is the player dead?
-	if player.is_dead:
+	# Is the entire party dead?
+	if player.is_dead and party.all_dead():
 		game_over = true
 		game_ended.emit()
 		return
@@ -438,7 +485,7 @@ func _consume_combat_resources(cs: CombatState, result: ActionResult) -> void:
 	for effect in result.effects:
 		if effect is AttackEffect or effect is HitEffect:
 			had_attack = true
-		elif effect is MoveEffect and effect.target == player:
+		elif effect is MoveEffect and is_party_member(effect.target):
 			had_move = true
 
 	if had_attack:
@@ -448,9 +495,10 @@ func _consume_combat_resources(cs: CombatState, result: ActionResult) -> void:
 
 
 ## Execute the current monster's combat turn.
+## Loops through the monster's full action economy: move + attack.
 func apply_combat_monster_turn() -> void:
 	var cs := game_mode.get_active_combatant()
-	if not cs or cs.combatant == player:
+	if not cs or is_party_member(cs.combatant):
 		return
 
 	var monster := cs.combatant
@@ -458,29 +506,38 @@ func apply_combat_monster_turn() -> void:
 	# Tick monster status effects
 	monster.tick_status_effects()
 
-	# Get and apply monster action
-	var monster_action := monster.get_next_action(current_map)
-	if monster_action:
+	# Loop: give the monster actions until resources exhausted
+	var actions_taken := 0
+	var max_actions := 12  # Safety limit (6 move + action + buffer)
+	while actions_taken < max_actions and not cs.is_turn_exhausted():
+		var monster_action := monster.get_next_action(current_map)
+		if not monster_action:
+			break
+
 		var result := monster_action.apply(current_map)
+		if not result or not result.success:
+			break
 
 		# Consume action economy resources
-		if result:
-			_consume_combat_resources(cs, result)
-
-		# Update vision
-		update_vision()
+		_consume_combat_resources(cs, result)
 
 		# Emit effects
-		if result:
-			for effect in result.effects:
-				effect_occurred.emit(effect)
-			if result.message:
-				message_logged.emit(result.message, result.message_level)
-	else:
-		update_vision()
+		for effect in result.effects:
+			effect_occurred.emit(effect)
+		if result.message:
+			message_logged.emit(result.message, result.message_level)
 
-	# Is the player dead?
-	if player.is_dead:
+		actions_taken += 1
+
+		# If the monster used its action (attacked), stop looping
+		if not cs.has_action:
+			break
+
+	# Update vision after full turn
+	update_vision()
+
+	# Is the entire party dead?
+	if player.is_dead and party.all_dead():
 		game_over = true
 		game_ended.emit()
 		return
@@ -528,8 +585,10 @@ func handle_level_transition(destination_level: String, coming_from_stairs: Obst
 			map.id = destination_level
 			maps[destination_level] = map
 
-	# Remove player from current map
+	# Remove player and companions from current map
 	current_map.find_and_remove_monster(player)
+	for companion in party.members:
+		current_map.find_and_remove_monster(companion)
 
 	# Switch to the new map
 	current_map = maps[destination_level]
@@ -547,6 +606,9 @@ func handle_level_transition(destination_level: String, coming_from_stairs: Obst
 	# Update FOV for new position
 	var player_pos := current_map.find_monster_position(player)
 	current_map.compute_fov(player_pos)
+
+	# Place companions near the player
+	_place_companions_near(player_pos)
 
 	# Signal that the map has changed
 	map_changed.emit(current_map)
@@ -620,6 +682,35 @@ func update_vision() -> void:
 		current_map.compute_fov(player_pos)
 
 
+func is_party_member(monster: Monster) -> bool:
+	return party.is_party_member(monster)
+
+
+## Place all living party companions on walkable cells adjacent to the given position.
+func _place_companions_near(pos: Vector2i) -> void:
+	var placed := 0
+	for companion in party.members:
+		if companion.is_dead:
+			continue
+		# Remove from old map position if present
+		current_map.find_and_remove_monster(companion)
+		var found_spot := false
+		for dir in Utils.ALL_DIRECTIONS:
+			var adj := pos + dir
+			if not current_map.is_in_bounds(adj):
+				continue
+			var cell := current_map.get_cell(adj)
+			if cell.is_walkable() and not cell.monster:
+				cell.monster = companion
+				placed += 1
+				found_spot = true
+				break
+		if not found_spot:
+			Log.e("Could not place companion %s near %s" % [companion.name, pos])
+	if placed > 0:
+		Log.i("Placed %d companions near %s" % [placed, pos])
+
+
 ## Check if combat should start from FOW reveal or bump-attack.
 func _check_combat_trigger(bump_target: Monster = null) -> bool:
 	if game_mode.is_combat():
@@ -633,7 +724,7 @@ func _check_combat_trigger(bump_target: Monster = null) -> bool:
 	var visible_monsters := current_map.get_visible_monsters()
 	var enemies: Array[Monster] = []
 	for monster in visible_monsters:
-		if monster == player:
+		if is_party_member(monster):
 			continue
 		if monster.is_hostile_to(player) and monster.behavior == Monster.Behavior.AGGRESSIVE:
 			enemies.append(monster)

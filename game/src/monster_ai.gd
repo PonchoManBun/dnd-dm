@@ -66,23 +66,44 @@ class BTSelector:
 		return BTStatus.FAILURE
 
 
+## Find the nearest living party member visible from the actor's position.
+static func find_nearest_party_member(actor: Monster, map: Map) -> Monster:
+	var actor_pos := map.find_monster_position(actor)
+	if actor_pos == Utils.INVALID_POS:
+		return null
+	var nearest: Monster = null
+	var nearest_dist: float = 999999.0
+	for member in World.party.get_living_members():
+		var member_pos := map.find_monster_position(member)
+		if member_pos == Utils.INVALID_POS:
+			continue
+		var dist := actor_pos.distance_to(member_pos)
+		if dist < nearest_dist:
+			nearest_dist = dist
+			nearest = member
+	return nearest
+
+
 # Check if the player is visible
 class CheckPlayerVisible:
 	extends BTNode
 
 	func tick(actor: Monster, map: Map) -> BTStatus:
 		var monster_pos := map.find_monster_position(actor)
-		var player_pos := map.find_monster_position(World.player)
+		var target := MonsterAI.find_nearest_party_member(actor, map)
+		if not target:
+			return BTStatus.FAILURE
 
-		if monster_pos == Utils.INVALID_POS or player_pos == Utils.INVALID_POS:
+		var target_pos := map.find_monster_position(target)
+		if monster_pos == Utils.INVALID_POS or target_pos == Utils.INVALID_POS:
 			Log.d("  CheckPlayerVisible: Invalid position")
 			return BTStatus.FAILURE
 
-		var distance := (monster_pos - player_pos).length()
+		var distance := (monster_pos - target_pos).length()
 		var visible := distance <= 20
 		Log.d(
 			(
-				"  CheckPlayerVisible: Player %s (distance: %.1f)"
+				"  CheckPlayerVisible: Target %s (distance: %.1f)"
 				% ["visible" if visible else "not visible", distance]
 			)
 		)
@@ -95,14 +116,17 @@ class AttackPlayer:
 
 	func tick(actor: Monster, map: Map) -> BTStatus:
 		var monster_pos := map.find_monster_position(actor)
-		var player_pos := map.find_monster_position(World.player)
+		var target := MonsterAI.find_nearest_party_member(actor, map)
+		if not target:
+			return BTStatus.FAILURE
 
-		if actor.is_adjacent_to(monster_pos, player_pos):
-			var direction := player_pos - monster_pos
+		var target_pos := map.find_monster_position(target)
+		if actor.is_adjacent_to(monster_pos, target_pos):
+			var direction := target_pos - monster_pos
 			actor.next_action = AttackMoveAction.new(actor, direction)
-			Log.d("  AttackPlayer: Attacking player in direction %s" % direction)
+			Log.d("  AttackPlayer: Attacking %s in direction %s" % [target.name, direction])
 			return BTStatus.SUCCESS
-		Log.d("  AttackPlayer: Player not adjacent")
+		Log.d("  AttackPlayer: No party member adjacent")
 		return BTStatus.FAILURE
 
 
@@ -112,21 +136,21 @@ class MoveTowardPlayer:
 
 	func tick(actor: Monster, map: Map) -> BTStatus:
 		var monster_pos := map.find_monster_position(actor)
-		var player_pos := map.find_monster_position(World.player)
+		var target := MonsterAI.find_nearest_party_member(actor, map)
+		if not target:
+			return BTStatus.FAILURE
 
-		# First try to find a path that avoids other monsters
-		var move_dir := actor.get_next_step_towards_player(map, monster_pos, player_pos, true)
+		var target_pos := map.find_monster_position(target)
+		var move_dir := actor.get_next_step_towards_player(map, monster_pos, target_pos, true)
 
-		# If no path found avoiding monsters, and we're not adjacent to player,
-		# try again allowing paths through monsters as a fallback
-		if move_dir == Vector2i.ZERO and not actor.is_adjacent_to(monster_pos, player_pos):
-			move_dir = actor.get_next_step_towards_player(map, monster_pos, player_pos, false)
+		if move_dir == Vector2i.ZERO and not actor.is_adjacent_to(monster_pos, target_pos):
+			move_dir = actor.get_next_step_towards_player(map, monster_pos, target_pos, false)
 
 		if move_dir != Vector2i.ZERO:
 			actor.next_action = MoveAction.new(actor, move_dir)
-			Log.d("  MoveTowardPlayer: Moving toward player in direction %s" % move_dir)
+			Log.d("  MoveTowardPlayer: Moving toward %s in direction %s" % [target.name, move_dir])
 			return BTStatus.SUCCESS
-		Log.d("  MoveTowardPlayer: No valid path to player")
+		Log.d("  MoveTowardPlayer: No valid path to any party member")
 		return BTStatus.FAILURE
 
 
@@ -136,13 +160,16 @@ class FleeFromPlayer:
 
 	func tick(actor: Monster, map: Map) -> BTStatus:
 		var monster_pos := map.find_monster_position(actor)
-		var player_pos := map.find_monster_position(World.player)
+		var target := MonsterAI.find_nearest_party_member(actor, map)
+		if not target:
+			return BTStatus.FAILURE
 
-		var away_dir := Vector2(monster_pos - player_pos).normalized()
+		var target_pos := map.find_monster_position(target)
+		var away_dir := Vector2(monster_pos - target_pos).normalized()
 		var move_dir := actor.get_safe_move_direction(map, monster_pos, away_dir)
 		if move_dir != Vector2i.ZERO:
 			actor.next_action = AttackMoveAction.new(actor, move_dir)
-			Log.d("  FleeFromPlayer: Fleeing from player in direction %s" % move_dir)
+			Log.d("  FleeFromPlayer: Fleeing from %s in direction %s" % [target.name, move_dir])
 			return BTStatus.SUCCESS
 		Log.d("  FleeFromPlayer: No valid escape direction")
 		return BTStatus.FAILURE
@@ -153,10 +180,11 @@ class CheckHostileToPlayer:
 	extends BTNode
 
 	func tick(actor: Monster, _map: Map) -> BTStatus:
-		if actor.is_hostile_to(World.player):
-			Log.d("  CheckHostileToPlayer: Monster is hostile")
-			return BTStatus.SUCCESS
-		Log.d("  CheckHostileToPlayer: Monster is not hostile")
+		for member in World.party.get_living_members():
+			if actor.is_hostile_to(member):
+				Log.d("  CheckHostileToPlayer: Monster is hostile to %s" % member.name)
+				return BTStatus.SUCCESS
+		Log.d("  CheckHostileToPlayer: Monster is not hostile to any party member")
 		return BTStatus.FAILURE
 
 
@@ -281,22 +309,24 @@ class FireAtPlayer:
 
 	func tick(actor: Monster, map: Map) -> BTStatus:
 		var monster_pos := map.find_monster_position(actor)
-		var player_pos := map.find_monster_position(World.player)
-		var distance := monster_pos.distance_to(player_pos)
-
-		# If too far, don't try to shoot
-		if distance > 6:
-			Log.d("  FireAtPlayer: Player too far (distance: %.1f)" % distance)
+		var target := MonsterAI.find_nearest_party_member(actor, map)
+		if not target:
 			return BTStatus.FAILURE
 
-		# Get the ranged weapon
+		var target_pos := map.find_monster_position(target)
+		var distance := monster_pos.distance_to(target_pos)
+
+		if distance > 6:
+			Log.d("  FireAtPlayer: Target too far (distance: %.1f)" % distance)
+			return BTStatus.FAILURE
+
 		var weapon := actor.equipment.get_equipped_item(Equipment.Slot.RANGED)
 		if not weapon or not weapon.is_ranged_weapon():
 			Log.d("  FireAtPlayer: No ranged weapon equipped")
 			return BTStatus.FAILURE
 
-		actor.next_action = FireAction.new(actor, player_pos)
-		Log.d("  FireAtPlayer: Firing at player at position %s" % player_pos)
+		actor.next_action = FireAction.new(actor, target_pos)
+		Log.d("  FireAtPlayer: Firing at %s at position %s" % [target.name, target_pos])
 		return BTStatus.SUCCESS
 
 

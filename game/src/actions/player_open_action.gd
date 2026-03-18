@@ -3,7 +3,7 @@ extends OpenAction
 
 
 func _init(dir: Vector2i) -> void:
-	super(World.player, dir)
+	super(World.active_character, dir)
 
 
 func _execute(map: Map, result: ActionResult) -> bool:

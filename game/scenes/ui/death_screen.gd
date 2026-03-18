@@ -4,16 +4,15 @@ extends Control
 ## Full-screen permadeath screen with sequential fade-in animations.
 ## Built entirely in code -- no .tscn needed.
 
-# Colors matching the game's dark theme (from CharacterCreation / GameColors)
 const BG_COLOR := Color(0.0, 0.0, 0.0, 0.0)  # starts transparent, fades in
 const BG_TARGET := Color(0.0, 0.0, 0.0, 0.92)
 const TITLE_COLOR := Color(0.827, 0.271, 0.286, 1.0)  # GameColors.RED
-const EULOGY_COLOR := Color(0.85, 0.85, 0.86, 1.0)  # CharacterCreation TEXT_COLOR
-const STAT_LABEL_COLOR := Color(0.5, 0.5, 0.55, 1.0)  # DIM_TEXT_COLOR
-const STAT_VALUE_COLOR := Color(0.95, 0.85, 0.6, 1.0)  # CharacterCreation TITLE_COLOR
-const SEPARATOR_COLOR := Color(0.827, 0.271, 0.286, 0.3)  # dim red
-const BUTTON_COLOR := Color(0.12, 0.1, 0.15, 0.95)  # PANEL_COLOR
-const BUTTON_BORDER := Color(0.3, 0.3, 0.35, 0.6)
+const EULOGY_COLOR := Color(0.93, 0.88, 0.78, 1.0)
+const STAT_LABEL_COLOR := Color(0.60, 0.55, 0.45, 1.0)
+const STAT_VALUE_COLOR := Color(0.95, 0.85, 0.60, 1.0)
+const SEPARATOR_COLOR := Color(0.827, 0.271, 0.286, 0.3)
+const BUTTON_COLOR := Color(0.18, 0.14, 0.10, 0.95)
+const BUTTON_BORDER := Color(0.40, 0.33, 0.22, 0.6)
 
 const OVERLAY_FADE_DURATION := 1.5
 const ELEMENT_FADE_DURATION := 0.8

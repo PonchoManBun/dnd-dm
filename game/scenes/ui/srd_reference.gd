@@ -5,18 +5,6 @@ extends PanelContainer
 ## Built entirely in code (same pattern as DMPanel).
 ## Press '?' to toggle visibility.
 
-const BG_COLOR := Color(0.06, 0.05, 0.08, 0.95)
-const BORDER_COLOR := Color(0.2, 0.19, 0.2, 1.0)
-const HEADER_COLOR := Color(0.42, 0.76, 0.80)
-const TEXT_COLOR := Color(0.85, 0.85, 0.86)
-const CHAPTER_BG_NORMAL := Color(0.15, 0.14, 0.18, 0.8)
-const CHAPTER_BG_HOVER := Color(0.25, 0.24, 0.30, 0.9)
-const CHAPTER_BG_PRESSED := Color(0.10, 0.10, 0.14, 0.9)
-const CHAPTER_BG_SELECTED := Color(0.20, 0.30, 0.40, 0.9)
-const CHAPTER_TEXT_COLOR := Color(0.86, 0.84, 0.37)
-const CLOSE_BTN_COLOR := Color(0.827, 0.271, 0.286)
-const SEPARATOR_COLOR := Color(0.2, 0.19, 0.2, 0.5)
-
 ## Chapter list width as a fraction of panel width
 const CHAPTER_LIST_RATIO := 0.30
 
@@ -89,8 +77,8 @@ func _scan_chapters() -> void:
 func _build_ui() -> void:
 	# Panel style
 	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = BG_COLOR
-	panel_style.border_color = BORDER_COLOR
+	panel_style.bg_color = UIColors.PANEL_BG
+	panel_style.border_color = UIColors.FRAME_GOLD
 	panel_style.set_border_width_all(2)
 	panel_style.content_margin_left = 6.0
 	panel_style.content_margin_top = 4.0
@@ -113,19 +101,19 @@ func _build_ui() -> void:
 	_header_label = Label.new()
 	_header_label.text = "SRD Reference"
 	_header_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_header_label.add_theme_color_override("font_color", HEADER_COLOR)
+	_header_label.add_theme_color_override("font_color", UIColors.TEXT_HEADER)
 	_header_label.add_theme_font_size_override("font_size", 16)
 	header_row.add_child(_header_label)
 
 	_close_button = Button.new()
 	_close_button.text = "X"
-	_close_button.add_theme_color_override("font_color", CLOSE_BTN_COLOR)
+	_close_button.add_theme_color_override("font_color", UIColors.CLOSE_BTN)
 	_close_button.add_theme_color_override("font_hover_color", Color(1.0, 0.4, 0.4))
-	_close_button.add_theme_font_size_override("font_size", 14)
+	_close_button.add_theme_font_size_override("font_size", 16)
 	_close_button.custom_minimum_size = Vector2(20, 20)
 
 	var close_normal := StyleBoxFlat.new()
-	close_normal.bg_color = Color(0.15, 0.14, 0.18, 0.8)
+	close_normal.bg_color = UIColors.BUTTON_BG
 	close_normal.content_margin_left = 4.0
 	close_normal.content_margin_right = 4.0
 	close_normal.content_margin_top = 1.0
@@ -133,7 +121,7 @@ func _build_ui() -> void:
 	_close_button.add_theme_stylebox_override("normal", close_normal)
 
 	var close_hover := StyleBoxFlat.new()
-	close_hover.bg_color = Color(0.3, 0.1, 0.1, 0.9)
+	close_hover.bg_color = Color(0.3, 0.12, 0.10, 0.9)
 	close_hover.content_margin_left = 4.0
 	close_hover.content_margin_right = 4.0
 	close_hover.content_margin_top = 1.0
@@ -149,7 +137,7 @@ func _build_ui() -> void:
 	# Header separator
 	var sep := HSeparator.new()
 	var sep_style := StyleBoxLine.new()
-	sep_style.color = SEPARATOR_COLOR
+	sep_style.color = UIColors.SEPARATOR
 	sep_style.thickness = 1
 	sep.add_theme_stylebox_override("separator", sep_style)
 	sep.add_theme_constant_override("separation", 2)
@@ -184,12 +172,12 @@ func _build_ui() -> void:
 		btn.text = _chapters[i].title
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		btn.add_theme_font_size_override("font_size", 12)
-		btn.add_theme_color_override("font_color", CHAPTER_TEXT_COLOR)
-		btn.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 0.8))
+		btn.add_theme_font_size_override("font_size", 16)
+		btn.add_theme_color_override("font_color", UIColors.CHOICE_TEXT)
+		btn.add_theme_color_override("font_hover_color", UIColors.CHOICE_HOVER_TEXT)
 
 		var btn_normal := StyleBoxFlat.new()
-		btn_normal.bg_color = CHAPTER_BG_NORMAL
+		btn_normal.bg_color = UIColors.BUTTON_BG
 		btn_normal.content_margin_left = 4.0
 		btn_normal.content_margin_right = 4.0
 		btn_normal.content_margin_top = 2.0
@@ -197,7 +185,7 @@ func _build_ui() -> void:
 		btn.add_theme_stylebox_override("normal", btn_normal)
 
 		var btn_hover := StyleBoxFlat.new()
-		btn_hover.bg_color = CHAPTER_BG_HOVER
+		btn_hover.bg_color = UIColors.BUTTON_HOVER
 		btn_hover.content_margin_left = 4.0
 		btn_hover.content_margin_right = 4.0
 		btn_hover.content_margin_top = 2.0
@@ -205,7 +193,7 @@ func _build_ui() -> void:
 		btn.add_theme_stylebox_override("hover", btn_hover)
 
 		var btn_pressed := StyleBoxFlat.new()
-		btn_pressed.bg_color = CHAPTER_BG_PRESSED
+		btn_pressed.bg_color = UIColors.BUTTON_PRESSED
 		btn_pressed.content_margin_left = 4.0
 		btn_pressed.content_margin_right = 4.0
 		btn_pressed.content_margin_top = 2.0
@@ -222,7 +210,7 @@ func _build_ui() -> void:
 	# Vertical separator between list and content
 	var vsep := VSeparator.new()
 	var vsep_style := StyleBoxLine.new()
-	vsep_style.color = SEPARATOR_COLOR
+	vsep_style.color = UIColors.SEPARATOR
 	vsep_style.thickness = 1
 	vsep.add_theme_stylebox_override("separator", vsep_style)
 	_hbox.add_child(vsep)
@@ -242,12 +230,12 @@ func _build_ui() -> void:
 	_content_label.scroll_active = false
 	_content_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	_content_label.add_theme_color_override("default_color", TEXT_COLOR)
-	_content_label.add_theme_font_size_override("normal_font_size", 12)
-	_content_label.add_theme_font_size_override("bold_font_size", 12)
-	_content_label.add_theme_font_size_override("italics_font_size", 12)
-	_content_label.add_theme_font_size_override("bold_italics_font_size", 12)
-	_content_label.add_theme_constant_override("line_separation", 1)
+	_content_label.add_theme_color_override("default_color", UIColors.TEXT_PRIMARY)
+	_content_label.add_theme_font_size_override("normal_font_size", 16)
+	_content_label.add_theme_font_size_override("bold_font_size", 16)
+	_content_label.add_theme_font_size_override("italics_font_size", 16)
+	_content_label.add_theme_font_size_override("bold_italics_font_size", 16)
+	_content_label.add_theme_constant_override("line_separation", 2)
 	_content_scroll.add_child(_content_label)
 
 
@@ -264,9 +252,9 @@ func _select_chapter(index: int) -> void:
 			continue
 		var style := StyleBoxFlat.new()
 		if i == index:
-			style.bg_color = CHAPTER_BG_SELECTED
+			style.bg_color = UIColors.TAB_SELECTED_BG
 		else:
-			style.bg_color = CHAPTER_BG_NORMAL
+			style.bg_color = UIColors.BUTTON_BG
 		style.content_margin_left = 4.0
 		style.content_margin_right = 4.0
 		style.content_margin_top = 2.0
@@ -294,6 +282,7 @@ func _markdown_to_bbcode(md: String) -> String:
 	var lines := md.split("\n")
 	var result := ""
 	var i := 0
+	var header_color := UIColors.TEXT_HEADER.to_html()
 
 	while i < lines.size():
 		var line := lines[i]
@@ -311,12 +300,12 @@ func _markdown_to_bbcode(md: String) -> String:
 						all_dashes = false
 				if all_equals and line.strip_edges().length() > 0:
 					# H1: setext style with ====
-					result += "[b][font_size=18][color=#6cc2cc]%s[/color][/font_size][/b]\n\n" % _inline_format(line.strip_edges())
+					result += "[b][font_size=18][color=#%s]%s[/color][/font_size][/b]\n\n" % [header_color, _inline_format(line.strip_edges())]
 					i += 2
 					continue
 				if all_dashes and line.strip_edges().length() > 0:
 					# H2: setext style with ----
-					result += "[b][font_size=16][color=#6cc2cc]%s[/color][/font_size][/b]\n\n" % _inline_format(line.strip_edges())
+					result += "[b][font_size=16][color=#%s]%s[/color][/font_size][/b]\n\n" % [header_color, _inline_format(line.strip_edges())]
 					i += 2
 					continue
 
@@ -325,33 +314,36 @@ func _markdown_to_bbcode(md: String) -> String:
 		# ATX headers
 		if stripped.begins_with("#####"):
 			var text := stripped.substr(5).strip_edges()
-			result += "[b][font_size=13][color=#aac8d0]%s[/color][/font_size][/b]\n" % _inline_format(text)
+			result += "[b][color=#%s]%s[/color][/b]\n" % [header_color, _inline_format(text)]
 		elif stripped.begins_with("####"):
 			var text := stripped.substr(4).strip_edges()
-			result += "[b][font_size=14][color=#8cc8d0]%s[/color][/font_size][/b]\n" % _inline_format(text)
+			result += "[b][color=#%s]%s[/color][/b]\n" % [header_color, _inline_format(text)]
 		elif stripped.begins_with("###"):
 			var text := stripped.substr(3).strip_edges()
-			result += "[b][font_size=15][color=#7cc8d0]%s[/color][/font_size][/b]\n" % _inline_format(text)
+			result += "[b][color=#%s]%s[/color][/b]\n" % [header_color, _inline_format(text)]
 		elif stripped.begins_with("##"):
 			var text := stripped.substr(2).strip_edges()
-			result += "[b][font_size=16][color=#6cc2cc]%s[/color][/font_size][/b]\n" % _inline_format(text)
+			result += "[b][font_size=16][color=#%s]%s[/color][/font_size][/b]\n" % [header_color, _inline_format(text)]
 		elif stripped.begins_with("#"):
 			var text := stripped.substr(1).strip_edges()
-			result += "[b][font_size=18][color=#6cc2cc]%s[/color][/font_size][/b]\n\n" % _inline_format(text)
+			result += "[b][font_size=18][color=#%s]%s[/color][/font_size][/b]\n\n" % [header_color, _inline_format(text)]
 		elif stripped.begins_with("- ") or stripped.begins_with("* "):
 			# Bullet list item
 			var text := stripped.substr(2).strip_edges()
-			result += "  [color=#aaa8a0]>[/color] %s\n" % _inline_format(text)
+			var dim_color := UIColors.TEXT_DIM.to_html()
+			result += "  [color=#%s]>[/color] %s\n" % [dim_color, _inline_format(text)]
 		elif stripped.begins_with("| ") or (stripped.begins_with("|") and stripped.find("-+-") >= 0):
 			# Table row — render as-is with monospace feel via indent
-			result += "[color=#a0a0a0]%s[/color]\n" % stripped
+			var dim_color := UIColors.TEXT_DIM.to_html()
+			result += "[color=#%s]%s[/color]\n" % [dim_color, stripped]
 		elif _is_ordered_list_item(stripped):
 			# Ordered list: "1. text", "2. text", etc.
 			var dot_idx := stripped.find(". ")
 			if dot_idx >= 0:
 				var num := stripped.substr(0, dot_idx + 1)
 				var text := stripped.substr(dot_idx + 2).strip_edges()
-				result += "  [color=#aaa8a0]%s[/color] %s\n" % [num, _inline_format(text)]
+				var dim_color := UIColors.TEXT_DIM.to_html()
+				result += "  [color=#%s]%s[/color] %s\n" % [dim_color, num, _inline_format(text)]
 			else:
 				result += "%s\n" % _inline_format(stripped)
 		elif stripped.is_empty():

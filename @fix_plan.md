@@ -83,19 +83,19 @@
 
 ### HIGH — Must complete
 
-- [ ] Party data model (companion slots in game state, party array in CharacterData or new PartyState)
-- [ ] NPC recruitment system (conversation action to recruit, NPC acceptance logic)
-- [ ] Stat block to character sheet conversion (DndMonsterFactory stat block to CharacterData)
-- [ ] Companion combat integration (player controls all party members in combat mode)
-- [ ] Party-aware death/game-over (game continues if any companion alive)
-- [ ] Dialogue UI — speaker selection dropdown (who is speaking, who they're speaking to)
+- [x] Party data model (companion slots in game state, party array in CharacterData or new PartyState)
+- [x] NPC recruitment system (conversation action to recruit, NPC acceptance logic)
+- [x] Stat block to character sheet conversion (DndMonsterFactory stat block to CharacterData)
+- [x] Companion combat integration (player controls all party members in combat mode)
+- [x] Party-aware death/game-over (game continues if any companion alive)
+- [x] Dialogue UI — speaker selection dropdown (who is speaking, who they're speaking to)
 
 ### MEDIUM — Should complete
 
-- [ ] Companion XP tracking (separate per character, class assignment on first XP)
-- [ ] Companion equipment management (shared inventory, individual equipment)
-- [ ] Party formation (companions follow player during exploration)
-- [ ] Update encounter balance for party of 4 (standard D&D 5e XP budgets)
+- [x] Companion XP tracking (separate per character, class assignment on first XP)
+- [x] Companion equipment management (shared inventory, individual equipment)
+- [x] Party formation (companions follow player during exploration)
+- [x] Update encounter balance for party of 4 (standard D&D 5e XP budgets)
 
 ### LOW — Nice to have
 

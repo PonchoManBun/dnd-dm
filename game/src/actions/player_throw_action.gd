@@ -3,7 +3,7 @@ extends ThrowAction
 
 
 func _init(p_selections: Array[ItemSelection], p_target_pos: Vector2i) -> void:
-	super(World.player, p_selections, p_target_pos)
+	super(World.active_character, p_selections, p_target_pos)
 
 
 func _execute(map: Map, result: ActionResult) -> bool:

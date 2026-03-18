@@ -5,9 +5,9 @@ var source_pos: Vector2i
 
 
 func _init(p_target_pos: Vector2i) -> void:
-	super(World.player, p_target_pos)
+	super(World.active_character, p_target_pos)
 	target_pos = p_target_pos
-	source_pos = World.current_map.find_monster_position(World.player)
+	source_pos = World.current_map.find_monster_position(World.active_character)
 
 
 func _to_string() -> String:
@@ -16,7 +16,7 @@ func _to_string() -> String:
 
 func _execute(map: Map, result: ActionResult) -> bool:
 	# Get the wielded weapon
-	var weapon := World.player.equipment.get_equipped_item(Equipment.Slot.RANGED)
+	var weapon := World.active_character.equipment.get_equipped_item(Equipment.Slot.RANGED)
 	if not weapon:
 		result.message = "You need to wield a ranged weapon first."
 		return false

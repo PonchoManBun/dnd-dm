@@ -38,6 +38,10 @@ signal toggle_container_requested(item: Item)
 var equipment_sockets: Dictionary = {}
 var _previous_tab: int = Tab.INVENTORY
 
+## The party member whose inventory/equipment is currently being viewed.
+var _viewed_character: Monster = null
+var _character_selector: OptionButton = null
+
 
 func _ready() -> void:
 	super._ready()
@@ -45,6 +49,15 @@ func _ready() -> void:
 	# Connect to World signals
 	World.world_initialized.connect(_on_world_initialized)
 	World.turn_ended.connect(_on_turn_ended)
+
+	# Create character selector dropdown (placed above the tab bar)
+	_character_selector = OptionButton.new()
+	_character_selector.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_character_selector.item_selected.connect(_on_character_selected)
+	# Insert above the tab row
+	var main_vbox := %CloseButton.get_parent().get_parent()
+	main_vbox.add_child(_character_selector)
+	main_vbox.move_child(_character_selector, 0)
 
 	# Assign equipment slots
 	equipment_sockets[Equipment.Slot.HEADWEAR] = %Hat
@@ -163,11 +176,42 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _on_world_initialized() -> void:
+	_viewed_character = World.player
+	_refresh_character_selector()
 	update()
 
 
 func _on_turn_ended() -> void:
+	_refresh_character_selector()
 	update()
+
+
+func _refresh_character_selector() -> void:
+	if not _character_selector:
+		return
+	var all_members := World.party.get_all_members()
+	# Hide selector if solo (no companions)
+	_character_selector.visible = all_members.size() > 1
+	var prev_index := _character_selector.selected
+	_character_selector.clear()
+	var selected_idx := 0
+	for i in range(all_members.size()):
+		var member := all_members[i]
+		_character_selector.add_item(member.name, i)
+		if member == _viewed_character:
+			selected_idx = i
+	if _character_selector.item_count > 0:
+		_character_selector.selected = selected_idx
+	# Make sure _viewed_character is valid
+	if _viewed_character == null or _viewed_character not in all_members:
+		_viewed_character = World.player
+
+
+func _on_character_selected(index: int) -> void:
+	var all_members := World.party.get_all_members()
+	if index >= 0 and index < all_members.size():
+		_viewed_character = all_members[index]
+		update()
 
 
 func _on_pickup_button_pressed() -> void:
@@ -194,7 +238,8 @@ func _on_equip_button_pressed() -> void:
 	if not selected_item:
 		message_logged.emit("No item selected to unequip.")
 		return
-	var slot: Variant = World.player.equipment.get_best_slot_for_item(selected_item)
+	var character := _viewed_character if _viewed_character else World.player
+	var slot: Variant = character.equipment.get_best_slot_for_item(selected_item)
 	if slot is Equipment.Slot:
 		equip_requested.emit(PlayerEquipAction.new(items[0], slot as Equipment.Slot))
 
@@ -276,7 +321,8 @@ func _on_equipment_item_dropped(item: Item, slot: Equipment.Slot, module_index: 
 		)
 	)
 
-	if not World.player.has_item(item):
+	var character := _viewed_character if _viewed_character else World.player
+	if not character.has_item(item):
 		# Shouldn't happen, but just in case, say something.
 		message_logged.emit("Can't equip what isn't in your inventory")
 		return
@@ -309,8 +355,9 @@ func _on_tab_item_dropped(item: Item, tab_idx: int) -> void:
 func _on_inventory_item_dropped(item: Item) -> void:
 	Log.d("[DragDrop] Inventory item dropped: %s" % item)
 
-	if World.player.has_item(item):
-		Log.d("[DragDrop] Player has item in inventory: %s" % item)
+	var character := _viewed_character if _viewed_character else World.player
+	if character.has_item(item):
+		Log.d("[DragDrop] Character has item in inventory: %s" % item)
 		reparent_requested.emit(PlayerReparentItemAction.new(item, null))
 	else:
 		Log.d("[DragDrop] Picking up item from ground: %s" % item)
@@ -324,12 +371,13 @@ func _on_ground_item_double_clicked(item: Item) -> void:
 func _on_ground_item_dropped(item: Item) -> void:
 	Log.d("[DragDrop] Ground item dropped: %s" % item)
 
-	var player_pos := World.current_map.find_monster_position(World.player)
-	if player_pos == Utils.INVALID_POS:
-		Log.e("Player not found on map")
+	var character := _viewed_character if _viewed_character else World.player
+	var char_pos := World.current_map.find_monster_position(character)
+	if char_pos == Utils.INVALID_POS:
+		Log.e("Character not found on map")
 		return
 
-	if World.player.has_item(item):
+	if character.has_item(item):
 		Log.d("[DragDrop] Dropping item from inventory to ground: %s" % item)
 		drop_requested.emit([ItemSelection.new(item, 1)])
 	else:
@@ -387,10 +435,11 @@ func _update_ground_items() -> void:
 func _update_inventory_items() -> void:
 	inventory_list.clear_items()
 
-	# Get player inventory
-	var inventory := World.player.inventory
+	# Get viewed character's inventory
+	var character := _viewed_character if _viewed_character else World.player
+	var inventory := character.inventory
 	if inventory == null:
-		Log.e("Player has no inventory")
+		Log.e("Character has no inventory")
 		return
 
 	# Add only top-level items to the inventory list
@@ -401,10 +450,11 @@ func _update_inventory_items() -> void:
 
 
 func _update_equipment_items() -> void:
-	# Update each equipment slot with its equipped item
+	# Update each equipment slot with the viewed character's equipped items
+	var character := _viewed_character if _viewed_character else World.player
 	for slot: Equipment.Slot in Equipment.Slot.values():
 		var socket: EquipmentSocket = equipment_sockets[slot]
-		var item := World.player.equipment.get_equipped_item(slot)
+		var item := character.equipment.get_equipped_item(slot)
 		if item:
 			socket.set_equipped_item(item)
 		else:
@@ -449,8 +499,9 @@ func _update_buttons() -> void:
 						and selected_item.children.size() == 0
 					)
 
+					var btn_character := _viewed_character if _viewed_character else World.player
 					if (
-						World.player.equipment.get_slot_where_item_is_equipped(selected_item)
+						btn_character.equipment.get_slot_where_item_is_equipped(selected_item)
 						== null
 					):
 						equip_button.disabled = false
@@ -493,12 +544,12 @@ func _update_weight_display() -> void:
 
 
 func _get_weight_bbcode() -> String:
-	var player: Monster = World.player
-	if not player:
+	var character: Monster = _viewed_character if _viewed_character else World.player
+	if not character:
 		return ""
 
-	var total_weight: float = player.get_total_carried_weight()
-	var capacity: float = player.get_dnd_carrying_capacity()
+	var total_weight: float = character.get_total_carried_weight()
+	var capacity: float = character.get_dnd_carrying_capacity()
 
 	# Determine color and encumbrance status
 	var weight_color: Color = GameColors.WHITE
@@ -506,8 +557,8 @@ func _get_weight_bbcode() -> String:
 
 	if capacity > 0:
 		var ratio: float = total_weight / capacity
-		var encumbered_threshold: float = player.get_dnd_encumbered_threshold()
-		var heavily_encumbered_threshold: float = player.get_dnd_heavily_encumbered_threshold()
+		var encumbered_threshold: float = character.get_dnd_encumbered_threshold()
+		var heavily_encumbered_threshold: float = character.get_dnd_heavily_encumbered_threshold()
 
 		if total_weight > capacity:
 			weight_color = GameColors.RED

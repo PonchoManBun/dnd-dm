@@ -5,7 +5,7 @@ extends RefCounted
 ## Phase 1: saves player data, current map id/depth, turn number, and world plan seed.
 ## Maps are regenerated on load (not serialized).
 
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
 
 
 static func serialize_game_state() -> Dictionary:
@@ -22,6 +22,7 @@ static func serialize_game_state() -> Dictionary:
 		"current_map_depth": World.current_map.depth,
 		"faction_affinities": _serialize_faction_affinities(),
 		"player": _serialize_player(player, pos),
+		"party": _serialize_party(),
 	}
 	return data
 
@@ -32,8 +33,8 @@ static func deserialize_game_state(data: Dictionary) -> bool:
 		return false
 
 	var version: int = data.get("version", 0)
-	if version != SAVE_VERSION:
-		Log.e("Incompatible save version: %d (expected %d)" % [version, SAVE_VERSION])
+	if version < 1 or version > SAVE_VERSION:
+		Log.e("Incompatible save version: %d (expected 1-%d)" % [version, SAVE_VERSION])
 		return false
 
 	# Restore world state (JSON parses numbers as float, so cast to int)
@@ -114,6 +115,66 @@ static func deserialize_game_state(data: Dictionary) -> bool:
 	# Compute FOV
 	World.update_vision()
 
+	# Restore party companions (v2+)
+	World.party = Party.new()
+	if version >= 2 and data.has("party"):
+		for companion_data: Dictionary in data["party"]:
+			var comp_slug := StringName(companion_data["slug"] as String)
+			var comp_monster: Monster
+			if DndMonsterFactory.has_monster(comp_slug):
+				comp_monster = DndMonsterFactory.create_monster(comp_slug)
+			else:
+				var comp_role: Roles.Type = int(companion_data["role"]) as Roles.Type
+				comp_monster = MonsterFactory.create_monster(comp_slug, comp_role)
+
+			# Restore companion stats
+			comp_monster.hp = int(companion_data["hp"])
+			comp_monster.max_hp = int(companion_data["max_hp"])
+			comp_monster.energy = int(companion_data["energy"])
+			comp_monster.is_dead = companion_data["is_dead"] as bool
+			comp_monster.nutrition.value = int(companion_data["nutrition"])
+			comp_monster.name = companion_data.get("name", comp_monster.name) as String
+			comp_monster.faction = Factions.Type.HUMAN
+			comp_monster.behavior = Monster.Behavior.PASSIVE
+
+			# Restore character data
+			if companion_data.has("character_data") and companion_data["character_data"] != null:
+				_deserialize_character_data(comp_monster, companion_data["character_data"])
+
+			# Restore skill levels
+			if companion_data.has("skill_levels"):
+				_deserialize_skill_levels(comp_monster, companion_data["skill_levels"])
+
+			# Restore status effects
+			if companion_data.has("status_effects"):
+				_deserialize_status_effects(comp_monster, companion_data["status_effects"])
+
+			# Clear default inventory and restore saved inventory
+			comp_monster.inventory.clear()
+			for slot: Equipment.Slot in Equipment.Slot.values():
+				comp_monster.equipment.equipped_items[slot] = null
+
+			if companion_data.has("inventory"):
+				for item_dict: Dictionary in companion_data["inventory"]:
+					var item := _deserialize_item(item_dict)
+					if item:
+						comp_monster.add_item(item)
+
+			if companion_data.has("equipment"):
+				_deserialize_equipment(comp_monster, companion_data["equipment"])
+
+			# Place companion on map
+			var comp_pos := Vector2i(int(companion_data["position_x"]), int(companion_data["position_y"]))
+			if World.current_map.is_in_bounds(comp_pos):
+				var comp_cell := World.current_map.get_cell(comp_pos)
+				if comp_cell.is_walkable() and not comp_cell.monster:
+					comp_cell.monster = comp_monster
+
+			# Add to party
+			World.party.add_member(comp_monster)
+
+		Log.i("Restored %d party companions" % World.party.members.size())
+
 	# Mark that the world was loaded from a save so game.gd skips re-initialization
 	World.loaded_from_save = true
 
@@ -145,6 +206,16 @@ static func _serialize_player(player: Monster, pos: Vector2i) -> Dictionary:
 		"equipment": _serialize_equipment(player),
 	}
 	return data
+
+
+static func _serialize_party() -> Array:
+	var companions: Array = []
+	for companion in World.party.members:
+		var pos := World.current_map.find_monster_position(companion)
+		if pos == Utils.INVALID_POS:
+			pos = Vector2i.ZERO
+		companions.append(_serialize_player(companion, pos))
+	return companions
 
 
 # --- CharacterData Serialization ---

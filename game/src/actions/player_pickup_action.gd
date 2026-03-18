@@ -3,7 +3,7 @@ extends PickupAction
 
 
 func _init(p_selections: Array[ItemSelection] = []) -> void:
-	super(World.player, p_selections)
+	super(World.active_character, p_selections)
 
 
 func _execute(map: Map, result: ActionResult) -> bool:

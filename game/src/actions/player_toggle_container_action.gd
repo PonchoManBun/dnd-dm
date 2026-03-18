@@ -3,7 +3,7 @@ extends ToggleContainerAction
 
 
 func _init(p_container: Item) -> void:
-	super(World.player, p_container)
+	super(World.active_character, p_container)
 
 
 func _execute(map: Map, result: ActionResult) -> bool:

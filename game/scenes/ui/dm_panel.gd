@@ -8,21 +8,8 @@ extends PanelContainer
 signal choice_pressed(index: int)
 signal text_submitted(text: String)
 
-const PANEL_WIDTH := 192
+const PANEL_WIDTH := 156
 const SCROLL_SPEED := 4.0
-
-## Colors matching the game's dark pixel art theme
-const BG_COLOR := Color(0.06, 0.05, 0.08, 0.92)
-const BORDER_COLOR := Color(0.2, 0.19, 0.2, 1.0)
-const HEADER_COLOR := Color(0.42, 0.76, 0.80)  # Cyan-ish, matches GameColors.CYAN
-const TEXT_COLOR := Color(0.85, 0.85, 0.86)
-const CHOICE_BG_NORMAL := Color(0.15, 0.14, 0.18, 0.8)
-const CHOICE_BG_HOVER := Color(0.25, 0.24, 0.30, 0.9)
-const CHOICE_BG_PRESSED := Color(0.10, 0.10, 0.14, 0.9)
-const CHOICE_TEXT_COLOR := Color(0.86, 0.84, 0.37)  # Yellow-ish, matches GameColors.YELLOW
-const INPUT_BG_COLOR := Color(0.08, 0.07, 0.10, 0.9)
-const INPUT_BORDER_COLOR := Color(0.30, 0.29, 0.32, 0.6)
-const SEPARATOR_COLOR := Color(0.2, 0.19, 0.2, 0.5)
 
 var _scroll_container: ScrollContainer
 var _narrative_label: RichTextLabel
@@ -30,6 +17,8 @@ var _choices_container: VBoxContainer
 var _input_field: LineEdit
 var _header_label: Label
 var _vbox: VBoxContainer
+var _speaking_as: OptionButton
+var _speaking_to: OptionButton
 
 
 func _ready() -> void:
@@ -46,10 +35,10 @@ func _build_ui() -> void:
 	size_flags_horizontal = Control.SIZE_FILL
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 
-	# Create a dark StyleBoxFlat for the panel background
+	# Panel style with gold left border
 	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = BG_COLOR
-	panel_style.border_color = BORDER_COLOR
+	panel_style.bg_color = UIColors.PANEL_BG
+	panel_style.border_color = UIColors.FRAME_GOLD
 	panel_style.border_width_left = 2
 	panel_style.border_width_top = 0
 	panel_style.border_width_right = 0
@@ -69,16 +58,16 @@ func _build_ui() -> void:
 
 	# -- Header --
 	_header_label = Label.new()
-	_header_label.text = "DM"
+	_header_label.text = "Dungeon Master"
 	_header_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_header_label.add_theme_color_override("font_color", HEADER_COLOR)
+	_header_label.add_theme_color_override("font_color", UIColors.TEXT_HEADER)
 	_header_label.add_theme_font_size_override("font_size", 16)
 	_vbox.add_child(_header_label)
 
 	# Header separator
 	var sep := HSeparator.new()
 	var sep_style := StyleBoxLine.new()
-	sep_style.color = SEPARATOR_COLOR
+	sep_style.color = UIColors.SEPARATOR
 	sep_style.thickness = 1
 	sep.add_theme_stylebox_override("separator", sep_style)
 	sep.add_theme_constant_override("separation", 2)
@@ -104,43 +93,78 @@ func _build_ui() -> void:
 	_narrative_label.scroll_active = false
 	_narrative_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_narrative_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	_narrative_label.add_theme_color_override("default_color", TEXT_COLOR)
-	_narrative_label.add_theme_font_size_override("normal_font_size", 14)
-	_narrative_label.add_theme_font_size_override("bold_font_size", 14)
-	_narrative_label.add_theme_font_size_override("italics_font_size", 14)
-	_narrative_label.add_theme_font_size_override("bold_italics_font_size", 14)
-	_narrative_label.add_theme_constant_override("line_separation", 1)
+	_narrative_label.add_theme_color_override("default_color", UIColors.TEXT_PRIMARY)
+	_narrative_label.add_theme_font_size_override("normal_font_size", 16)
+	_narrative_label.add_theme_font_size_override("bold_font_size", 16)
+	_narrative_label.add_theme_font_size_override("italics_font_size", 16)
+	_narrative_label.add_theme_font_size_override("bold_italics_font_size", 16)
+	_narrative_label.add_theme_constant_override("line_separation", 2)
 	_narrative_label.text = ""
 	_scroll_container.add_child(_narrative_label)
 
 	# -- Choices container --
 	_choices_container = VBoxContainer.new()
 	_choices_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_choices_container.add_theme_constant_override("separation", 2)
+	_choices_container.add_theme_constant_override("separation", 3)
 	_vbox.add_child(_choices_container)
 
 	# Separator before input
 	var input_sep := HSeparator.new()
 	var input_sep_style := StyleBoxLine.new()
-	input_sep_style.color = SEPARATOR_COLOR
+	input_sep_style.color = UIColors.SEPARATOR
 	input_sep_style.thickness = 1
 	input_sep.add_theme_stylebox_override("separator", input_sep_style)
 	input_sep.add_theme_constant_override("separation", 2)
 	_vbox.add_child(input_sep)
+
+	# -- Speaker selectors --
+	var speaker_row := HBoxContainer.new()
+	speaker_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	speaker_row.add_theme_constant_override("separation", 4)
+	_vbox.add_child(speaker_row)
+
+	var as_label := Label.new()
+	as_label.text = "As:"
+	as_label.add_theme_color_override("font_color", UIColors.TEXT_DIM)
+	as_label.add_theme_font_size_override("font_size", 14)
+	speaker_row.add_child(as_label)
+
+	_speaking_as = OptionButton.new()
+	_speaking_as.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_speaking_as.add_theme_font_size_override("font_size", 14)
+	_speaking_as.add_theme_color_override("font_color", UIColors.TEXT_PRIMARY)
+	_speaking_as.flat = true
+	speaker_row.add_child(_speaking_as)
+
+	var to_label := Label.new()
+	to_label.text = "To:"
+	to_label.add_theme_color_override("font_color", UIColors.TEXT_DIM)
+	to_label.add_theme_font_size_override("font_size", 14)
+	speaker_row.add_child(to_label)
+
+	_speaking_to = OptionButton.new()
+	_speaking_to.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_speaking_to.add_theme_font_size_override("font_size", 14)
+	_speaking_to.add_theme_color_override("font_color", UIColors.TEXT_PRIMARY)
+	_speaking_to.flat = true
+	speaker_row.add_child(_speaking_to)
+
+	_refresh_speaker_options()
+	_refresh_target_options()
 
 	# -- Free-text input --
 	_input_field = LineEdit.new()
 	_input_field.focus_mode = Control.FOCUS_CLICK  # Never auto-grab keyboard focus
 	_input_field.placeholder_text = "Say something..."
 	_input_field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_input_field.add_theme_font_size_override("font_size", 14)
-	_input_field.add_theme_color_override("font_color", TEXT_COLOR)
-	_input_field.add_theme_color_override("font_placeholder_color", Color(0.45, 0.44, 0.42, 0.6))
+	_input_field.add_theme_font_size_override("font_size", 16)
+	_input_field.add_theme_color_override("font_color", UIColors.TEXT_PRIMARY)
+	_input_field.add_theme_color_override("font_placeholder_color", UIColors.TEXT_DIM)
 
 	# Style the input field background
 	var input_normal := StyleBoxFlat.new()
-	input_normal.bg_color = INPUT_BG_COLOR
-	input_normal.border_color = INPUT_BORDER_COLOR
+	input_normal.bg_color = UIColors.INPUT_BG
+	input_normal.border_color = UIColors.INPUT_BORDER
 	input_normal.border_width_bottom = 1
 	input_normal.content_margin_left = 4.0
 	input_normal.content_margin_right = 4.0
@@ -149,8 +173,8 @@ func _build_ui() -> void:
 	_input_field.add_theme_stylebox_override("normal", input_normal)
 
 	var input_focus := StyleBoxFlat.new()
-	input_focus.bg_color = INPUT_BG_COLOR
-	input_focus.border_color = HEADER_COLOR
+	input_focus.bg_color = UIColors.INPUT_BG
+	input_focus.border_color = UIColors.FRAME_GOLD
 	input_focus.border_width_bottom = 1
 	input_focus.content_margin_left = 4.0
 	input_focus.content_margin_right = 4.0
@@ -170,6 +194,10 @@ func _connect_signals() -> void:
 	NarrativeManager.narrative_added.connect(_on_narrative_added)
 	NarrativeManager.choices_presented.connect(_on_choices_presented)
 	NarrativeManager.narrative_cleared.connect(_on_narrative_cleared)
+
+	# Refresh dropdowns when the world state changes
+	World.turn_ended.connect(_on_turn_ended_refresh)
+	World.map_changed.connect(_on_map_changed_refresh)
 
 
 ## Load any narrative history that was added before the panel was ready.
@@ -214,14 +242,14 @@ func _on_choices_presented(choices: Array[String]) -> void:
 		button.text = "%d. %s" % [i + 1, choices[i]]
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.add_theme_font_size_override("font_size", 14)
-		button.add_theme_color_override("font_color", CHOICE_TEXT_COLOR)
-		button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 0.8))
-		button.add_theme_color_override("font_pressed_color", Color(0.7, 0.68, 0.3))
+		button.add_theme_font_size_override("font_size", 16)
+		button.add_theme_color_override("font_color", UIColors.CHOICE_TEXT)
+		button.add_theme_color_override("font_hover_color", UIColors.CHOICE_HOVER_TEXT)
+		button.add_theme_color_override("font_pressed_color", UIColors.CHOICE_PRESSED_TEXT)
 
 		# Style the choice buttons
 		var btn_normal := StyleBoxFlat.new()
-		btn_normal.bg_color = CHOICE_BG_NORMAL
+		btn_normal.bg_color = UIColors.BUTTON_BG
 		btn_normal.content_margin_left = 4.0
 		btn_normal.content_margin_right = 4.0
 		btn_normal.content_margin_top = 2.0
@@ -229,7 +257,7 @@ func _on_choices_presented(choices: Array[String]) -> void:
 		button.add_theme_stylebox_override("normal", btn_normal)
 
 		var btn_hover := StyleBoxFlat.new()
-		btn_hover.bg_color = CHOICE_BG_HOVER
+		btn_hover.bg_color = UIColors.BUTTON_HOVER
 		btn_hover.content_margin_left = 4.0
 		btn_hover.content_margin_right = 4.0
 		btn_hover.content_margin_top = 2.0
@@ -237,7 +265,7 @@ func _on_choices_presented(choices: Array[String]) -> void:
 		button.add_theme_stylebox_override("hover", btn_hover)
 
 		var btn_pressed := StyleBoxFlat.new()
-		btn_pressed.bg_color = CHOICE_BG_PRESSED
+		btn_pressed.bg_color = UIColors.BUTTON_PRESSED
 		btn_pressed.content_margin_left = 4.0
 		btn_pressed.content_margin_right = 4.0
 		btn_pressed.content_margin_top = 2.0
@@ -270,10 +298,23 @@ func _on_text_submitted(text: String) -> void:
 		return
 
 	_input_field.text = ""
-	text_submitted.emit(text)
+
+	# Prepend speaker context if a non-player companion is selected
+	var submitted_text := text
+	var speaker_idx := _speaking_as.selected
+	if speaker_idx > 0:
+		var speaker_name := _speaking_as.get_item_text(speaker_idx)
+		submitted_text = "[Speaking as: %s] %s" % [speaker_name, text]
+
+	var target_idx := _speaking_to.selected
+	if target_idx > 0:
+		var target_name := _speaking_to.get_item_text(target_idx)
+		submitted_text = "[Speaking to: %s] %s" % [target_name, submitted_text]
+
+	text_submitted.emit(submitted_text)
 
 	if NarrativeManager:
-		NarrativeManager.submit_input(text)
+		NarrativeManager.submit_input(submitted_text)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -292,3 +333,49 @@ func _scroll_to_bottom() -> void:
 	# Wait a frame for layout to update, then scroll to the bottom
 	await get_tree().process_frame
 	_scroll_container.scroll_vertical = int(_scroll_container.get_v_scroll_bar().max_value)
+
+
+func _on_turn_ended_refresh() -> void:
+	_refresh_target_options()
+
+
+func _on_map_changed_refresh(_map: Map) -> void:
+	_refresh_speaker_options()
+	_refresh_target_options()
+
+
+## Populate "Speaking as" with the player name + all companion names.
+func _refresh_speaker_options() -> void:
+	_speaking_as.clear()
+
+	# Index 0 = the player (default)
+	var player_name := "Player"
+	if World.player:
+		player_name = World.player.name
+	_speaking_as.add_item(player_name)
+
+	# Add party companions
+	for member: Monster in World.party.members:
+		_speaking_as.add_item(member.name)
+
+	_speaking_as.selected = 0
+
+
+## Populate "Speaking to" with nearby visible non-party monsters.
+func _refresh_target_options() -> void:
+	_speaking_to.clear()
+
+	# Index 0 = nobody in particular (DM / general)
+	_speaking_to.add_item("(anyone)")
+
+	if not World.current_map:
+		return
+
+	# List visible non-party monsters
+	var visible := World.current_map.get_visible_monsters()
+	for monster: Monster in visible:
+		if World.party.is_party_member(monster):
+			continue
+		_speaking_to.add_item(monster.name)
+
+	_speaking_to.selected = 0

@@ -12,10 +12,9 @@ var _entry_labels: Array[RichTextLabel] = []
 func _ready() -> void:
 	# Build UI
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.1, 0.1, 0.15, 0.9)
-	style.border_color = Color(0.3, 0.3, 0.4)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(2)
+	style.bg_color = UIColors.PANEL_BG
+	style.border_color = UIColors.FRAME_GOLD
+	style.set_border_width_all(2)
 	style.set_content_margin_all(4)
 	add_theme_stylebox_override("panel", style)
 
@@ -26,16 +25,20 @@ func _ready() -> void:
 	_header_label = Label.new()
 	_header_label.text = "Initiative"
 	_header_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_header_label.add_theme_font_size_override("font_size", 8)
-	_header_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.6))
+	_header_label.add_theme_font_size_override("font_size", 16)
+	_header_label.add_theme_color_override("font_color", UIColors.TEXT_HEADER)
 	vbox.add_child(_header_label)
 
 	var sep := HSeparator.new()
+	var sep_style := StyleBoxLine.new()
+	sep_style.color = UIColors.SEPARATOR
+	sep_style.thickness = 1
+	sep.add_theme_stylebox_override("separator", sep_style)
 	sep.add_theme_constant_override("separation", 2)
 	vbox.add_child(sep)
 
 	_entries_container = VBoxContainer.new()
-	_entries_container.add_theme_constant_override("separation", 1)
+	_entries_container.add_theme_constant_override("separation", 2)
 	vbox.add_child(_entries_container)
 
 	# Start hidden
@@ -54,7 +57,7 @@ func update_turn_order(combatants: Array[CombatState], active_index: int) -> voi
 		label.bbcode_enabled = true
 		label.fit_content = true
 		label.scroll_active = false
-		label.add_theme_font_size_override("normal_font_size", 7)
+		label.add_theme_font_size_override("normal_font_size", 16)
 
 		var name_text := cs.combatant.get_name(Monster.NameFormat.PLAIN)
 		var init_text := str(cs.initiative)

@@ -60,6 +60,20 @@ func enter_combat(player: Monster, enemies: Array[Monster], trigger: Monster = n
 		player_state.initiative = Dice.roll(1, 20)
 	combatants.append(player_state)
 
+	# Roll initiative for party companions
+	for companion in World.party.members:
+		if companion.is_dead:
+			continue
+		var comp_pos := World.current_map.find_monster_position(companion)
+		if comp_pos == Utils.INVALID_POS:
+			continue
+		var comp_state := CombatState.new(companion)
+		if companion.character_data:
+			comp_state.initiative = RulesEngine.initiative_roll(companion.character_data)
+		else:
+			comp_state.initiative = Dice.roll(1, 20)
+		combatants.append(comp_state)
+
 	for enemy in enemies:
 		var enemy_state := CombatState.new(enemy)
 		if enemy.character_data:
@@ -82,7 +96,7 @@ func enter_combat(player: Monster, enemies: Array[Monster], trigger: Monster = n
 	for cs: CombatState in combatants:
 		if cs.combatant == player and player_surprised:
 			cs.is_surprised = true
-		elif cs.combatant != player and enemies_surprised:
+		elif not World.is_party_member(cs.combatant) and enemies_surprised:
 			cs.is_surprised = true
 
 	current_combatant_index = 0
@@ -131,7 +145,7 @@ func advance_turn() -> void:
 
 	# Check if combat should end
 	if _should_end_combat():
-		var player_survived := World.player != null and not World.player.is_dead
+		var player_survived := not World.party.all_dead()
 		exit_combat(player_survived)
 		return
 
@@ -150,6 +164,24 @@ func exit_combat(victory: bool) -> void:
 	combat_round = 0
 
 	Log.i("Combat ended. Victory: %s" % victory)
+
+	# Distribute XP on victory
+	if victory:
+		var total_xp := 0
+		for monster: Monster in monsters:
+			if not World.is_party_member(monster) and monster.is_dead:
+				total_xp += DndMonsterFactory.get_xp(monster.slug)
+		if total_xp > 0:
+			var living := World.party.get_living_members()
+			var xp_each := total_xp / maxi(1, living.size())
+			for member in living:
+				if member.character_data:
+					if member.character_data.add_xp(xp_each):
+						World.message_logged.emit("[color=yellow]%s leveled up to %d![/color]" % [member.name, member.character_data.level])
+						member.max_hp = member.character_data.max_hp
+						member.hp = mini(member.hp + (member.max_hp - member.hp), member.max_hp)
+			World.message_logged.emit("[color=cyan]Gained %d XP (%d each)[/color]" % [total_xp, xp_each])
+
 	mode_changed.emit(Mode.EXPLORATION)
 	combat_ended.emit(victory)
 
@@ -159,7 +191,7 @@ func is_player_turn() -> bool:
 	if current_mode != Mode.COMBAT:
 		return true  # In exploration, it's always "player's turn"
 	var active := get_active_combatant()
-	return active != null and active.combatant == World.player
+	return active != null and World.is_party_member(active.combatant)
 
 
 ## Get combat state for a specific monster.
@@ -171,17 +203,15 @@ func get_combat_state(monster: Monster) -> CombatState:
 
 
 func _should_end_combat() -> bool:
-	# Combat ends when all enemies are dead
 	var enemies_alive := 0
-	var player_alive := false
+	var party_alive := false
 	for cs: CombatState in combatants:
-		if cs.combatant == World.player:
+		if World.is_party_member(cs.combatant):
 			if not cs.combatant.is_dead:
-				player_alive = true
+				party_alive = true
 		elif not cs.combatant.is_dead:
 			enemies_alive += 1
-
-	return enemies_alive == 0 or not player_alive
+	return enemies_alive == 0 or not party_alive
 
 
 func _reset_all_turns() -> void:

@@ -12,7 +12,8 @@ signal drop_requested(selections: Array[ItemSelection])
 @onready var melee_container: HBoxContainer = %MeleeContainer
 @onready var ranged_container: HBoxContainer = %RangedContainer
 @onready var armor_container: HBoxContainer = %ArmorContainer
-@onready var dawnlike_notice: RichTextLabel = %DawnLikeNotice
+@onready var char_sheet_button: Button = %CharSheetButton
+@onready var title_label: Label = %Title1
 
 const MAX_LOG_LENGTH = 10000
 const EQUIPMENT_ICON_SIZE := Vector2(16, 16)
@@ -40,15 +41,14 @@ func _ready() -> void:
 	inventory_button.focus_mode = Control.FOCUS_NONE
 	inventory_button.pressed.connect(_on_inventory_button_pressed)
 
+	char_sheet_button.focus_mode = Control.FOCUS_NONE
+	char_sheet_button.pressed.connect(func() -> void:
+		Input.action_press("toggle_character_sheet")
+		Input.action_release("toggle_character_sheet")
+	)
+
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
-
-	dawnlike_notice.gui_input.connect(func(event: InputEvent) -> void:
-		if event is InputEventMouseButton:
-			var mouse_event := event as InputEventMouseButton
-			if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
-				OS.shell_open("https://opengameart.org/content/16x16-dawnhack-roguelike-tileset")
-	)
 
 	throw_info.visible = false
 
@@ -78,7 +78,12 @@ func _update_display() -> void:
 
 	hp_bar.set_value_and_max(World.player.hp, World.player.max_hp)
 
-	# Update equipment displays
+	# Update character name in title
+	if title_label and World.player.character_data:
+		var cd := World.player.character_data
+		title_label.text = cd.character_name if not cd.character_name.is_empty() else "Adventurer"
+
+	# Update equipment displays (compact icon-only)
 	_build_weapon_container(
 		melee_container, "Melee", World.player.equipment.get_equipped_item(Equipment.Slot.MELEE)
 	)
@@ -89,8 +94,12 @@ func _update_display() -> void:
 
 	_build_armor_container(armor_container)
 
-	# Update basic status text
-	status_text.text = "Time: %d" % World.current_turn
+	# Update basic status text — compact with AC and level
+	var ac_text := "AC:%d" % World.player.get_armor_class()
+	var lvl_text := ""
+	if World.player.character_data:
+		lvl_text = " Lv%d" % World.player.character_data.level
+	status_text.text = "T:%d %s%s" % [World.current_turn, ac_text, lvl_text]
 	var nutrition_status := World.player.nutrition.get_status()
 	if nutrition_status != Nutrition.Status.NORMAL:
 		var text := Nutrition.get_status_rich_text_label(nutrition_status)

@@ -3,7 +3,7 @@ extends RestAction
 
 
 func _init() -> void:
-	super(World.player)
+	super(World.active_character)
 
 
 func _execute(map: Map, result: ActionResult) -> bool:

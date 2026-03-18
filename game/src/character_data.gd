@@ -537,6 +537,21 @@ func get_class_name_str() -> String:
 	return CLASS_DATA[dnd_class]["name"]
 
 
+## Add XP to this character. Returns true if they leveled up.
+func add_xp(amount: int) -> bool:
+	experience_points += amount
+	if level < XP_THRESHOLDS.size() and experience_points >= XP_THRESHOLDS[level]:
+		level += 1
+		# Recalculate HP
+		var old_max := max_hp
+		max_hp = get_max_hp_for_level()
+		current_hp += max_hp - old_max  # Heal the HP gained
+		hit_dice_remaining = level
+		initialize_class_features()
+		return true
+	return false
+
+
 ## Initialize class features based on current class and level.
 ## Call after setting dnd_class and level.
 func initialize_class_features() -> void:

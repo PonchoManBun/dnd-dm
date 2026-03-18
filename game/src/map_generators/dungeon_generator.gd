@@ -256,7 +256,10 @@ func _populate_level(map: Map, width: int, height: int) -> void:
 	Log.d("Populating level")
 
 	# Update this to change item and monster density
-	_place_monsters(map, int(sqrt(width * height) / 10))
+	# Scale monster count based on party size (1 player = 1x, 4 members = ~1.75x)
+	var base_count := int(sqrt(width * height) / 10)
+	var party_scale := 1.0 + (World.party.size() - 1) * 0.25
+	_place_monsters(map, int(base_count * party_scale))
 	_place_items(map, int(sqrt(width * height) / 5))
 
 	# Add special items to specific room types
