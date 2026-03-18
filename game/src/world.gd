@@ -605,7 +605,7 @@ func handle_level_transition(destination_level: String, coming_from_stairs: Obst
 
 	# Update FOV for new position
 	var player_pos := current_map.find_monster_position(player)
-	current_map.compute_fov(player_pos)
+	current_map.compute_fov(player_pos, player.sight_radius)
 
 	# Place companions near the player
 	_place_companions_near(player_pos)
@@ -679,7 +679,7 @@ func update_vision() -> void:
 	if player.has_status_effect(StatusEffect.Type.BLIND):
 		current_map.clear_fov(player_pos)
 	else:
-		current_map.compute_fov(player_pos)
+		current_map.compute_fov(player_pos, player.sight_radius)
 
 
 func is_party_member(monster: Monster) -> bool:

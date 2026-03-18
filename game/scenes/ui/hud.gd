@@ -86,12 +86,21 @@ func _update_display() -> void:
 
 	_build_armor_container(armor_container)
 
-	# Update basic status text — compact with AC and level
+	# Update basic status text — compact with AC, level, and XP
 	var ac_text := "AC:%d" % World.player.get_armor_class()
 	var lvl_text := ""
+	var xp_text := ""
 	if World.player.character_data:
-		lvl_text = " Lv%d" % World.player.character_data.level
-	status_text.text = "T:%d %s%s" % [World.current_turn, ac_text, lvl_text]
+		var cd := World.player.character_data
+		lvl_text = " Lv%d" % cd.level
+		var xp_next := 0
+		if cd.level < CharacterData.XP_THRESHOLDS.size():
+			xp_next = CharacterData.XP_THRESHOLDS[cd.level]
+		if xp_next > 0:
+			xp_text = " XP:%d/%d" % [cd.experience_points, xp_next]
+		else:
+			xp_text = " XP:MAX"
+	status_text.text = "T:%d %s%s%s" % [World.current_turn, ac_text, lvl_text, xp_text]
 	var nutrition_status := World.player.nutrition.get_status()
 	if nutrition_status != Nutrition.Status.NORMAL:
 		var text := Nutrition.get_status_rich_text_label(nutrition_status)

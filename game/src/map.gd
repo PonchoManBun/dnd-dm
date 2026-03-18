@@ -251,21 +251,25 @@ func clear_fov(origin: Vector2i) -> void:
 
 
 # Adam Miazzola's implementation of FOV - https://www.adammil.net/blog/v125_Roguelike_Vision_Algorithms.html
-func compute_fov(origin: Vector2i) -> void:
+func compute_fov(origin: Vector2i, radius: int = 8) -> void:
 	# Clear previous visibility
 	clear_fov(origin)
 
 	# Process all 4 quadrants
 	for quadrant in range(4):
-		_fov_scan_quadrant(quadrant, origin)
+		_fov_scan_quadrant(quadrant, origin, radius)
 
 
-func _fov_scan_quadrant(quadrant: int, origin: Vector2i) -> void:
+func _fov_scan_quadrant(quadrant: int, origin: Vector2i, radius: int) -> void:
 	var first_row := Row.new(1, -1.0, 1.0)
-	_fov_scan_recursive(quadrant, origin, first_row)
+	_fov_scan_recursive(quadrant, origin, first_row, radius)
 
 
-func _fov_scan_recursive(quadrant: int, origin: Vector2i, row: Row) -> void:
+func _fov_scan_recursive(quadrant: int, origin: Vector2i, row: Row, radius: int) -> void:
+	# Stop if we've exceeded the sight radius
+	if row.depth > radius:
+		return
+
 	var prev_tile: Vector2i = Utils.INVALID_POS
 
 	for tile: Vector2i in row.get_tiles():
@@ -283,7 +287,7 @@ func _fov_scan_recursive(quadrant: int, origin: Vector2i, row: Row) -> void:
 			if not is_wall(transform_tile(quadrant, origin, prev_tile)) and is_wall(world_pos):
 				var next_row := row.next()
 				next_row.end_slope = get_slope(tile)
-				_fov_scan_recursive(quadrant, origin, next_row)
+				_fov_scan_recursive(quadrant, origin, next_row, radius)
 
 			# Wall to floor transition
 			elif is_wall(transform_tile(quadrant, origin, prev_tile)) and not is_wall(world_pos):
@@ -293,7 +297,7 @@ func _fov_scan_recursive(quadrant: int, origin: Vector2i, row: Row) -> void:
 
 	# If we hit the end with a floor tile, continue to next row
 	if prev_tile != Utils.INVALID_POS and not is_wall(transform_tile(quadrant, origin, prev_tile)):
-		_fov_scan_recursive(quadrant, origin, row.next())
+		_fov_scan_recursive(quadrant, origin, row.next(), radius)
 
 
 class Row:
