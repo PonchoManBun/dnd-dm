@@ -27,7 +27,7 @@ See `specs/research/dev-workflow.md` for full Git workflow, orchestrator setup, 
 specs/            # Phase specs, research docs, and reference GDDs
   phase-1-core/   # Current phase specs (architecture, DM, forge, orchestrator)
   research/       # Research documents (legal, base game, file formats, Jetson, MCP, dev workflow)
-  reference/      # 20 GDD documents (game design reference, read-only)
+  reference/      # 24 GDD documents (game design reference, read-only)
 rules/            # D&D 5e SRD markdown files
 forge/            # Forge Mode working directory (has its own CLAUDE.md)
 game/             # Godot 4 project (Phase 1+, forked from base game)
@@ -38,7 +38,7 @@ game_state/       # JSON game state files (Phase 2+)
 
 ## Commands
 
-### Phase 1 (Current — Godot Game, No AI)
+### Phase 2 (Current — Local LLM Integration)
 ```bash
 # Open in Godot editor
 godot --path game/ -e

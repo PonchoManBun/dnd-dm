@@ -6,11 +6,11 @@
 
 **Platform:** Jetson Orin Nano (8GB) — development and play. See `specs/research/dev-workflow.md`.
 
-## Current Phase: Phase 1 (Extended) — Standalone Godot Game + Party System
+## Current Phase: Phase 2 — Local LLM Integration
 
-**Goal:** Playable game with hardcoded content, no AI. The original Phase 1 objectives are all complete. Phase 1 is being extended to add a BG3-style party/companion system before advancing to Phase 2.
+**Goal:** Connect the Godot client to the Python/FastAPI orchestrator and Ollama LLM for real-time DM narration, NPC dialogue, and contextual choices. The game currently runs with hardcoded content — Phase 2 replaces that with live LLM responses.
 
-### Original Objectives (Complete)
+### Phase 1 Objectives (All Complete)
 1. ~~Fork and adapt statico/godot-roguelike-example base game~~
 2. ~~Adapt D20 combat to D&D 5e SRD rules~~
 3. ~~Add DM panel UI (narrative text, choices, free-text input)~~
@@ -18,27 +18,33 @@
 5. ~~Basic character creation flow (race, class, ability scores)~~
 6. ~~Save/load system~~
 7. ~~Hybrid combat model (roguelike exploration + tactical D&D 5e combat)~~
+8. ~~BG3-style party/companion system (up to 3 companions + player character)~~
+9. ~~NPC recruitment — any NPC anywhere can be recruited via conversation~~
+10. ~~Companion stat block to character sheet conversion~~
+11. ~~Companion XP tracking (separate per character)~~
+12. ~~Party-aware combat (player controls all party members)~~
+13. ~~Dialogue UI with speaker selection dropdown~~
+14. ~~Encounter balance for party of 4 (standard D&D 5e XP budgets)~~
 
-### Extension Objectives (In Progress)
-8. BG3-style party/companion system (up to 3 companions + player character)
-9. NPC recruitment — any NPC anywhere can be recruited via conversation
-10. Companion stat block to character sheet conversion (DndMonsterFactory stat block to CharacterData)
-11. Companion XP tracking (separate per character)
-12. Party-aware combat (player controls all party members)
-13. Dialogue UI with speaker selection dropdown (who is speaking, who they're speaking to)
-14. Encounter balance for party of 4 (standard D&D 5e XP budgets)
+All HIGH and MEDIUM criteria met. 3 LOW items (companion AI, dismissal, quest hooks) deferred to Phase 2.
 
-### Phase 1 is done when:
-- The game runs in Godot with a playable dungeon loop
-- Character creation produces a valid D&D 5e character
-- Combat uses SRD action economy (movement + action + bonus + reaction)
-- DM panel displays narrative text, choices, and free-text input
-- Game can save and load state
-- Player can recruit up to 3 NPC companions into a party
-- Companions have full character sheets converted from stat blocks
-- Party members are controllable in combat (player controls all)
-- Encounter balance accounts for party of 4
-- **No AI** — all content is hardcoded. LLM integration is Phase 2.
+### Phase 2 Objectives
+15. Godot HTTP client connecting to orchestrator API
+16. Real-time DM narration via Ollama (room entry, combat, exploration)
+17. Freeform NPC conversation via LLM (replace hardcoded narratives)
+18. Contextual choice generation (DM offers situational choices)
+19. Combat narration (LLM describes hits, misses, kills, spells)
+20. Memory/context management (orchestrator tracks conversation history)
+21. Tavern hub scene (rest, recruit, shop, quest board — LLM-powered)
+
+### Phase 2 is done when:
+- Godot client communicates with orchestrator via HTTP
+- Room entry triggers LLM narration (not hardcoded text)
+- Player can have freeform conversation with any NPC via LLM
+- DM panel shows LLM-generated choices based on context
+- Combat has LLM narration for key events
+- Orchestrator maintains conversation context across turns
+- Tavern scene works as a hub with LLM-powered NPCs
 
 ### Additional Infrastructure Done
 - **Forge Mode** is set up: validated schemas, forge/CLAUDE.md, validation script, schema reference files, prompt templates, 8 slash commands, design guide
@@ -110,4 +116,4 @@ See `specs/research/` for research documents:
 - `mcp-forge-design.md` — MCP/Forge architecture options
 - `dev-workflow.md` — Jetson development workflow
 
-See `specs/reference/` for the full 20-document GDD archive.
+See `specs/reference/` for the full 24-document GDD archive.

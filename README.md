@@ -18,13 +18,13 @@ A local LLM (Llama 3.2 3B) handles real-time DM duties — narration, freeform N
 | Phase | Name | Goal |
 |-------|------|------|
 | **0** | Research & Documentation | Validate architecture, write specs (DONE) |
-| **1** | Standalone Godot Game | Playable game with hardcoded content, no AI |
+| **1** | Standalone Godot Game | Playable game with hardcoded content, no AI (DONE — extension complete) |
 | **2** | Local LLM Integration | Real-time DM narration and NPC dialogue |
 | **3** | Forge Mode | Claude generates content on demand |
 | **4** | Content Depth | Factions, permadeath, archetypes |
 | **5** | Polish | Full game flow, audio, MCP formalization |
 
-**Current phase:** Phase 1
+**Current phase:** Phase 2 (Local LLM Integration)
 
 ## Development Workflow
 
@@ -45,17 +45,20 @@ PROMPT.md              # Current phase context and principles
 @AGENT.md              # Build/run/test commands
 CLAUDE.md              # Project instructions for Claude Code
 specs/
-  phase-1-core/        # Phase 1 design specs (active)
+  phase-1-core/        # Phase 1 design specs (complete)
   phase-2-tavern/      # Future phase placeholders
   phase-3-combat/      #   (specs written when phase begins)
   phase-4-dungeon/
   phase-5-world/
   phase-6-polish/
   research/            # Research documents (legal, base game, Jetson, dev workflow)
-  reference/           # Original 20 GDD documents
+  reference/           # 24 GDD documents (game design reference)
 rules/                 # D&D 5e SRD markdown files (17 files, OGL)
-forge/                 # Forge Mode working directory (Phase 3+)
-game/                  # Godot 4 project (Phase 1+, not yet created)
+forge/                 # Forge Mode working directory (has its own CLAUDE.md)
+game/                  # Godot 4 project (active)
+orchestrator/          # Python/FastAPI DM orchestrator
+forge_output/          # Claude-generated content (tracked)
+scripts/               # Automated playtest and utility scripts
 ```
 
 ## Architecture
@@ -80,4 +83,4 @@ game/                  # Godot 4 project (Phase 1+, not yet created)
 
 ## Specs
 
-Full game design is documented across 20 GDD files in `specs/reference/`. Phase-specific build specs are in `specs/phase-N-*/`. Research documents in `specs/research/`.
+Full game design is documented across 24 GDD files in `specs/reference/`. Phase-specific build specs are in `specs/phase-N-*/`. Research documents in `specs/research/`.

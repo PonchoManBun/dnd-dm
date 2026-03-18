@@ -79,29 +79,48 @@
 
 ---
 
-## Phase 1 Extension — Party System
+## COMPLETED — Phase 1 Extension — Party System
 
-### HIGH — Must complete
+All HIGH and MEDIUM tasks complete. 3 LOW items deferred to Phase 2.
 
-- [x] Party data model (companion slots in game state, party array in CharacterData or new PartyState)
-- [x] NPC recruitment system (conversation action to recruit, NPC acceptance logic)
-- [x] Stat block to character sheet conversion (DndMonsterFactory stat block to CharacterData)
-- [x] Companion combat integration (player controls all party members in combat mode)
-- [x] Party-aware death/game-over (game continues if any companion alive)
-- [x] Dialogue UI — speaker selection dropdown (who is speaking, who they're speaking to)
+### HIGH — Complete
+- [x] Party data model, NPC recruitment, stat block conversion
+- [x] Companion combat integration, party-aware death, dialogue UI
 
-### MEDIUM — Should complete
+### MEDIUM — Complete
+- [x] Companion XP tracking, equipment management, party formation, encounter balance
 
-- [x] Companion XP tracking (separate per character, class assignment on first XP)
-- [x] Companion equipment management (shared inventory, individual equipment)
-- [x] Party formation (companions follow player during exploration)
-- [x] Update encounter balance for party of 4 (standard D&D 5e XP budgets)
-
-### LOW — Nice to have
-
+### LOW — Deferred to Phase 2
 - [ ] Companion AI during non-combat (follow behavior, idle animations)
 - [ ] Companion dismissal and re-recruitment
 - [ ] Companion quest hooks (personal quests per companion)
+
+---
+
+## Phase 2 — Local LLM Integration
+
+### HIGH — Must complete
+
+- [ ] Godot HTTP client for orchestrator API (HTTPRequest nodes, response parsing)
+- [ ] Wire DM panel to orchestrator (replace hardcoded narratives with LLM responses)
+- [ ] Room entry narration via Ollama (trigger on room_entered signal)
+- [ ] Freeform NPC conversation via LLM (free-text input → orchestrator → Ollama → DM panel)
+- [ ] Combat narration via LLM (hits, misses, kills, spell effects)
+- [ ] Context management in orchestrator (conversation history, world state summary)
+
+### MEDIUM — Should complete
+
+- [ ] Contextual choice generation (LLM suggests situational choices)
+- [ ] Tavern hub scene (rest, recruit, shop, quest board — LLM-powered NPCs)
+- [ ] NPC personality persistence (orchestrator tracks NPC conversation state)
+- [ ] Companion AI during non-combat (deferred from Phase 1)
+
+### LOW — Nice to have
+
+- [ ] Companion dismissal and re-recruitment (deferred from Phase 1)
+- [ ] Companion quest hooks (deferred from Phase 1)
+- [ ] DM archetype affects LLM prompt style (use stored archetype choice)
+- [ ] Streaming LLM responses (token-by-token display in DM panel)
 
 ---
 

@@ -7,14 +7,18 @@ A single-player 2D pixel art turn-based tactical RPG with a dual-model AI Dungeo
 ## Project Structure
 
 ```
-PROMPT.md          # Current phase context and development principles
-@fix_plan.md       # Prioritized task list for current phase
-@AGENT.md          # Build/run/test commands
+PROMPT.md            # Current phase context and development principles
+@fix_plan.md         # Prioritized task list for current phase
+@AGENT.md            # Build/run/test commands
 specs/phase-1-core/  # Phase specs (architecture, DM integration, forge mode, orchestrator)
 specs/research/      # Research documents (legal, base game, file formats, Jetson, MCP, dev workflow)
-specs/reference/     # 20 GDD documents (game design reference)
+specs/reference/     # 24 GDD documents (game design reference)
 rules/               # D&D 5e SRD markdown files
 forge/               # Forge Mode working directory (has its own CLAUDE.md)
+game/                # Godot 4 project (active)
+orchestrator/        # Python/FastAPI DM orchestrator
+forge_output/        # Claude-generated content (tracked)
+scripts/             # Automated playtest and utility scripts
 ```
 
 ## Architecture Rules
@@ -54,4 +58,4 @@ No external plugins or loop runners. Claude Code manages all development directl
 
 ## Current Phase
 
-Phase 1 (Extended): Standalone Godot Game + Party System — original Phase 1 objectives are complete. Now adding BG3-style party/companion system before advancing to Phase 2. See `PROMPT.md` for objectives and `@fix_plan.md` for tasks.
+Phase 1 Extension complete. Ready for Phase 2 (Local LLM Integration). See `PROMPT.md` for objectives and `@fix_plan.md` for tasks.
