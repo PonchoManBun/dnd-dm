@@ -224,8 +224,14 @@ func is_opaque(pos: Vector2i) -> bool:
 	var terrain := get_terrain(pos)
 	var obstacle := get_obstacle(pos)
 
-	# Check for opaque terrain (walls)
+	# Empty void between rooms blocks sight
+	if terrain and terrain.type == Terrain.Type.EMPTY:
+		return true
+
+	# Check for opaque terrain (walls, vented walls)
 	if terrain and terrain.type == Terrain.Type.DUNGEON_WALL:
+		return true
+	if terrain and terrain.type == Terrain.Type.DUNGEON_WALL_VENTED:
 		return true
 
 	# Check for closed doors
