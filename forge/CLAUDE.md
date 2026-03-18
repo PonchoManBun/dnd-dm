@@ -359,6 +359,221 @@ Every generation must:
 
 ---
 
+## Workflow D — Generate & Edit Locations (Taverns, Shops, etc.)
+
+### Tavern JSON Schema
+
+Must match `TavernMap.from_json()` format exactly. Reference: `schemas/tavern_example.json`.
+
+```json
+{
+  "name": "Tavern Name",
+  "location_type": "tavern",
+  "width": 24, "height": 20, "tile_size": 16,
+  "layout": ["########################", "#......................#", ...],
+  "tile_legend": {
+    "#": {"name": "wall", "walkable": false, "wall_like": true},
+    ".": {"name": "floor", "walkable": true, "atlas": "indoor", "tile_name": "indoor-77"},
+    ...
+  },
+  "npcs": [{"npc_id": "id", "display_name": "Name", "position": [x, y], "sprite_name": "player-25", "modulate": [r, g, b, a]}],
+  "player_spawn": [x, y],
+  "player_sprite": "player-4",
+  "atmosphere": {"candle_positions": [[x,y]], "candle_color": [r,g,b], "candle_energy": 0.6, "dust_mote_color": [r,g,b,a], "candle_flicker_range": [lo, hi]},
+  "zones": [{"id": "bar", "name": "Bar Area", "rect": {"x": 0, "y": 0, "w": 4, "h": 6}}],
+  "entrance_narration": ["BBCode line 1", "BBCode line 2"]
+}
+```
+
+### Tile Vocabulary (Valid Characters)
+
+**Core structural tiles:**
+
+| Char | Name | Atlas | Tile Name | Walkable | wall_like |
+|------|------|-------|-----------|----------|-----------|
+| `#` | wall | world | directional wall-5-* | no | yes |
+| `.` | floor (wood plank) | indoor | indoor-77 | yes | no |
+| `D` | entrance door | world | doors0-0 | yes | no |
+| `R` | room door | world | directional wall | no | yes |
+| `S` | stairs | world | tile-28 | no | no |
+
+**Furniture tiles (world atlas — decor sprites):**
+
+| Char | Name | Atlas | Tile Name | Walkable | Notes |
+|------|------|-------|-----------|----------|-------|
+| `B` | bar counter | world | decor-5 | no | Main counter surface |
+| `T` | table | world | decor-25 | no | Small dining table |
+| `c` | chair | world | decor-24 | yes | Walkable (decorative) |
+| `Q` | quest board | world | decor-0 | no | Notice board / shelf |
+| `b` | barrel | world | decor-48 | no | Storage, atmosphere |
+| `k` | crate | world | decor-49 | no | Storage, shop goods |
+| `p` | pot/cauldron | world | decor-50 | no | Kitchen, fireplace |
+| `M` | memorial/trophy | world | decor-32 + wall base | no | wall_like=true |
+| `*` | barkeep position | indoor | indoor-77 (floor) | no | NPC slot |
+
+**Indoor decoration tiles (indoor atlas — richer detail):**
+
+| Char | Name | Atlas | Tile Name | Walkable | Notes |
+|------|------|-------|-----------|----------|-------|
+| `h` | bookshelf | indoor | indoor-23 | no | Along walls, adds richness |
+| `H` | bookshelf variant | indoor | indoor-24 | no | Alternate shelf style |
+| `e` | bed | indoor | indoor-25 | no | Guest rooms |
+| `L` | long counter | indoor | indoor-35 | no | Shop display, long bar |
+| `n` | bench | indoor | indoor-45 | yes | Seating (walkable like chair) |
+| `r` | carpet/rug | indoor | indoor-extra-6 | yes | Decorative floor covering |
+| `g` | stone floor | indoor | indoor-78 | yes | Alternate floor for variety |
+| `s` | shop counter | world | decor-0 | no | Same as quest board sprite |
+
+**Floor variants** (use sparingly for visual interest):
+- `indoor-77`: warm wood planks (default `.`)
+- `indoor-78`: stone/grey floor (use as `g`)
+- `indoor-79`: alternate wood
+- `indoor-extra-6`: carpet/rug piece (use as `r`)
+- `indoor-extra-7`: carpet variant
+
+**IMPORTANT:** View the actual sprite sheets at `reference_maps/tile_vocabulary/` before generating. The indoor_tiles.png has 90 sprites — use them to create richly detailed interiors, not just empty rooms with tables. Study `reference_maps/approved/town.gif` for the DawnLike author's own interior design: furniture hugs walls, shelves line perimeters, carpets mark zones, barrels cluster in corners.
+
+You may define additional characters using any valid atlas sprite name from `../game/assets/generated/world_tiles.json` (29 sprites) and `indoor_tiles.json` (90 sprites).
+
+### Tavern Validation
+
+```bash
+python3 validate.py tavern ../forge_output/taverns/{name}.json
+```
+
+Checks: layout dimensions, tile_legend completeness, NPC positions, player_spawn walkability, perimeter enclosure, BFS connectivity (player can reach all NPCs), atlas sprite name validity.
+
+### Tavern Preview Rendering
+
+```bash
+python3 simulate.py ../forge_output/taverns/{name}.json --tavern --render /tmp/{name}_preview.png
+```
+
+Generates a color-coded PNG preview. View it to self-check layout before user reviews.
+
+### Reference Image Gallery
+
+Before generating a tavern, view reference images in `reference_maps/`:
+- `reference_maps/approved/` — DawnLike example layouts (town, dungeon, mine, underworld)
+- `reference_maps/tile_vocabulary/` — Sprite sheets showing all available tiles
+- `reference_maps/index.md` — Design notes and what to study in each reference
+
+### Tavern Edit Operations
+
+| Operation | Description |
+|---|---|
+| `move_furniture` | Reposition bars, tables, quest boards within the layout |
+| `add_npc` | Add NPC to JSON with position on walkable tile |
+| `change_atmosphere` | Modify candle positions, colors, dust mote settings |
+| `resize` | Change width/height, adjust layout strings and zones |
+| `rezone` | Redefine semantic zones after layout changes |
+
+### Output
+
+- Tavern JSON: `../forge_output/taverns/{name}.json`
+- User notes: `../forge_output/taverns/{name}_notes.md`
+- Archived versions: `../forge_output/taverns/{name}_v{N}.json`
+
+Always validate after writing. Always create/update notes file.
+
+---
+
+## Workflow E — Generate & Edit Villages
+
+### Village JSON Schema
+
+Must match village map loader format. Reference: `schemas/village_example.json`.
+
+```json
+{
+  "name": "Village Name",
+  "location_type": "village",
+  "width": 40, "height": 30, "tile_size": 16,
+  "layout": ["tttttttttttttttttttttttttttttttttttttttttt", ...],
+  "tile_legend": {
+    "w": {"name": "grass", "walkable": true, "atlas": "outdoor", "tile_name": "ground0-0"},
+    "d": {"name": "dirt_path", "walkable": true, "atlas": "outdoor", "tile_name": "ground0-1"},
+    "v": {"name": "stone_path", "walkable": true, "atlas": "outdoor", "tile_name": "outdoor-floor-0"},
+    "t": {"name": "tree", "walkable": false, "atlas": "outdoor", "tile_name": "tree0-0"},
+    "#": {"name": "wall", "walkable": false, "wall_like": true},
+    ".": {"name": "floor", "walkable": true, "atlas": "indoor", "tile_name": "indoor-77"},
+    "D": {"name": "door", "walkable": true, "atlas": "world", "tile_name": "doors0-0"},
+    "G": {"name": "dungeon_gate", "walkable": true, "atlas": "world", "tile_name": "tile-28"},
+    "*": {"name": "npc_slot", "walkable": false, "is_npc_slot": true},
+    ...
+  },
+  "buildings": [
+    {
+      "id": "tavern",
+      "name": "The Welcome Wench",
+      "type": "tavern",
+      "rect": {"x": 3, "y": 3, "w": 12, "h": 10},
+      "door_positions": [[8, 12]]
+    }
+  ],
+  "npcs": [{"npc_id": "id", "display_name": "Name", "position": [x, y], "sprite_name": "player-25", "modulate": [r, g, b, a]}],
+  "player_spawn": [x, y],
+  "player_sprite": "player-4",
+  "exits": [{"position": [x, y], "destination": "dungeon"}],
+  "atmosphere": {"candle_positions": [[x,y]], "candle_color": [r,g,b], "candle_energy": 0.6, "dust_mote_color": [r,g,b,a], "candle_flicker_range": [lo, hi]},
+  "entrance_narration": ["BBCode line 1", "BBCode line 2"]
+}
+```
+
+### Village Tile Vocabulary
+
+**Outdoor tiles (village-specific):**
+
+| Char | Name | Atlas | Tile Name | Walkable |
+|------|------|-------|-----------|----------|
+| `w` | grass | outdoor | ground0-0 | yes |
+| `d` | dirt path | outdoor | ground0-1 | yes |
+| `v` | stone path | outdoor | outdoor-floor-0 | yes |
+| `t` | tree | outdoor | tree0-0 | no |
+| `u` | bush | outdoor | tree0-6 | no |
+| `f` | fence | outdoor | fence-0 | no |
+| `~` | water | outdoor | ground0-5 | no |
+| `G` | dungeon gate | world | tile-28 | yes (exit) |
+
+**Indoor tiles (reused from tavern):**
+All tavern tile chars (#, ., D, B, T, c, Q, b, k, h, e, r, *, etc.) work inside village buildings.
+
+### Village Validation
+
+```bash
+python3 validate.py village ../forge_output/villages/{name}.json
+```
+
+Checks: layout dimensions, tile_legend completeness, NPC positions, player_spawn walkability, building rects (no overlap, within bounds), door positions on perimeter, BFS connectivity (player can reach all building doors and NPCs), perimeter check (no indoor floors on village edges), atlas sprite name validity (including outdoor_tiles).
+
+### Village Preview Rendering
+
+```bash
+python3 simulate.py ../forge_output/villages/{name}.json --village --render /tmp/{name}_preview.png
+```
+
+Generates a color-coded PNG preview with outdoor palette, building outlines/labels, exit markers, NPC positions, and tile legend.
+
+### Village Edit Operations
+
+| Operation | Description |
+|---|---|
+| `move_building` | Reposition a building and its contents within the village |
+| `add_npc` | Add NPC to JSON with position on a walkable or NPC-slot tile |
+| `change_paths` | Modify path layout (dirt/stone connections between buildings) |
+| `resize` | Change width/height, adjust layout strings |
+| `add_building` | Add a new building with interior furnishing |
+
+### Output
+
+- Village JSON: `../forge_output/villages/{name}.json`
+- User notes: `../forge_output/villages/{name}_notes.md`
+- Archived versions: `../forge_output/villages/{name}_v{N}.json`
+
+Always validate after writing. Always create/update notes file.
+
+---
+
 ## Available Slash Commands
 
 Use these commands for common workflows:
@@ -372,6 +587,10 @@ Use these commands for common workflows:
 | `/generate-quest` | Generate a quest arc |
 | `/edit-quest` | Edit an existing quest |
 | `/generate-narrative` | Generate narrative pool entries |
+| `/generate-tavern` | Generate a tavern/location layout |
+| `/edit-tavern` | Edit an existing tavern based on user feedback |
+| `/generate-village` | Generate a complete village hub |
+| `/edit-village` | Edit an existing village based on user feedback |
 | `/validate` | Run validation on generated content |
 | `/simulate` | Run dungeon simulation — playability, balance, render preview |
 
@@ -387,6 +606,8 @@ Use these commands for common workflows:
 ├── npcs/             # NPC profile JSON files
 ├── narrative/        # Quest arc JSON files
 │   └── pools/        # Narrative pool JSON files
+├── taverns/          # Tavern layout JSON files
+├── villages/         # Village layout JSON files
 ├── manifests/        # Generation manifests
 └── _fallback/        # Emergency fallback content
 ```

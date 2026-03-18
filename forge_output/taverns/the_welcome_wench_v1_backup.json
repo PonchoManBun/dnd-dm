@@ -1,0 +1,90 @@
+{
+  "name": "The Welcome Wench",
+  "location_type": "tavern",
+  "width": 24,
+  "height": 20,
+  "tile_size": 16,
+  "layout": [
+    "########################",
+    "#......................#",
+    "#..MMMM...............S#",
+    "#..MMMM...TT....TT....S#",
+    "#..MMMM...cc....cc....##",
+    "#.........TT....TT.....#",
+    "#.........cc....cc.....#",
+    "#......................#",
+    "##..........BB.........#",
+    "#R..........BB.........#",
+    "#R..........BB.........#",
+    "##..........BB..QQQQ...#",
+    "#...........BB..QQQQ...#",
+    "#...........*B..QQQQ...#",
+    "#......................#",
+    "#......................#",
+    "#..ssssss..............#",
+    "#..ssssss..............#",
+    "#.....................DD",
+    "########################"
+  ],
+  "tile_legend": {
+    "#": {"name": "wall", "walkable": false, "wall_like": true},
+    ".": {"name": "floor", "walkable": true, "atlas": "indoor", "tile_name": "indoor-77"},
+    "B": {"name": "bar_counter", "walkable": false, "atlas": "world", "tile_name": "decor-5"},
+    "T": {"name": "table", "walkable": false, "atlas": "world", "tile_name": "decor-25"},
+    "c": {"name": "chair", "walkable": true, "atlas": "world", "tile_name": "decor-24"},
+    "Q": {"name": "quest_board", "walkable": false, "atlas": "world", "tile_name": "decor-0"},
+    "s": {"name": "shop_counter", "walkable": false, "atlas": "world", "tile_name": "decor-0"},
+    "S": {"name": "stairs", "walkable": false, "atlas": "world", "tile_name": "tile-28"},
+    "M": {"name": "memorial", "walkable": false, "wall_like": true, "atlas": "world", "tile_name": "decor-32", "base": "wall"},
+    "R": {"name": "room_door", "walkable": false, "wall_like": true},
+    "D": {"name": "entrance_door", "walkable": true, "atlas": "world", "tile_name": "doors0-0"},
+    "*": {"name": "barkeep_position", "walkable": false, "atlas": "indoor", "tile_name": "indoor-77", "is_npc_slot": true}
+  },
+  "npcs": [
+    {
+      "npc_id": "marta",
+      "display_name": "Marta",
+      "position": [12, 13],
+      "sprite_name": "player-25",
+      "modulate": [0.8, 0.5, 0.3, 1.0]
+    },
+    {
+      "npc_id": "old_tom",
+      "display_name": "OldTom",
+      "position": [10, 3],
+      "sprite_name": "player-31",
+      "modulate": [0.55, 0.4, 0.25, 1.0]
+    },
+    {
+      "npc_id": "elara",
+      "display_name": "Elara",
+      "position": [17, 5],
+      "sprite_name": "player-4",
+      "modulate": [0.4, 0.3, 0.7, 1.0]
+    }
+  ],
+  "player_spawn": [21, 17],
+  "player_sprite": "player-4",
+  "atmosphere": {
+    "canvas_modulate": [1.0, 0.92, 0.82],
+    "dust_mote_color": [1.0, 0.9, 0.7, 0.8],
+    "candle_positions": [[12, 11], [13, 4], [20, 17]],
+    "candle_color": [1.0, 0.85, 0.5],
+    "candle_energy": 0.6,
+    "candle_flicker_range": [0.5, 0.7]
+  },
+  "zones": [
+    {"id": "memorial", "name": "Memorial Wall", "rect": {"x": 2, "y": 2, "w": 4, "h": 3}},
+    {"id": "dining", "name": "Dining Area", "rect": {"x": 10, "y": 3, "w": 8, "h": 4}},
+    {"id": "bar", "name": "Bar", "rect": {"x": 12, "y": 8, "w": 2, "h": 6}},
+    {"id": "quest_board", "name": "Quest Board", "rect": {"x": 16, "y": 11, "w": 4, "h": 3}},
+    {"id": "shop", "name": "General Store", "rect": {"x": 2, "y": 16, "w": 6, "h": 2}},
+    {"id": "entrance", "name": "Entrance", "rect": {"x": 18, "y": 17, "w": 4, "h": 2}},
+    {"id": "rooms", "name": "Guest Rooms", "rect": {"x": 1, "y": 8, "w": 2, "h": 4}},
+    {"id": "stairs", "name": "Upper Floor Stairs", "rect": {"x": 22, "y": 2, "w": 2, "h": 2}}
+  ],
+  "entrance_narration": [
+    "[color=#6cb4c4][b]The Welcome Wench[/b][/color]\nYou push open the heavy oak door. The warmth of the tavern washes over you \u2014 crackling hearth, the clink of mugs, and the low murmur of conversation.",
+    "[color=#d9d566]Barkeep Marta[/color] stands behind the polished bar, wiping down a mug. [color=#d9d566]Old Tom[/color] nurses an ale at a nearby table. A [color=#d9d566]hooded figure[/color] sits alone in the corner. A [color=#d9d566]quest board[/color] on the far wall catches your eye."
+  ]
+}

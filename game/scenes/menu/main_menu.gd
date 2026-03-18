@@ -125,7 +125,25 @@ func _on_restart_button_pressed() -> void:
 	# Delete save and start fresh, straight to the tavern
 	if AutoSave.save_exists():
 		AutoSave.delete_save()
-	get_tree().change_scene_to_file("res://scenes/tavern/tavern.tscn")
+	# Ensure the player has a character name even without character creation
+	if not World.player.character_data or World.player.character_data.character_name.is_empty():
+		var data := CharacterData.new()
+		data.character_name = "Adventurer"
+		data.race = CharacterData.Race.HUMAN
+		data.dnd_class = CharacterData.DndClass.FIGHTER
+		data.level = 1
+		data.strength = 16
+		data.dexterity = 14
+		data.constitution = 14
+		data.intelligence = 10
+		data.wisdom = 12
+		data.charisma = 8
+		data.max_hp = World.player.max_hp
+		data.current_hp = World.player.hp
+		data.initialize_class_features()
+		World.player.character_data = data
+		World.player.name = data.character_name
+	get_tree().change_scene_to_file("res://scenes/village/village.tscn")
 
 
 func _on_quit_button_pressed() -> void:

@@ -10,6 +10,8 @@ Usage:
     python3 forge/simulate.py path/to/dungeon.json --level 3 --runs 200
     python3 forge/simulate.py path/to/dungeon.json --json --seed 42
     python3 forge/simulate.py path/to/dungeon.json --render preview.png
+    python3 forge/simulate.py path/to/tavern.json --tavern --render tavern.png
+    python3 forge/simulate.py path/to/village.json --village --render village.png
 """
 
 import argparse
@@ -1230,6 +1232,414 @@ def generate_report(
 # CLI
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Tavern Preview Rendering
+# ---------------------------------------------------------------------------
+
+# Tile character -> RGB color for tavern preview
+TAVERN_TILE_COLORS: dict[str, tuple[int, int, int]] = {
+    "#": (80, 80, 80),        # wall — dark gray
+    ".": (160, 120, 80),      # floor — warm brown
+    "B": (100, 60, 30),       # bar counter — dark brown
+    "T": (120, 80, 40),       # table — medium brown
+    "c": (140, 100, 60),      # chair — light brown
+    "Q": (180, 140, 80),      # quest board — tan
+    "s": (100, 60, 30),       # shop counter — same as bar
+    "S": (140, 140, 140),     # stairs — light gray
+    "M": (100, 80, 120),      # memorial — purple-gray
+    "R": (100, 90, 80),       # room door — gray-brown
+    "D": (80, 120, 200),      # entrance door — blue
+    "*": (160, 120, 80),      # barkeep pos — floor base (dot overlaid)
+    "b": (120, 80, 40),       # barrel — wood brown
+    "k": (110, 90, 50),       # crate — lighter wood
+    "p": (70, 70, 70),        # pot/cauldron — dark metal
+    "h": (90, 60, 30),        # bookshelf — dark wood
+    "H": (80, 50, 25),        # bookshelf variant — darker
+    "e": (140, 50, 50),       # bed — red-brown
+    "L": (90, 70, 40),        # long counter — dark wood
+    "n": (130, 95, 55),       # bench — medium wood
+    "r": (150, 60, 60),       # carpet/rug — red
+    "g": (120, 120, 120),     # stone floor — gray
+}
+
+# Zone colors for semi-transparent overlays (cycled if more zones than colors)
+ZONE_COLORS: list[tuple[int, int, int]] = [
+    (255, 100, 100),
+    (100, 255, 100),
+    (100, 100, 255),
+    (255, 255, 100),
+    (255, 100, 255),
+    (100, 255, 255),
+    (255, 180, 100),
+    (180, 100, 255),
+]
+
+
+def render_tavern_preview(tavern_path: str, output_path: str) -> str | None:
+    """Render a color-coded PNG preview of a tavern layout.
+
+    Returns None on success, or an error message string.
+    """
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except ImportError:
+        return ("Pillow is not installed. Install it with: "
+                "pip install Pillow")
+
+    # Load tavern JSON
+    try:
+        with open(tavern_path, "r") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError) as e:
+        return f"Could not load tavern JSON: {e}"
+
+    layout: list[str] = data.get("layout", [])
+    if not layout:
+        return "Tavern JSON has no 'layout' field"
+
+    tile_legend: dict[str, dict] = data.get("tile_legend", {})
+    npcs: list[dict] = data.get("npcs", [])
+    player_spawn: list[int] | None = data.get("player_spawn")
+    zones: list[dict] = data.get("zones", [])
+
+    # Grid dimensions
+    grid_h = len(layout)
+    grid_w = max(len(row) for row in layout) if layout else 0
+    tile_px = 8  # pixels per tile
+
+    # Legend area sizing
+    legend_entries: list[tuple[str, str]] = []
+    for char, info in tile_legend.items():
+        name = info.get("name", "unknown")
+        legend_entries.append((char, name))
+    legend_line_h = 14
+    legend_padding = 8
+    legend_height = legend_padding * 2 + max(len(legend_entries), 1) * legend_line_h + legend_line_h  # +1 for header
+
+    img_w = grid_w * tile_px
+    img_h = grid_h * tile_px + legend_height
+    # Ensure minimum width for legend text
+    img_w = max(img_w, 240)
+
+    img = Image.new("RGBA", (img_w, img_h), (30, 25, 35, 255))
+    draw = ImageDraw.Draw(img)
+
+    # Try to load a font for labels
+    font = None
+    small_font = None
+    try:
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 10)
+        small_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 9)
+    except (OSError, IOError):
+        try:
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 10)
+            small_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 9)
+        except (OSError, IOError):
+            font = ImageFont.load_default()
+            small_font = font
+
+    # --- Draw tiles ---
+    for row_idx, row in enumerate(layout):
+        for col_idx, char in enumerate(row):
+            color = TAVERN_TILE_COLORS.get(char, (255, 0, 255))  # magenta for unknown
+            x0 = col_idx * tile_px
+            y0 = row_idx * tile_px
+            draw.rectangle([x0, y0, x0 + tile_px - 1, y0 + tile_px - 1], fill=color)
+
+    # --- Draw barkeep position marker (orange dot on floor) ---
+    for row_idx, row in enumerate(layout):
+        for col_idx, char in enumerate(row):
+            if char == "*":
+                cx = col_idx * tile_px + tile_px // 2
+                cy = row_idx * tile_px + tile_px // 2
+                r = max(tile_px // 3, 2)
+                draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(240, 160, 40))
+
+    # --- Draw zone boundaries ---
+    zone_overlay = Image.new("RGBA", (img_w, img_h), (0, 0, 0, 0))
+    zone_draw = ImageDraw.Draw(zone_overlay)
+    for i, zone in enumerate(zones):
+        rect = zone.get("rect", {})
+        zx = rect.get("x", 0) * tile_px
+        zy = rect.get("y", 0) * tile_px
+        zw = rect.get("w", 0) * tile_px
+        zh = rect.get("h", 0) * tile_px
+        zcolor = ZONE_COLORS[i % len(ZONE_COLORS)]
+        # Semi-transparent fill
+        zone_draw.rectangle([zx, zy, zx + zw - 1, zy + zh - 1],
+                            fill=(*zcolor, 40),
+                            outline=(*zcolor, 160), width=1)
+        # Label
+        zone_name = zone.get("name", zone.get("id", ""))
+        if zone_name and small_font:
+            zone_draw.text((zx + 2, zy + 1), zone_name, fill=(*zcolor, 200), font=small_font)
+    img = Image.alpha_composite(img, zone_overlay)
+    draw = ImageDraw.Draw(img)
+
+    # --- Draw NPC positions ---
+    for npc in npcs:
+        pos = npc.get("position")
+        if not pos or len(pos) < 2:
+            continue
+        nx, ny = pos[0], pos[1]
+        cx = nx * tile_px + tile_px // 2
+        cy = ny * tile_px + tile_px // 2
+        r = max(tile_px // 3, 2)
+
+        modulate = npc.get("modulate")
+        if modulate and len(modulate) >= 3:
+            npc_color = (
+                int(min(modulate[0] * 255, 255)),
+                int(min(modulate[1] * 255, 255)),
+                int(min(modulate[2] * 255, 255)),
+            )
+        else:
+            npc_color = (0, 200, 0)
+
+        draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=npc_color)
+        # Draw NPC name label
+        npc_name = npc.get("display_name", npc.get("npc_id", ""))
+        if npc_name and small_font:
+            draw.text((cx + r + 2, cy - 4), npc_name, fill=(255, 255, 255, 220), font=small_font)
+
+    # --- Draw player spawn ---
+    if player_spawn and len(player_spawn) >= 2:
+        px, py = player_spawn[0], player_spawn[1]
+        sx0 = px * tile_px
+        sy0 = py * tile_px
+        # Bright green square outline
+        draw.rectangle([sx0, sy0, sx0 + tile_px - 1, sy0 + tile_px - 1],
+                        outline=(0, 255, 0), width=1)
+        draw.text((sx0 + tile_px + 2, sy0 - 2), "spawn", fill=(0, 255, 0), font=small_font)
+
+    # --- Draw legend at the bottom ---
+    legend_y = grid_h * tile_px + legend_padding
+    draw.text((4, legend_y), "Tile Legend:", fill=(220, 220, 220), font=font)
+    legend_y += legend_line_h
+    for char, name in legend_entries:
+        color = TAVERN_TILE_COLORS.get(char, (255, 0, 255))
+        # Color swatch
+        draw.rectangle([4, legend_y + 1, 4 + 10, legend_y + 11], fill=color)
+        draw.text((18, legend_y), f"{char}  {name}", fill=(200, 200, 200), font=small_font)
+        legend_y += legend_line_h
+
+    # Save
+    try:
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        img.save(output_path)
+    except Exception as e:
+        return f"Failed to save image: {e}"
+
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Village Preview Rendering
+# ---------------------------------------------------------------------------
+
+# Tile character -> RGB color for village preview (outdoor palette)
+VILLAGE_TILE_COLORS: dict[str, tuple[int, int, int]] = {
+    'w': (34, 139, 34),    # grass - forest green
+    'd': (139, 119, 101),  # dirt path - tan
+    'v': (169, 169, 169),  # stone path - gray
+    't': (0, 100, 0),      # tree - dark green
+    'u': (50, 120, 50),    # bush - medium green
+    'f': (139, 90, 43),    # fence - brown
+    '~': (65, 105, 225),   # water - blue
+    'G': (255, 215, 0),    # gate - gold
+    '#': (101, 67, 33),    # wall - dark brown
+    '.': (160, 120, 80),   # floor - wood
+    'D': (210, 180, 140),  # door - light wood
+    'B': (139, 90, 43),    # bar - brown
+    'T': (160, 82, 45),    # table - sienna
+    'c': (222, 184, 135),  # chair - burlywood
+    'b': (128, 70, 27),    # barrel - dark brown
+    'k': (160, 100, 40),   # crate - tan
+    'h': (90, 60, 30),     # bookshelf - dark wood
+    'H': (80, 50, 25),     # bookshelf variant - darker
+    'e': (140, 50, 50),    # bed - red-brown
+    'r': (150, 60, 60),    # carpet - red
+    'a': (120, 120, 130),  # anvil - metallic gray
+    '*': (255, 0, 255),    # npc - magenta
+}
+
+# Exit marker color
+VILLAGE_EXIT_COLOR: tuple[int, int, int] = (255, 50, 50)
+
+
+def render_village_preview(village_path: str, output_path: str) -> str | None:
+    """Render a color-coded PNG preview of a village layout.
+
+    Returns None on success, or an error message string.
+    """
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except ImportError:
+        return ("Pillow is not installed. Install it with: "
+                "pip install Pillow")
+
+    # Load village JSON
+    try:
+        with open(village_path, "r") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError) as e:
+        return f"Could not load village JSON: {e}"
+
+    layout: list[str] = data.get("layout", [])
+    if not layout:
+        return "Village JSON has no 'layout' field"
+
+    tile_legend: dict[str, dict] = data.get("tile_legend", {})
+    npcs: list[dict] = data.get("npcs", [])
+    buildings: list[dict] = data.get("buildings", [])
+    player_spawn: list[int] | None = data.get("player_spawn")
+    exits: list[dict] = data.get("exits", [])
+
+    # Grid dimensions
+    grid_h = len(layout)
+    grid_w = max(len(row) for row in layout) if layout else 0
+    tile_px = 8  # pixels per tile
+
+    # Legend area sizing
+    legend_entries: list[tuple[str, str]] = []
+    for char, info in tile_legend.items():
+        name = info.get("name", "unknown")
+        legend_entries.append((char, name))
+    legend_line_h = 14
+    legend_padding = 8
+    legend_height = legend_padding * 2 + max(len(legend_entries), 1) * legend_line_h + legend_line_h
+
+    img_w = grid_w * tile_px
+    img_h = grid_h * tile_px + legend_height
+    # Ensure minimum width for legend text
+    img_w = max(img_w, 300)
+
+    img = Image.new("RGBA", (img_w, img_h), (20, 30, 20, 255))
+    draw = ImageDraw.Draw(img)
+
+    # Try to load a font for labels
+    font = None
+    small_font = None
+    try:
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 10)
+        small_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 9)
+    except (OSError, IOError):
+        try:
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 10)
+            small_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 9)
+        except (OSError, IOError):
+            font = ImageFont.load_default()
+            small_font = font
+
+    # --- Draw tiles ---
+    for row_idx, row in enumerate(layout):
+        for col_idx, char in enumerate(row):
+            color = VILLAGE_TILE_COLORS.get(char, (255, 0, 255))  # magenta for unknown
+            x0 = col_idx * tile_px
+            y0 = row_idx * tile_px
+            draw.rectangle([x0, y0, x0 + tile_px - 1, y0 + tile_px - 1], fill=color)
+
+    # --- Draw NPC slot markers (orange dot on floor) ---
+    for row_idx, row in enumerate(layout):
+        for col_idx, char in enumerate(row):
+            if char == "*":
+                cx = col_idx * tile_px + tile_px // 2
+                cy = row_idx * tile_px + tile_px // 2
+                r = max(tile_px // 3, 2)
+                draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(240, 160, 40))
+
+    # --- Draw building boundaries and labels ---
+    building_overlay = Image.new("RGBA", (img_w, img_h), (0, 0, 0, 0))
+    building_draw = ImageDraw.Draw(building_overlay)
+    for i, bldg in enumerate(buildings):
+        rect = bldg.get("rect", {})
+        bx = rect.get("x", 0) * tile_px
+        by = rect.get("y", 0) * tile_px
+        bw = rect.get("w", 0) * tile_px
+        bh = rect.get("h", 0) * tile_px
+        # Draw building outline
+        building_draw.rectangle([bx, by, bx + bw - 1, by + bh - 1],
+                                outline=(255, 255, 255, 180), width=1)
+        # Label building name
+        bname = bldg.get("name", bldg.get("id", ""))
+        if bname and small_font:
+            building_draw.text((bx + 2, by + 1), bname,
+                               fill=(255, 255, 255, 220), font=small_font)
+    img = Image.alpha_composite(img, building_overlay)
+    draw = ImageDraw.Draw(img)
+
+    # --- Draw exit positions ---
+    for ex in exits:
+        epos = ex.get("position")
+        if not epos or len(epos) < 2:
+            continue
+        ex_x, ex_y = epos[0], epos[1]
+        x0 = ex_x * tile_px
+        y0 = ex_y * tile_px
+        draw.rectangle([x0, y0, x0 + tile_px - 1, y0 + tile_px - 1],
+                        fill=VILLAGE_EXIT_COLOR)
+        dest = ex.get("destination", "exit")
+        if small_font:
+            draw.text((x0 + tile_px + 2, y0 - 2), dest,
+                      fill=(255, 100, 100), font=small_font)
+
+    # --- Draw NPC positions ---
+    for npc in npcs:
+        pos = npc.get("position")
+        if not pos or len(pos) < 2:
+            continue
+        nx, ny = pos[0], pos[1]
+        cx = nx * tile_px + tile_px // 2
+        cy = ny * tile_px + tile_px // 2
+        r = max(tile_px // 3, 2)
+
+        modulate = npc.get("modulate")
+        if modulate and len(modulate) >= 3:
+            npc_color = (
+                int(min(modulate[0] * 255, 255)),
+                int(min(modulate[1] * 255, 255)),
+                int(min(modulate[2] * 255, 255)),
+            )
+        else:
+            npc_color = (0, 200, 0)
+
+        draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=npc_color)
+        npc_name = npc.get("display_name", npc.get("npc_id", ""))
+        if npc_name and small_font:
+            draw.text((cx + r + 2, cy - 4), npc_name,
+                      fill=(255, 255, 255, 220), font=small_font)
+
+    # --- Draw player spawn ---
+    if player_spawn and len(player_spawn) >= 2:
+        px, py = player_spawn[0], player_spawn[1]
+        sx0 = px * tile_px
+        sy0 = py * tile_px
+        draw.rectangle([sx0, sy0, sx0 + tile_px - 1, sy0 + tile_px - 1],
+                        outline=(0, 255, 0), width=1)
+        draw.text((sx0 + tile_px + 2, sy0 - 2), "spawn",
+                  fill=(0, 255, 0), font=small_font)
+
+    # --- Draw legend at the bottom ---
+    legend_y = grid_h * tile_px + legend_padding
+    draw.text((4, legend_y), "Tile Legend:", fill=(220, 220, 220), font=font)
+    legend_y += legend_line_h
+    for char, name in legend_entries:
+        color = VILLAGE_TILE_COLORS.get(char, (255, 0, 255))
+        draw.rectangle([4, legend_y + 1, 4 + 10, legend_y + 11], fill=color)
+        draw.text((18, legend_y), f"{char}  {name}",
+                  fill=(200, 200, 200), font=small_font)
+        legend_y += legend_line_h
+
+    # Save
+    try:
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        img.save(output_path)
+    except Exception as e:
+        return f"Failed to save image: {e}"
+
+    return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Headless dungeon simulation and playability validator."
@@ -1243,8 +1653,36 @@ def main() -> int:
     parser.add_argument("--render", type=str, default=None,
                         metavar="FILE.png",
                         help="Render pixel-accurate map preview to PNG (uses game tile atlas)")
+    parser.add_argument("--tavern", action="store_true",
+                        help="Render a tavern JSON preview instead of dungeon simulation")
+    parser.add_argument("--village", action="store_true",
+                        help="Render a village JSON preview instead of dungeon simulation")
 
     args = parser.parse_args()
+
+    # --- Village preview mode ---
+    if args.village:
+        if not args.render:
+            print("ERROR: --render is required when using --village", file=sys.stderr)
+            return 1
+        err = render_village_preview(args.file, args.render)
+        if err:
+            print(f"ERROR: {err}", file=sys.stderr)
+            return 1
+        print(f"Village preview saved to: {args.render}")
+        return 0
+
+    # --- Tavern preview mode ---
+    if args.tavern:
+        if not args.render:
+            print("ERROR: --render is required when using --tavern", file=sys.stderr)
+            return 1
+        err = render_tavern_preview(args.file, args.render)
+        if err:
+            print(f"ERROR: {err}", file=sys.stderr)
+            return 1
+        print(f"Tavern preview saved to: {args.render}")
+        return 0
 
     # Load dungeon
     try:

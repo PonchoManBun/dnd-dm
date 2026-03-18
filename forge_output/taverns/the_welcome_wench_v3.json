@@ -1,0 +1,376 @@
+{
+  "name": "The Welcome Wench",
+  "location_type": "tavern",
+  "width": 24,
+  "height": 20,
+  "tile_size": 16,
+  "layout": [
+    "########################",
+    "#hhHh.BBBBBB.*.hh.bbkk.#",
+    "#gggg.BBBBBB...hH.bpk..#",
+    "#gpbk...........Tc..Q..#",
+    "######.................#",
+    "#h...cT.rrrrrrr.Tc....S#",
+    "#h..cT..rrrrrrr.cT....S#",
+    "#.......rrrrrrr........#",
+    "#..cT...rrrrrrr...Tc.L.#",
+    "#..Tc...rrrrrrr...cT..H#",
+    "#.......Tc............h#",
+    "#...Tc...........##R####",
+    "#..cT............#...ce#",
+    "#................#..nT.#",
+    "#..nn............#h....#",
+    "#................#######",
+    "#..........bk..........#",
+    "#h.....MM..bk..........#",
+    "#h....................DD",
+    "########################"
+  ],
+  "tile_legend": {
+    "#": {
+      "name": "wall",
+      "walkable": false,
+      "wall_like": true
+    },
+    ".": {
+      "name": "floor",
+      "walkable": true,
+      "atlas": "indoor",
+      "tile_name": "indoor-77"
+    },
+    "B": {
+      "name": "bar_counter",
+      "walkable": false,
+      "atlas": "world",
+      "tile_name": "decor-5"
+    },
+    "T": {
+      "name": "table",
+      "walkable": false,
+      "atlas": "world",
+      "tile_name": "decor-25"
+    },
+    "c": {
+      "name": "chair",
+      "walkable": true,
+      "atlas": "world",
+      "tile_name": "decor-24"
+    },
+    "Q": {
+      "name": "quest_board",
+      "walkable": false,
+      "atlas": "world",
+      "tile_name": "decor-0"
+    },
+    "S": {
+      "name": "stairs",
+      "walkable": false,
+      "atlas": "world",
+      "tile_name": "tile-28"
+    },
+    "M": {
+      "name": "memorial",
+      "walkable": false,
+      "wall_like": true,
+      "atlas": "world",
+      "tile_name": "decor-32",
+      "base": "wall"
+    },
+    "R": {
+      "name": "room_door",
+      "walkable": true,
+      "atlas": "world",
+      "tile_name": "doors0-0"
+    },
+    "D": {
+      "name": "entrance_door",
+      "walkable": true,
+      "atlas": "world",
+      "tile_name": "doors0-0"
+    },
+    "*": {
+      "name": "barkeep_position",
+      "walkable": false,
+      "atlas": "indoor",
+      "tile_name": "indoor-77",
+      "is_npc_slot": true
+    },
+    "b": {
+      "name": "barrel",
+      "walkable": false,
+      "atlas": "world",
+      "tile_name": "decor-48"
+    },
+    "k": {
+      "name": "crate",
+      "walkable": false,
+      "atlas": "world",
+      "tile_name": "decor-49"
+    },
+    "p": {
+      "name": "pot_cauldron",
+      "walkable": false,
+      "atlas": "world",
+      "tile_name": "decor-50"
+    },
+    "h": {
+      "name": "bookshelf",
+      "walkable": false,
+      "atlas": "indoor",
+      "tile_name": "indoor-23"
+    },
+    "H": {
+      "name": "bookshelf_alt",
+      "walkable": false,
+      "atlas": "indoor",
+      "tile_name": "indoor-24"
+    },
+    "e": {
+      "name": "bed",
+      "walkable": false,
+      "atlas": "indoor",
+      "tile_name": "indoor-25"
+    },
+    "L": {
+      "name": "long_counter",
+      "walkable": false,
+      "atlas": "indoor",
+      "tile_name": "indoor-35"
+    },
+    "n": {
+      "name": "bench",
+      "walkable": true,
+      "atlas": "indoor",
+      "tile_name": "indoor-45"
+    },
+    "r": {
+      "name": "carpet",
+      "walkable": true,
+      "atlas": "indoor",
+      "tile_name": "indoor-extra-6"
+    },
+    "g": {
+      "name": "stone_floor",
+      "walkable": true,
+      "atlas": "indoor",
+      "tile_name": "indoor-78"
+    }
+  },
+  "npcs": [
+    {
+      "npc_id": "marta",
+      "display_name": "Marta",
+      "position": [
+        13,
+        1
+      ],
+      "sprite_name": "player-25",
+      "modulate": [
+        0.8,
+        0.5,
+        0.3,
+        1.0
+      ]
+    },
+    {
+      "npc_id": "old_tom",
+      "display_name": "OldTom",
+      "position": [
+        5,
+        11
+      ],
+      "sprite_name": "player-31",
+      "modulate": [
+        0.55,
+        0.4,
+        0.25,
+        1.0
+      ]
+    },
+    {
+      "npc_id": "elara",
+      "display_name": "Elara",
+      "position": [
+        21,
+        12
+      ],
+      "sprite_name": "player-4",
+      "modulate": [
+        0.4,
+        0.3,
+        0.7,
+        1.0
+      ]
+    }
+  ],
+  "player_spawn": [
+    21,
+    17
+  ],
+  "player_sprite": "player-4",
+  "atmosphere": {
+    "canvas_modulate": [
+      1.0,
+      0.92,
+      0.82
+    ],
+    "dust_mote_color": [
+      1.0,
+      0.9,
+      0.7,
+      0.8
+    ],
+    "candle_positions": [
+      [
+        10,
+        2
+      ],
+      [
+        6,
+        5
+      ],
+      [
+        13,
+        7
+      ],
+      [
+        17,
+        6
+      ],
+      [
+        4,
+        11
+      ],
+      [
+        20,
+        13
+      ]
+    ],
+    "candle_color": [
+      1.0,
+      0.85,
+      0.5
+    ],
+    "candle_energy": 0.6,
+    "candle_flicker_range": [
+      0.5,
+      0.7
+    ]
+  },
+  "zones": [
+    {
+      "id": "kitchen",
+      "name": "Kitchen & Storage",
+      "rect": {
+        "x": 1,
+        "y": 1,
+        "w": 5,
+        "h": 4
+      }
+    },
+    {
+      "id": "bar",
+      "name": "Bar",
+      "rect": {
+        "x": 6,
+        "y": 1,
+        "w": 8,
+        "h": 2
+      }
+    },
+    {
+      "id": "storage_ne",
+      "name": "Back Storage",
+      "rect": {
+        "x": 18,
+        "y": 1,
+        "w": 4,
+        "h": 2
+      }
+    },
+    {
+      "id": "quest_board",
+      "name": "Quest Board",
+      "rect": {
+        "x": 19,
+        "y": 3,
+        "w": 3,
+        "h": 1
+      }
+    },
+    {
+      "id": "dining_main",
+      "name": "Main Hall",
+      "rect": {
+        "x": 3,
+        "y": 5,
+        "w": 18,
+        "h": 6
+      }
+    },
+    {
+      "id": "carpet",
+      "name": "Central Carpet",
+      "rect": {
+        "x": 8,
+        "y": 5,
+        "w": 7,
+        "h": 5
+      }
+    },
+    {
+      "id": "stairs",
+      "name": "Upper Floor Stairs",
+      "rect": {
+        "x": 22,
+        "y": 5,
+        "w": 1,
+        "h": 2
+      }
+    },
+    {
+      "id": "private_booth",
+      "name": "Private Booth",
+      "rect": {
+        "x": 18,
+        "y": 12,
+        "w": 5,
+        "h": 3
+      }
+    },
+    {
+      "id": "south_seating",
+      "name": "South Seating",
+      "rect": {
+        "x": 3,
+        "y": 12,
+        "w": 4,
+        "h": 3
+      }
+    },
+    {
+      "id": "entrance",
+      "name": "Entrance",
+      "rect": {
+        "x": 18,
+        "y": 17,
+        "w": 6,
+        "h": 2
+      }
+    },
+    {
+      "id": "memorial",
+      "name": "Memorial Wall",
+      "rect": {
+        "x": 7,
+        "y": 17,
+        "w": 2,
+        "h": 1
+      }
+    }
+  ],
+  "entrance_narration": [
+    "[color=#6cb4c4][b]The Welcome Wench[/b][/color]\nYou push open the heavy oak door and warmth floods over you \u2014 the crackle of the hearth, the rich smell of roasted meat, and a low hum of conversation fill the crowded common room.",
+    "A large [color=#d9a066]carpet[/color] covers the center of the floor, surrounded by tables and chairs. [color=#d9d566]Barkeep Marta[/color] stands behind the polished bar, wiping down a mug. [color=#d9d566]Old Tom[/color] nurses an ale at a corner table. Through a half-open door to the east, a [color=#d9d566]hooded figure[/color] sits alone in a private booth. A [color=#d9d566]quest board[/color] on the far wall catches your eye."
+  ]
+}

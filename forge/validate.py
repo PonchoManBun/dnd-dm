@@ -585,6 +585,627 @@ def validate_quest(file_path: str) -> ValidationResult:
 
 
 # ---------------------------------------------------------------------------
+# Tavern / Location validation
+# ---------------------------------------------------------------------------
+
+WORLD_TILES_PATH = PROJECT_ROOT / "game" / "assets" / "generated" / "world_tiles.json"
+INDOOR_TILES_PATH = PROJECT_ROOT / "game" / "assets" / "generated" / "indoor_tiles.json"
+CHARACTER_TILES_PATH = PROJECT_ROOT / "game" / "assets" / "generated" / "character_tiles.json"
+OUTDOOR_TILES_PATH = PROJECT_ROOT / "game" / "assets" / "generated" / "outdoor_tiles.json"
+
+
+def _load_tile_names(path: Path) -> set[str]:
+    """Load valid sprite names from a tile atlas JSON."""
+    if not path.exists():
+        return set()
+    with open(path, "r") as f:
+        data = json.load(f)
+    sprites = data.get("sprites", {})
+    return set(sprites.keys())
+
+
+def _bfs_reachable(layout: list[str], start: tuple[int, int],
+                   tile_legend: dict[str, Any], width: int, height: int) -> set[tuple[int, int]]:
+    """BFS from start position on walkable tiles. Returns set of reachable (x,y)."""
+    visited: set[tuple[int, int]] = set()
+    queue: list[tuple[int, int]] = [start]
+    visited.add(start)
+    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+
+    while queue:
+        cx, cy = queue.pop(0)
+        for dx, dy in directions:
+            nx, ny = cx + dx, cy + dy
+            if 0 <= nx < width and 0 <= ny < height and (nx, ny) not in visited:
+                ch = layout[ny][nx] if nx < len(layout[ny]) else ""
+                legend_entry = tile_legend.get(ch, {})
+                walkable = legend_entry.get("walkable", False) if isinstance(legend_entry, dict) else False
+                if walkable:
+                    visited.add((nx, ny))
+                    queue.append((nx, ny))
+
+    return visited
+
+
+def validate_tavern(file_path: str) -> ValidationResult:
+    result = ValidationResult(file_path, "tavern")
+
+    # Load JSON
+    try:
+        with open(file_path, "r") as f:
+            data = json.load(f)
+    except json.JSONDecodeError as e:
+        result.error(f"Invalid JSON: {e}")
+        return result
+    except FileNotFoundError:
+        result.error(f"File not found: {file_path}")
+        return result
+
+    if not isinstance(data, dict):
+        result.error("Top-level value must be a JSON object")
+        return result
+
+    # Required top-level fields
+    _check_type(result, data, "name", str, "tavern")
+    _check_type(result, data, "location_type", str, "tavern")
+    has_width = _check_type(result, data, "width", int, "tavern")
+    has_height = _check_type(result, data, "height", int, "tavern")
+    _check_type(result, data, "tile_size", int, "tavern")
+
+    if not _check_type(result, data, "layout", list, "tavern"):
+        return result
+    if not _check_type(result, data, "tile_legend", dict, "tavern"):
+        return result
+
+    layout = data["layout"]
+    tile_legend = data["tile_legend"]
+    width = data.get("width", 0)
+    height = data.get("height", 0)
+
+    # Layout dimensions
+    if has_height and len(layout) != height:
+        result.error(
+            f"Layout has {len(layout)} rows but declared height is {height}"
+        )
+
+    if has_width:
+        for i, row in enumerate(layout):
+            if not isinstance(row, str):
+                result.error(f"layout[{i}]: must be a string, got {type(row).__name__}")
+                continue
+            if len(row) != width:
+                result.error(
+                    f"layout[{i}]: row length {len(row)} != declared width {width}"
+                )
+
+    # All chars in layout exist in tile_legend
+    used_chars: set[str] = set()
+    for y, row in enumerate(layout):
+        if not isinstance(row, str):
+            continue
+        for x, ch in enumerate(row):
+            used_chars.add(ch)
+            if ch not in tile_legend:
+                result.error(
+                    f"layout[{y}][{x}]: character '{ch}' not in tile_legend"
+                )
+
+    # Validate tile_legend entries
+    world_tiles = _load_tile_names(WORLD_TILES_PATH)
+    indoor_tiles = _load_tile_names(INDOOR_TILES_PATH)
+
+    for ch, entry in tile_legend.items():
+        if not isinstance(entry, dict):
+            result.error(f"tile_legend['{ch}']: must be a dict")
+            continue
+        _check_type(result, entry, "name", str, f"tile_legend['{ch}']")
+        if "walkable" not in entry:
+            result.error(f"tile_legend['{ch}']: missing 'walkable' field")
+
+        # Validate tile_name references against atlases
+        tile_name = entry.get("tile_name")
+        atlas = entry.get("atlas", "")
+        if tile_name:
+            if atlas == "world" and world_tiles and tile_name not in world_tiles:
+                result.error(
+                    f"tile_legend['{ch}']: tile_name '{tile_name}' not found "
+                    f"in world_tiles atlas"
+                )
+            elif atlas == "indoor" and indoor_tiles and tile_name not in indoor_tiles:
+                result.error(
+                    f"tile_legend['{ch}']: tile_name '{tile_name}' not found "
+                    f"in indoor_tiles atlas"
+                )
+
+    # Player spawn
+    if _check_type(result, data, "player_spawn", list, "tavern"):
+        spawn = data["player_spawn"]
+        if len(spawn) != 2:
+            result.error(f"player_spawn must have exactly 2 elements [x, y]")
+        elif has_width and has_height:
+            sx, sy = spawn
+            if not (0 <= sx < width and 0 <= sy < height):
+                result.error(
+                    f"player_spawn [{sx},{sy}] out of bounds ({width}x{height})"
+                )
+            elif sy < len(layout) and isinstance(layout[sy], str) and sx < len(layout[sy]):
+                ch = layout[sy][sx]
+                legend = tile_legend.get(ch, {})
+                if isinstance(legend, dict) and not legend.get("walkable", False):
+                    result.error(
+                        f"player_spawn [{sx},{sy}] is on non-walkable tile '{ch}'"
+                    )
+
+    # NPC validation
+    character_tiles = _load_tile_names(CHARACTER_TILES_PATH)
+    if _check_type(result, data, "npcs", list, "tavern"):
+        for ni, npc in enumerate(data["npcs"]):
+            nctx = f"npcs[{ni}]"
+            if not isinstance(npc, dict):
+                result.error(f"{nctx}: must be a dict")
+                continue
+            _check_type(result, npc, "npc_id", str, nctx)
+            _check_type(result, npc, "display_name", str, nctx)
+            if _check_type(result, npc, "position", list, nctx):
+                pos = npc["position"]
+                if len(pos) != 2:
+                    result.error(f"{nctx}: position must have exactly 2 elements")
+                elif has_width and has_height:
+                    px, py = pos
+                    if not (0 <= px < width and 0 <= py < height):
+                        result.error(
+                            f"{nctx}: position [{px},{py}] out of bounds"
+                        )
+            _check_type(result, npc, "sprite_name", str, nctx)
+            if "sprite_name" in npc and character_tiles:
+                if npc["sprite_name"] not in character_tiles:
+                    result.error(
+                        f"{nctx}: sprite_name '{npc['sprite_name']}' not found "
+                        f"in character_tiles atlas"
+                    )
+
+    # At least one entrance door
+    has_door = False
+    for row in layout:
+        if isinstance(row, str) and "D" in row:
+            has_door = True
+            break
+    if not has_door:
+        # Check if any tile_legend entry is named "entrance_door"
+        door_chars = [ch for ch, e in tile_legend.items()
+                      if isinstance(e, dict) and "door" in e.get("name", "").lower()
+                      and "entrance" in e.get("name", "").lower()]
+        if not door_chars:
+            result.error("No entrance door ('D') found in layout")
+
+    # Perimeter enclosure check
+    if layout and has_width and has_height and len(layout) == height:
+        # Top and bottom rows should be walls/non-walkable
+        for row_idx in [0, height - 1]:
+            if row_idx < len(layout) and isinstance(layout[row_idx], str):
+                for x, ch in enumerate(layout[row_idx]):
+                    legend = tile_legend.get(ch, {})
+                    walkable = legend.get("walkable", False) if isinstance(legend, dict) else False
+                    if walkable and ch != "D":
+                        result.error(
+                            f"Perimeter breach at [{x},{row_idx}]: "
+                            f"walkable tile '{ch}' on border (must be wall or door)"
+                        )
+        # Left and right columns
+        for y in range(height):
+            if y >= len(layout) or not isinstance(layout[y], str):
+                continue
+            for x_idx in [0, width - 1]:
+                if x_idx >= len(layout[y]):
+                    continue
+                ch = layout[y][x_idx]
+                legend = tile_legend.get(ch, {})
+                walkable = legend.get("walkable", False) if isinstance(legend, dict) else False
+                if walkable and ch != "D":
+                    result.error(
+                        f"Perimeter breach at [{x_idx},{y}]: "
+                        f"walkable tile '{ch}' on border (must be wall or door)"
+                    )
+
+    # BFS connectivity: player_spawn can reach all NPCs
+    if (has_width and has_height and len(layout) == height
+            and "player_spawn" in data and isinstance(data["player_spawn"], list)
+            and len(data["player_spawn"]) == 2):
+        sx, sy = data["player_spawn"]
+        if 0 <= sx < width and 0 <= sy < height:
+            reachable = _bfs_reachable(layout, (sx, sy), tile_legend, width, height)
+            # Check NPC adjacency (NPCs are on non-walkable tiles, so check neighbors)
+            for ni, npc in enumerate(data.get("npcs", [])):
+                if not isinstance(npc, dict) or "position" not in npc:
+                    continue
+                pos = npc["position"]
+                if len(pos) != 2:
+                    continue
+                px, py = pos
+                # Check if any adjacent walkable tile is reachable
+                adjacent_reachable = False
+                for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+                    nx, ny = px + dx, py + dy
+                    if (nx, ny) in reachable:
+                        adjacent_reachable = True
+                        break
+                if not adjacent_reachable:
+                    npc_id = npc.get("npc_id", f"#{ni}")
+                    result.error(
+                        f"NPC '{npc_id}' at [{px},{py}] is not reachable "
+                        f"from player_spawn [{sx},{sy}]"
+                    )
+
+    # Optional fields validation
+    _check_optional_type(result, data, "atmosphere", dict, "tavern")
+    _check_optional_type(result, data, "zones", list, "tavern")
+    _check_optional_type(result, data, "entrance_narration", list, "tavern")
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Village validation
+# ---------------------------------------------------------------------------
+
+INDOOR_FLOOR_NAMES = {"floor", "carpet", "chair", "bed", "bench", "stone_floor",
+                      "bookshelf", "long_counter", "shop_counter"}
+
+
+def _rects_overlap(a: dict, b: dict) -> bool:
+    """Check if two rects (x,y,w,h) overlap."""
+    if a["x"] >= b["x"] + b["w"] or b["x"] >= a["x"] + a["w"]:
+        return False
+    if a["y"] >= b["y"] + b["h"] or b["y"] >= a["y"] + a["h"]:
+        return False
+    return True
+
+
+def validate_village(file_path: str) -> ValidationResult:
+    result = ValidationResult(file_path, "village")
+
+    # Load JSON
+    try:
+        with open(file_path, "r") as f:
+            data = json.load(f)
+    except json.JSONDecodeError as e:
+        result.error(f"Invalid JSON: {e}")
+        return result
+    except FileNotFoundError:
+        result.error(f"File not found: {file_path}")
+        return result
+
+    if not isinstance(data, dict):
+        result.error("Top-level value must be a JSON object")
+        return result
+
+    # Required top-level fields
+    _check_type(result, data, "name", str, "village")
+    _check_type(result, data, "location_type", str, "village")
+    has_width = _check_type(result, data, "width", int, "village")
+    has_height = _check_type(result, data, "height", int, "village")
+    _check_type(result, data, "tile_size", int, "village")
+
+    if not _check_type(result, data, "layout", list, "village"):
+        return result
+    if not _check_type(result, data, "tile_legend", dict, "village"):
+        return result
+
+    layout = data["layout"]
+    tile_legend = data["tile_legend"]
+    width = data.get("width", 0)
+    height = data.get("height", 0)
+
+    # Layout dimensions
+    if has_height and len(layout) != height:
+        result.error(
+            f"Layout has {len(layout)} rows but declared height is {height}"
+        )
+
+    if has_width:
+        for i, row in enumerate(layout):
+            if not isinstance(row, str):
+                result.error(f"layout[{i}]: must be a string, got {type(row).__name__}")
+                continue
+            if len(row) != width:
+                result.error(
+                    f"layout[{i}]: row length {len(row)} != declared width {width}"
+                )
+
+    # All chars in layout exist in tile_legend
+    used_chars: set[str] = set()
+    for y, row in enumerate(layout):
+        if not isinstance(row, str):
+            continue
+        for x, ch in enumerate(row):
+            used_chars.add(ch)
+            if ch not in tile_legend:
+                result.error(
+                    f"layout[{y}][{x}]: character '{ch}' not in tile_legend"
+                )
+
+    # Validate tile_legend entries
+    world_tiles = _load_tile_names(WORLD_TILES_PATH)
+    indoor_tiles = _load_tile_names(INDOOR_TILES_PATH)
+    outdoor_tiles = _load_tile_names(OUTDOOR_TILES_PATH)
+
+    for ch, entry in tile_legend.items():
+        if not isinstance(entry, dict):
+            result.error(f"tile_legend['{ch}']: must be a dict")
+            continue
+        _check_type(result, entry, "name", str, f"tile_legend['{ch}']")
+        if "walkable" not in entry:
+            result.error(f"tile_legend['{ch}']: missing 'walkable' field")
+
+        # Validate tile_name references against atlases
+        tile_name = entry.get("tile_name")
+        atlas = entry.get("atlas", "")
+        if tile_name:
+            if atlas == "world" and world_tiles and tile_name not in world_tiles:
+                result.error(
+                    f"tile_legend['{ch}']: tile_name '{tile_name}' not found "
+                    f"in world_tiles atlas"
+                )
+            elif atlas == "indoor" and indoor_tiles and tile_name not in indoor_tiles:
+                result.error(
+                    f"tile_legend['{ch}']: tile_name '{tile_name}' not found "
+                    f"in indoor_tiles atlas"
+                )
+            elif atlas == "outdoor" and outdoor_tiles and tile_name not in outdoor_tiles:
+                result.error(
+                    f"tile_legend['{ch}']: tile_name '{tile_name}' not found "
+                    f"in outdoor_tiles atlas"
+                )
+
+    # Player spawn
+    if _check_type(result, data, "player_spawn", list, "village"):
+        spawn = data["player_spawn"]
+        if len(spawn) != 2:
+            result.error("player_spawn must have exactly 2 elements [x, y]")
+        elif has_width and has_height:
+            sx, sy = spawn
+            if not (0 <= sx < width and 0 <= sy < height):
+                result.error(
+                    f"player_spawn [{sx},{sy}] out of bounds ({width}x{height})"
+                )
+            elif sy < len(layout) and isinstance(layout[sy], str) and sx < len(layout[sy]):
+                ch = layout[sy][sx]
+                legend = tile_legend.get(ch, {})
+                if isinstance(legend, dict) and not legend.get("walkable", False):
+                    result.error(
+                        f"player_spawn [{sx},{sy}] is on non-walkable tile '{ch}'"
+                    )
+
+    # NPC validation
+    character_tiles = _load_tile_names(CHARACTER_TILES_PATH)
+    if _check_type(result, data, "npcs", list, "village"):
+        for ni, npc in enumerate(data["npcs"]):
+            nctx = f"npcs[{ni}]"
+            if not isinstance(npc, dict):
+                result.error(f"{nctx}: must be a dict")
+                continue
+            _check_type(result, npc, "npc_id", str, nctx)
+            _check_type(result, npc, "display_name", str, nctx)
+            if _check_type(result, npc, "position", list, nctx):
+                pos = npc["position"]
+                if len(pos) != 2:
+                    result.error(f"{nctx}: position must have exactly 2 elements")
+                elif has_width and has_height:
+                    px, py = pos
+                    if not (0 <= px < width and 0 <= py < height):
+                        result.error(
+                            f"{nctx}: position [{px},{py}] out of bounds"
+                        )
+            _check_type(result, npc, "sprite_name", str, nctx)
+            if "sprite_name" in npc and character_tiles:
+                if npc["sprite_name"] not in character_tiles:
+                    result.error(
+                        f"{nctx}: sprite_name '{npc['sprite_name']}' not found "
+                        f"in character_tiles atlas"
+                    )
+
+    # --- Village-specific: buildings validation ---
+    if _check_type(result, data, "buildings", list, "village"):
+        buildings = data["buildings"]
+        building_ids: set[str] = set()
+
+        for bi, bldg in enumerate(buildings):
+            bctx = f"buildings[{bi}]"
+            if not isinstance(bldg, dict):
+                result.error(f"{bctx}: must be a dict")
+                continue
+
+            _check_type(result, bldg, "id", str, bctx)
+            _check_type(result, bldg, "name", str, bctx)
+            _check_type(result, bldg, "type", str, bctx)
+
+            # Check for duplicate building IDs
+            bid = bldg.get("id", "")
+            if bid:
+                if bid in building_ids:
+                    result.error(f"{bctx}: duplicate building id '{bid}'")
+                building_ids.add(bid)
+
+            # Validate rect
+            has_rect = _check_type(result, bldg, "rect", dict, bctx)
+            if has_rect:
+                rect = bldg["rect"]
+                has_bx = _check_type(result, rect, "x", int, f"{bctx}.rect")
+                has_by = _check_type(result, rect, "y", int, f"{bctx}.rect")
+                has_bw = _check_type(result, rect, "w", int, f"{bctx}.rect")
+                has_bh = _check_type(result, rect, "h", int, f"{bctx}.rect")
+
+                if has_bx and has_by and has_bw and has_bh and has_width and has_height:
+                    bx, by, bw, bh = rect["x"], rect["y"], rect["w"], rect["h"]
+                    if bx < 0 or by < 0 or bx + bw > width or by + bh > height:
+                        result.error(
+                            f"{bctx}: rect ({bx},{by},{bw},{bh}) extends beyond "
+                            f"map bounds ({width}x{height})"
+                        )
+
+            # Validate door_positions
+            if _check_type(result, bldg, "door_positions", list, bctx):
+                for di, dpos in enumerate(bldg["door_positions"]):
+                    dctx = f"{bctx}.door_positions[{di}]"
+                    if not isinstance(dpos, list) or len(dpos) != 2:
+                        result.error(f"{dctx}: must be [x, y] array")
+                        continue
+                    dx, dy = dpos
+                    if has_width and has_height:
+                        if not (0 <= dx < width and 0 <= dy < height):
+                            result.error(f"{dctx}: [{dx},{dy}] out of map bounds")
+
+                    # Check door is on building perimeter
+                    if has_rect:
+                        rect = bldg["rect"]
+                        bx, by = rect.get("x", 0), rect.get("y", 0)
+                        bw, bh = rect.get("w", 0), rect.get("h", 0)
+                        on_top = (dy == by and bx <= dx < bx + bw)
+                        on_bottom = (dy == by + bh - 1 and bx <= dx < bx + bw)
+                        on_left = (dx == bx and by <= dy < by + bh)
+                        on_right = (dx == bx + bw - 1 and by <= dy < by + bh)
+                        # Also allow door just outside the rect (on the edge row/col)
+                        on_outside_bottom = (dy == by + bh and bx <= dx < bx + bw)
+                        on_outside_top = (dy == by - 1 and bx <= dx < bx + bw)
+                        on_outside_left = (dx == bx - 1 and by <= dy < by + bh)
+                        on_outside_right = (dx == bx + bw and by <= dy < by + bh)
+                        on_perimeter = (on_top or on_bottom or on_left or on_right or
+                                        on_outside_bottom or on_outside_top or
+                                        on_outside_left or on_outside_right)
+                        if not on_perimeter:
+                            result.error(
+                                f"{dctx}: door at [{dx},{dy}] is not on the "
+                                f"perimeter of building rect ({bx},{by},{bw},{bh})"
+                            )
+
+        # Check buildings don't overlap
+        for i in range(len(buildings)):
+            if not isinstance(buildings[i], dict) or "rect" not in buildings[i]:
+                continue
+            for j in range(i + 1, len(buildings)):
+                if not isinstance(buildings[j], dict) or "rect" not in buildings[j]:
+                    continue
+                ra, rb = buildings[i]["rect"], buildings[j]["rect"]
+                if (all(k in ra for k in ("x", "y", "w", "h")) and
+                        all(k in rb for k in ("x", "y", "w", "h"))):
+                    if _rects_overlap(ra, rb):
+                        result.error(
+                            f"buildings[{i}] ({ra['x']},{ra['y']},{ra['w']},{ra['h']}) "
+                            f"and buildings[{j}] ({rb['x']},{rb['y']},{rb['w']},{rb['h']}) overlap"
+                        )
+
+    # --- Village-specific: exits validation ---
+    if _check_type(result, data, "exits", list, "village"):
+        for ei, ex in enumerate(data["exits"]):
+            ectx = f"exits[{ei}]"
+            if not isinstance(ex, dict):
+                result.error(f"{ectx}: must be a dict")
+                continue
+            _check_type(result, ex, "destination", str, ectx)
+            if _check_type(result, ex, "position", list, ectx):
+                epos = ex["position"]
+                if len(epos) != 2:
+                    result.error(f"{ectx}: position must have exactly 2 elements")
+                elif has_width and has_height:
+                    epx, epy = epos
+                    if not (0 <= epx < width and 0 <= epy < height):
+                        result.error(
+                            f"{ectx}: position [{epx},{epy}] out of map bounds"
+                        )
+
+    # --- Village perimeter check (relaxed) ---
+    # Village edges can have outdoor walkable tiles (grass, paths) but not indoor floors
+    if layout and has_width and has_height and len(layout) == height:
+        for row_idx in [0, height - 1]:
+            if row_idx < len(layout) and isinstance(layout[row_idx], str):
+                for x, ch in enumerate(layout[row_idx]):
+                    legend = tile_legend.get(ch, {})
+                    if not isinstance(legend, dict):
+                        continue
+                    tile_name_str = legend.get("name", "").lower()
+                    # Indoor floor tiles on the perimeter are not allowed
+                    if tile_name_str in INDOOR_FLOOR_NAMES:
+                        result.error(
+                            f"Perimeter breach at [{x},{row_idx}]: "
+                            f"indoor tile '{ch}' ({tile_name_str}) on village border"
+                        )
+        for y in range(height):
+            if y >= len(layout) or not isinstance(layout[y], str):
+                continue
+            for x_idx in [0, width - 1]:
+                if x_idx >= len(layout[y]):
+                    continue
+                ch = layout[y][x_idx]
+                legend = tile_legend.get(ch, {})
+                if not isinstance(legend, dict):
+                    continue
+                tile_name_str = legend.get("name", "").lower()
+                if tile_name_str in INDOOR_FLOOR_NAMES:
+                    result.error(
+                        f"Perimeter breach at [{x_idx},{y}]: "
+                        f"indoor tile '{ch}' ({tile_name_str}) on village border"
+                    )
+
+    # --- BFS connectivity: player can reach all building doors ---
+    if (has_width and has_height and len(layout) == height
+            and "player_spawn" in data and isinstance(data["player_spawn"], list)
+            and len(data["player_spawn"]) == 2):
+        sx, sy = data["player_spawn"]
+        if 0 <= sx < width and 0 <= sy < height:
+            reachable = _bfs_reachable(layout, (sx, sy), tile_legend, width, height)
+
+            # Check NPC adjacency (NPCs are on non-walkable tiles, so check neighbors)
+            for ni, npc in enumerate(data.get("npcs", [])):
+                if not isinstance(npc, dict) or "position" not in npc:
+                    continue
+                pos = npc["position"]
+                if len(pos) != 2:
+                    continue
+                px, py = pos
+                adjacent_reachable = False
+                for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+                    nx, ny = px + dx, py + dy
+                    if (nx, ny) in reachable:
+                        adjacent_reachable = True
+                        break
+                if not adjacent_reachable:
+                    npc_id = npc.get("npc_id", f"#{ni}")
+                    result.error(
+                        f"NPC '{npc_id}' at [{px},{py}] is not reachable "
+                        f"from player_spawn [{sx},{sy}]"
+                    )
+
+            # Check all building doors are reachable
+            for bi, bldg in enumerate(data.get("buildings", [])):
+                if not isinstance(bldg, dict):
+                    continue
+                bid = bldg.get("id", f"#{bi}")
+                for di, dpos in enumerate(bldg.get("door_positions", [])):
+                    if not isinstance(dpos, list) or len(dpos) != 2:
+                        continue
+                    dx, dy = dpos
+                    # Door itself should be reachable, or an adjacent tile should be
+                    door_reachable = (dx, dy) in reachable
+                    if not door_reachable:
+                        for ddx, ddy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+                            nxx, nyy = dx + ddx, dy + ddy
+                            if (nxx, nyy) in reachable:
+                                door_reachable = True
+                                break
+                    if not door_reachable:
+                        result.error(
+                            f"Building '{bid}' door at [{dx},{dy}] is not reachable "
+                            f"from player_spawn [{sx},{sy}]"
+                        )
+
+    # Optional fields validation
+    _check_optional_type(result, data, "atmosphere", dict, "village")
+    _check_optional_type(result, data, "entrance_narration", list, "village")
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -592,6 +1213,8 @@ VALIDATORS = {
     "dungeon": validate_dungeon,
     "npc": validate_npc,
     "quest": validate_quest,
+    "tavern": validate_tavern,
+    "village": validate_village,
 }
 
 

@@ -51,23 +51,34 @@ def change_to_project_root():
     return project_root
 
 def extract_used_tile_names():
-    """Extract tile names from map_renderer.gd by finding StringName references like &"tile-name"."""
-    map_renderer_path = Path("src/map_renderer.gd")
+    """Extract tile names from GDScript files by finding StringName references like &"tile-name"."""
+    files_to_scan = [
+        Path("src/map_renderer.gd"),
+        Path("src/tavern_renderer.gd"),
+        Path("src/village_renderer.gd"),
+    ]
     used_tile_names = set()
-
-    if not map_renderer_path.exists():
-        print(f"Warning: {map_renderer_path} not found. Using all tiles.")
-        return None
+    found_any = False
 
     # Regex pattern to match StringName references like &"tile-name"
     pattern = r'&"([^"]+)"'
 
-    with open(map_renderer_path, 'r', encoding='utf-8') as f:
-        content = f.read()
-        matches = re.findall(pattern, content)
-        used_tile_names.update(matches)
+    for path in files_to_scan:
+        if not path.exists():
+            print(f"  Skipping {path} (not found)")
+            continue
+        found_any = True
+        with open(path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            matches = re.findall(pattern, content)
+            used_tile_names.update(matches)
+            print(f"  Found {len(matches)} tile references in {path}")
 
-    print(f"Found {len(used_tile_names)} used tile names in map_renderer.gd:")
+    if not found_any:
+        print("Warning: No GDScript files found. Using all tiles.")
+        return None
+
+    print(f"Total unique tile names: {len(used_tile_names)}")
     for tile_name in sorted(used_tile_names):
         print(f"  {tile_name}")
     print()
@@ -570,8 +581,11 @@ def create_atlas(sprite_files, used_tile_names=None):
     try:
         bbox = draw.textbbox((0, 0), text, font=font)
         text_w, text_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    except AttributeError:
-        text_w, text_h = font.getsize(text)
+    except (AttributeError, ValueError):
+        try:
+            text_w, text_h = font.getsize(text)
+        except AttributeError:
+            text_w, text_h = len(text) * 6, 10  # rough fallback
     margin = 4
     x = atlas_width - text_w - margin
     y = atlas_height - text_h - margin

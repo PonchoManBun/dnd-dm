@@ -1,6 +1,70 @@
-# Dungeon Design Guide
+# Content Design Guide
 
-Read this guide before generating any dungeon content. These are the design principles for The Welcome Wench. They override generic D&D defaults where specified.
+Read this guide before generating any content. These are the design principles for The Welcome Wench. They override generic D&D defaults where specified.
+
+---
+
+## Tavern & Location Design
+
+### Layout Principles
+
+Taverns are the player's home base — they should feel welcoming, navigable, and full of things to interact with.
+
+**Bar Placement**: The bar should face the entrance so the barkeep can see who walks in. This is a D&D tavern convention and creates a natural focal point. Place the bar counter (B) as a vertical or horizontal strip with the barkeep position (*) behind it.
+
+**Traffic Flow**: The player enters through the door (D) and should have a clear, unobstructed path to the bar. No furniture should block the main walkway. Think of the layout as a floor plan — patrons need to move between tables, the bar, and the exit.
+
+**Table Grouping**: Tables (T) should be placed with chairs (c) in natural clusters:
+- 2x2 blocks: `TT` / `cc` — standard 4-person table
+- 1x2 blocks: `Tc` — small 2-person table
+- Single `T` with `c` adjacent — bar stools or lone seats
+
+**Perimeter**: ALL edge tiles must be walls (#) except entrance doors (D). No walkable tiles on the border.
+
+### Zone Ratios
+
+A well-designed tavern divides space into functional zones:
+
+| Zone | Percentage | Purpose |
+|------|-----------|---------|
+| Entrance/Hallway | ~20% | First impression, player spawn, door area |
+| Bar/Counter | ~20% | Barkeep interaction, main focal point |
+| Dining/Seating | ~40% | Tables and chairs, patron NPCs, social area |
+| Specialty Areas | ~20% | Quest board, shop, stairs, rooms, memorial, fireplace |
+
+### NPC Placement Rules
+
+| NPC Role | Placement | Why |
+|----------|-----------|-----|
+| Barkeep | Behind bar counter (*) | Convention; they serve drinks |
+| Regular patron | At a table (adjacent to T) | They're eating/drinking |
+| Mysterious figure | Corner, far from entrance | Creates intrigue, player must explore |
+| Merchant/shopkeep | Behind shop counter (s) | They sell things |
+| Quest giver | Near quest board (Q) | Natural association |
+| Guard/bouncer | Near entrance (D) | They watch the door |
+
+### Atmosphere Guidelines
+
+| Mood | Canvas Modulate | Candle Color | Candle Energy | Dust Motes |
+|------|----------------|--------------|---------------|------------|
+| Warm tavern | [1.0, 0.92, 0.82] | [1.0, 0.85, 0.5] | 0.6 | [1.0, 0.9, 0.7, 0.8] |
+| Cold inn | [0.8, 0.85, 1.0] | [0.8, 0.9, 1.0] | 0.4 | [0.8, 0.85, 1.0, 0.6] |
+| Dim dive bar | [0.7, 0.65, 0.6] | [1.0, 0.7, 0.3] | 0.3 | [0.8, 0.7, 0.5, 0.5] |
+| Busy marketplace | [1.0, 1.0, 0.95] | [1.0, 1.0, 0.9] | 0.8 | [1.0, 1.0, 0.9, 0.4] |
+| Haunted tavern | [0.6, 0.7, 0.8] | [0.5, 0.7, 1.0] | 0.3 | [0.6, 0.7, 0.9, 0.9] |
+
+### Common Mistakes to Avoid
+
+1. **Furniture blocking paths**: Always leave at least 1-tile walkable corridors between furniture groups
+2. **NPCs in walls**: NPC positions must be on valid tiles (floor or NPC slot)
+3. **Unreachable areas**: BFS from player_spawn must reach all NPC adjacent tiles
+4. **Boring symmetry**: Real taverns are organic. Vary table cluster sizes and positions
+5. **Missing zones**: Every tavern needs at least: entrance, bar, seating area
+6. **Too many doors**: One entrance is standard. Add more only if there's a back exit or upstairs
+
+---
+
+# Dungeon Design Guide
 
 ---
 
@@ -355,3 +419,75 @@ After generating a dungeon, include design rationale in the manifest at `forge_o
   }
 }
 ```
+
+---
+
+## Village & Outdoor Design
+
+### Layout Principles
+- Central open area (town square) with stone paths
+- Buildings face the square or main road
+- Tavern is the largest building, prominent position
+- Dungeon gate/exit at map edge
+- Trees/fence border the village perimeter
+- 2-tile-wide paths between buildings for comfortable movement
+- Map size: ~40x30 tiles (can vary 30-50 width, 20-35 height)
+
+### Building Placement (adapted from dungeon room placement)
+- Place 3-4 rectangular building footprints (6-12 tiles wide, 5-8 tiles tall)
+- Minimum 3-tile spacing between buildings for paths
+- Buildings must not overlap
+- Each building needs at least one door on a reachable path
+
+### Path Connectivity (adapted from MST corridors)
+- Connect all building doors with dirt/stone paths
+- Ensure no building is isolated (BFS from player spawn must reach all doors)
+- Paths should be 2 tiles wide for comfortable movement
+- Use stone paths (v) for main roads, dirt paths (d) for side paths
+
+### Interior Furnishing (adapted from obstacle density)
+- Fill each building interior with appropriate furniture at 30-40% density
+- Tavern: bar counter, tables, chairs, quest board, barrels
+- Blacksmith: anvil, forge, crates, barrels
+- Store: shop counter, shelves, crates
+- Temple: altar, benches, bookshelves
+
+### Vegetation (decoration density)
+- Scatter trees around outdoor areas at 15-20% density
+- Cluster trees at map edges (natural border)
+- Leave paths and building approaches clear
+- Mix tree types (tree0-0, tree0-1, etc.) for variety
+
+### NPC Placement
+- Barkeep behind bar counter
+- Smith near anvil
+- Merchant behind counter
+- Guards at gate (if any)
+- Villagers on paths or in town square
+- Each NPC on a non-walkable '*' slot adjacent to walkable tiles
+
+### Village Tile Vocabulary
+
+**Outdoor tiles:**
+
+| Char | Name | Atlas | Walkable |
+|------|------|-------|----------|
+| w | grass | outdoor | yes |
+| d | dirt path | outdoor | yes |
+| v | stone path | outdoor | yes |
+| t | tree | outdoor | no |
+| u | bush | outdoor | no |
+| f | fence | outdoor | no |
+| ~ | water | outdoor | no |
+| G | dungeon gate | world | yes (exit) |
+
+**Indoor tiles (reused from tavern):**
+All tavern tile chars work in village buildings too.
+
+**Structural:**
+
+| Char | Name | Walkable |
+|------|------|----------|
+| # | wall | no (wall_like) |
+| D | door | yes |
+| * | NPC slot | no |
