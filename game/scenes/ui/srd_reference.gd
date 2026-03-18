@@ -76,15 +76,7 @@ func _scan_chapters() -> void:
 
 func _build_ui() -> void:
 	# Panel style
-	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = UIColors.PANEL_BG
-	panel_style.border_color = UIColors.FRAME_GOLD
-	panel_style.set_border_width_all(2)
-	panel_style.content_margin_left = 6.0
-	panel_style.content_margin_top = 4.0
-	panel_style.content_margin_right = 6.0
-	panel_style.content_margin_bottom = 4.0
-	add_theme_stylebox_override("panel", panel_style)
+	add_theme_stylebox_override("panel", UIStyles.overlay_panel())
 
 	# Main vertical layout (header row + body)
 	_vbox = VBoxContainer.new()
@@ -107,40 +99,12 @@ func _build_ui() -> void:
 
 	_close_button = Button.new()
 	_close_button.text = "X"
-	_close_button.add_theme_color_override("font_color", UIColors.CLOSE_BTN)
-	_close_button.add_theme_color_override("font_hover_color", Color(1.0, 0.4, 0.4))
-	_close_button.add_theme_font_size_override("font_size", 16)
-	_close_button.custom_minimum_size = Vector2(20, 20)
-
-	var close_normal := StyleBoxFlat.new()
-	close_normal.bg_color = UIColors.BUTTON_BG
-	close_normal.content_margin_left = 4.0
-	close_normal.content_margin_right = 4.0
-	close_normal.content_margin_top = 1.0
-	close_normal.content_margin_bottom = 1.0
-	_close_button.add_theme_stylebox_override("normal", close_normal)
-
-	var close_hover := StyleBoxFlat.new()
-	close_hover.bg_color = Color(0.3, 0.12, 0.10, 0.9)
-	close_hover.content_margin_left = 4.0
-	close_hover.content_margin_right = 4.0
-	close_hover.content_margin_top = 1.0
-	close_hover.content_margin_bottom = 1.0
-	_close_button.add_theme_stylebox_override("hover", close_hover)
-
-	var close_focus := StyleBoxEmpty.new()
-	_close_button.add_theme_stylebox_override("focus", close_focus)
-
+	UIStyles.apply_close_button_styles(_close_button)
 	_close_button.pressed.connect(_on_close_pressed)
 	header_row.add_child(_close_button)
 
 	# Header separator
-	var sep := HSeparator.new()
-	var sep_style := StyleBoxLine.new()
-	sep_style.color = UIColors.SEPARATOR
-	sep_style.thickness = 1
-	sep.add_theme_stylebox_override("separator", sep_style)
-	sep.add_theme_constant_override("separation", 2)
+	var sep := UIStyles.h_separator(2)
 	_vbox.add_child(sep)
 
 	# -- Body: chapter list (left) + content (right) --
@@ -173,46 +137,14 @@ func _build_ui() -> void:
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.add_theme_font_size_override("font_size", 16)
-		btn.add_theme_color_override("font_color", UIColors.CHOICE_TEXT)
-		btn.add_theme_color_override("font_hover_color", UIColors.CHOICE_HOVER_TEXT)
-
-		var btn_normal := StyleBoxFlat.new()
-		btn_normal.bg_color = UIColors.BUTTON_BG
-		btn_normal.content_margin_left = 4.0
-		btn_normal.content_margin_right = 4.0
-		btn_normal.content_margin_top = 2.0
-		btn_normal.content_margin_bottom = 2.0
-		btn.add_theme_stylebox_override("normal", btn_normal)
-
-		var btn_hover := StyleBoxFlat.new()
-		btn_hover.bg_color = UIColors.BUTTON_HOVER
-		btn_hover.content_margin_left = 4.0
-		btn_hover.content_margin_right = 4.0
-		btn_hover.content_margin_top = 2.0
-		btn_hover.content_margin_bottom = 2.0
-		btn.add_theme_stylebox_override("hover", btn_hover)
-
-		var btn_pressed := StyleBoxFlat.new()
-		btn_pressed.bg_color = UIColors.BUTTON_PRESSED
-		btn_pressed.content_margin_left = 4.0
-		btn_pressed.content_margin_right = 4.0
-		btn_pressed.content_margin_top = 2.0
-		btn_pressed.content_margin_bottom = 2.0
-		btn.add_theme_stylebox_override("pressed", btn_pressed)
-
-		var btn_focus := StyleBoxEmpty.new()
-		btn.add_theme_stylebox_override("focus", btn_focus)
+		UIStyles.apply_choice_button_styles(btn)
 
 		var chapter_idx := i
 		btn.pressed.connect(func() -> void: _select_chapter(chapter_idx))
 		_chapter_list.add_child(btn)
 
 	# Vertical separator between list and content
-	var vsep := VSeparator.new()
-	var vsep_style := StyleBoxLine.new()
-	vsep_style.color = UIColors.SEPARATOR
-	vsep_style.thickness = 1
-	vsep.add_theme_stylebox_override("separator", vsep_style)
+	var vsep := UIStyles.v_separator()
 	_hbox.add_child(vsep)
 
 	# Content area

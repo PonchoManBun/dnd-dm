@@ -38,6 +38,16 @@ func _on_turn_started() -> void:
 	for message_label: RichTextLabel in messages_container.get_children():
 		message_label.modulate.a = OLD_MESSAGE_OPACITY
 
+	# Add turn separator
+	var dim_color := UIColors.TEXT_DIM.to_html()
+	var sep := RichTextLabel.new()
+	sep.bbcode_enabled = true
+	sep.text = "[font_size=%d][color=#%s]-- Turn %d --[/color][/font_size]" % [UIColors.FONT_SMALL, dim_color, World.current_turn]
+	sep.fit_content = true
+	sep.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sep.modulate.a = OLD_MESSAGE_OPACITY
+	messages_container.add_child(sep)
+
 
 func _on_message_logged(message: String, level: int = Level.NORMAL) -> void:
 	var color := ""

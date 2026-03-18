@@ -16,15 +16,7 @@ func _ready() -> void:
 
 func _build_ui() -> void:
 	# Panel style
-	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = UIColors.PANEL_BG
-	panel_style.border_color = UIColors.FRAME_GOLD
-	panel_style.set_border_width_all(2)
-	panel_style.content_margin_left = 6.0
-	panel_style.content_margin_top = 4.0
-	panel_style.content_margin_right = 6.0
-	panel_style.content_margin_bottom = 4.0
-	add_theme_stylebox_override("panel", panel_style)
+	add_theme_stylebox_override("panel", UIStyles.overlay_panel())
 
 	var vbox := VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -46,26 +38,12 @@ func _build_ui() -> void:
 
 	_close_button = Button.new()
 	_close_button.text = "X"
-	_close_button.add_theme_color_override("font_color", UIColors.CLOSE_BTN)
-	_close_button.add_theme_color_override("font_hover_color", Color(1.0, 0.4, 0.4))
-	_close_button.add_theme_font_size_override("font_size", 16)
-	_close_button.custom_minimum_size = Vector2(20, 20)
-	var close_style := StyleBoxFlat.new()
-	close_style.bg_color = UIColors.BUTTON_BG
-	close_style.set_content_margin_all(2.0)
-	_close_button.add_theme_stylebox_override("normal", close_style)
-	var close_focus := StyleBoxEmpty.new()
-	_close_button.add_theme_stylebox_override("focus", close_focus)
+	UIStyles.apply_close_button_styles(_close_button)
 	_close_button.pressed.connect(func() -> void: visible = false)
 	header_row.add_child(_close_button)
 
 	# Separator
-	var sep := HSeparator.new()
-	var sep_style := StyleBoxLine.new()
-	sep_style.color = UIColors.SEPARATOR
-	sep_style.thickness = 1
-	sep.add_theme_stylebox_override("separator", sep_style)
-	sep.add_theme_constant_override("separation", 2)
+	var sep := UIStyles.h_separator(2)
 	vbox.add_child(sep)
 
 	# -- Two-column body --
@@ -89,11 +67,7 @@ func _build_ui() -> void:
 	left_scroll.add_child(_left_column)
 
 	# Vertical separator
-	var vsep := VSeparator.new()
-	var vsep_style := StyleBoxLine.new()
-	vsep_style.color = UIColors.SEPARATOR
-	vsep_style.thickness = 1
-	vsep.add_theme_stylebox_override("separator", vsep_style)
+	var vsep := UIStyles.v_separator()
 	_content_hbox.add_child(vsep)
 
 	# Right column: scroll container
@@ -247,22 +221,11 @@ func _refresh() -> void:
 
 
 func _add_label(parent: VBoxContainer, text: String, color: Color) -> void:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_color_override("font_color", color)
-	label.add_theme_font_size_override("font_size", 16)
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	parent.add_child(label)
+	parent.add_child(UIStyles.make_label(text, color))
 
 
 func _add_section_separator(parent: VBoxContainer) -> void:
-	var sep := HSeparator.new()
-	var sep_style := StyleBoxLine.new()
-	sep_style.color = UIColors.SEPARATOR
-	sep_style.thickness = 1
-	sep.add_theme_stylebox_override("separator", sep_style)
-	sep.add_theme_constant_override("separation", 2)
-	parent.add_child(sep)
+	parent.add_child(UIStyles.h_separator(2))
 
 
 func _get_xp_for_next_level(cd: CharacterData) -> int:

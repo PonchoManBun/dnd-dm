@@ -28,15 +28,7 @@ func _ready() -> void:
 func _build_slots() -> void:
 	for i in MAX_SLOTS:
 		var slot := PanelContainer.new()
-		var style := StyleBoxFlat.new()
-		style.bg_color = UIColors.PANEL_BG_LIGHT
-		style.border_color = UIColors.FRAME_GOLD
-		style.set_border_width_all(1)
-		style.content_margin_left = 2.0
-		style.content_margin_right = 2.0
-		style.content_margin_top = 1.0
-		style.content_margin_bottom = 1.0
-		slot.add_theme_stylebox_override("panel", style)
+		slot.add_theme_stylebox_override("panel", UIStyles.slot_panel())
 		slot.custom_minimum_size = Vector2(24, 20)
 
 		var vbox := VBoxContainer.new()

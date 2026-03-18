@@ -28,10 +28,7 @@ func _build_ui() -> void:
 	add_child(center)
 
 	var panel := PanelContainer.new()
-	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = UIColors.PANEL_BG
-	panel_style.border_color = UIColors.FRAME_GOLD
-	panel_style.set_border_width_all(2)
+	var panel_style := UIStyles.overlay_panel()
 	panel_style.content_margin_left = 16.0
 	panel_style.content_margin_top = 12.0
 	panel_style.content_margin_right = 16.0
@@ -54,12 +51,7 @@ func _build_ui() -> void:
 	vbox.add_child(title)
 
 	# Separator
-	var sep := HSeparator.new()
-	var sep_style := StyleBoxLine.new()
-	sep_style.color = UIColors.SEPARATOR
-	sep_style.thickness = 1
-	sep.add_theme_stylebox_override("separator", sep_style)
-	sep.add_theme_constant_override("separation", 4)
+	var sep := UIStyles.h_separator(4)
 	vbox.add_child(sep)
 
 	# Resume
@@ -120,26 +112,5 @@ func _make_button(text: String) -> Button:
 	btn.add_theme_font_size_override("font_size", 16)
 	btn.add_theme_color_override("font_color", UIColors.TEXT_PRIMARY)
 	btn.add_theme_color_override("font_hover_color", UIColors.TEXT_HEADER)
-
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = UIColors.BUTTON_BG
-	normal.border_color = UIColors.INPUT_BORDER
-	normal.set_border_width_all(1)
-	normal.set_content_margin_all(4)
-	btn.add_theme_stylebox_override("normal", normal)
-
-	var hover := StyleBoxFlat.new()
-	hover.bg_color = UIColors.BUTTON_HOVER
-	hover.border_color = UIColors.FRAME_GOLD
-	hover.set_border_width_all(1)
-	hover.set_content_margin_all(4)
-	btn.add_theme_stylebox_override("hover", hover)
-
-	var pressed := StyleBoxFlat.new()
-	pressed.bg_color = UIColors.BUTTON_PRESSED
-	pressed.border_color = UIColors.FRAME_GOLD
-	pressed.set_border_width_all(1)
-	pressed.set_content_margin_all(4)
-	btn.add_theme_stylebox_override("pressed", pressed)
-
+	UIStyles.apply_button_styles(btn)
 	return btn

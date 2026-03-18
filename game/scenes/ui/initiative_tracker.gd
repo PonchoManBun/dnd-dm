@@ -11,12 +11,7 @@ var _entry_labels: Array[RichTextLabel] = []
 
 func _ready() -> void:
 	# Build UI
-	var style := StyleBoxFlat.new()
-	style.bg_color = UIColors.PANEL_BG
-	style.border_color = UIColors.FRAME_GOLD
-	style.set_border_width_all(2)
-	style.set_content_margin_all(4)
-	add_theme_stylebox_override("panel", style)
+	add_theme_stylebox_override("panel", UIStyles.overlay_panel())
 
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 2)
@@ -29,13 +24,7 @@ func _ready() -> void:
 	_header_label.add_theme_color_override("font_color", UIColors.TEXT_HEADER)
 	vbox.add_child(_header_label)
 
-	var sep := HSeparator.new()
-	var sep_style := StyleBoxLine.new()
-	sep_style.color = UIColors.SEPARATOR
-	sep_style.thickness = 1
-	sep.add_theme_stylebox_override("separator", sep_style)
-	sep.add_theme_constant_override("separation", 2)
-	vbox.add_child(sep)
+	vbox.add_child(UIStyles.h_separator(2))
 
 	_entries_container = VBoxContainer.new()
 	_entries_container.add_theme_constant_override("separation", 2)
@@ -68,14 +57,17 @@ func update_turn_order(combatants: Array[CombatState], active_index: int) -> voi
 		var is_dead := cs.combatant.is_dead
 
 		if is_dead:
-			label.text = "[color=gray][s]%s %s[/s][/color]" % [init_text, name_text]
+			var c := UIColors.COMBAT_DEAD.to_html()
+			label.text = "[color=#%s][s]%s %s[/s][/color]" % [c, init_text, name_text]
 		elif is_active:
-			var color := "lime" if is_player else "red"
-			label.text = "[color=%s]> %s %s (%s)[/color]" % [color, init_text, name_text, hp_text]
+			var c := UIColors.COMBAT_PLAYER_ACTIVE.to_html() if is_player else UIColors.COMBAT_ENEMY_ACTIVE.to_html()
+			label.text = "[color=#%s]> %s %s (%s)[/color]" % [c, init_text, name_text, hp_text]
 		elif is_player:
-			label.text = "[color=cyan]  %s %s (%s)[/color]" % [init_text, name_text, hp_text]
+			var c := UIColors.COMBAT_PLAYER.to_html()
+			label.text = "[color=#%s]  %s %s (%s)[/color]" % [c, init_text, name_text, hp_text]
 		else:
-			label.text = "[color=white]  %s %s (%s)[/color]" % [init_text, name_text, hp_text]
+			var c := UIColors.COMBAT_ENEMY.to_html()
+			label.text = "[color=#%s]  %s %s (%s)[/color]" % [c, init_text, name_text, hp_text]
 
 		if cs.is_surprised:
 			label.text += " [color=yellow][Surprised][/color]"

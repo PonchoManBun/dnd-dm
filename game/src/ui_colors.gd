@@ -54,28 +54,21 @@ const PROGRESS_FILL := Color(0.30, 0.55, 0.25, 1.0)
 # Focus outline
 const FOCUS_BORDER := Color(0.77, 0.64, 0.31, 0.8)
 
+# Font sizes
+const FONT_TITLE := 20
+const FONT_HEADER := 16
+const FONT_BODY := 16
+const FONT_SMALL := 14
+const FONT_TINY := 12
 
-## Create a standard panel StyleBoxFlat with gold border.
-static func make_panel_style(bg: Color = PANEL_BG, border: Color = FRAME_GOLD, border_width: int = 2) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = bg
-	style.border_color = border
-	style.set_border_width_all(border_width)
-	style.content_margin_left = 4.0
-	style.content_margin_top = 4.0
-	style.content_margin_right = 4.0
-	style.content_margin_bottom = 4.0
-	return style
+# Combat / initiative colors
+const COMBAT_PLAYER_ACTIVE := Color(0.0, 1.0, 0.0)      # lime — active player
+const COMBAT_ENEMY_ACTIVE := Color(1.0, 0.0, 0.0)        # red — active enemy
+const COMBAT_PLAYER := Color(0.0, 1.0, 1.0)              # cyan — player (not active)
+const COMBAT_ENEMY := Color(1.0, 1.0, 1.0)               # white — enemy (not active)
+const COMBAT_DEAD := Color(0.5, 0.5, 0.5)                # gray — dead combatant
 
-
-## Create a button StyleBoxFlat.
-static func make_button_style(bg: Color, border_w: int = 0, border_c: Color = FRAME_GOLD) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = bg
-	style.border_color = border_c
-	style.set_border_width_all(border_w)
-	style.content_margin_left = 5.0
-	style.content_margin_top = 5.0
-	style.content_margin_right = 5.0
-	style.content_margin_bottom = 5.0
-	return style
+# HP bar colors
+const HP_HIGH := Color(0.30, 0.75, 0.25)    # green
+const HP_MID := Color(0.85, 0.75, 0.20)     # yellow
+const HP_LOW := Color(0.85, 0.25, 0.20)     # red

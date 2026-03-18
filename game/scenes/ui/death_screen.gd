@@ -4,16 +4,6 @@ extends Control
 ## Full-screen permadeath screen with sequential fade-in animations.
 ## Built entirely in code -- no .tscn needed.
 
-const BG_COLOR := Color(0.0, 0.0, 0.0, 0.0)  # starts transparent, fades in
-const BG_TARGET := Color(0.0, 0.0, 0.0, 0.92)
-const TITLE_COLOR := Color(0.827, 0.271, 0.286, 1.0)  # GameColors.RED
-const EULOGY_COLOR := Color(0.93, 0.88, 0.78, 1.0)
-const STAT_LABEL_COLOR := Color(0.60, 0.55, 0.45, 1.0)
-const STAT_VALUE_COLOR := Color(0.95, 0.85, 0.60, 1.0)
-const SEPARATOR_COLOR := Color(0.827, 0.271, 0.286, 0.3)
-const BUTTON_COLOR := Color(0.18, 0.14, 0.10, 0.95)
-const BUTTON_BORDER := Color(0.40, 0.33, 0.22, 0.6)
-
 const OVERLAY_FADE_DURATION := 1.5
 const ELEMENT_FADE_DURATION := 0.8
 const ELEMENT_STAGGER := 0.4
@@ -39,7 +29,7 @@ func _build_ui() -> void:
 	# --- Dark overlay background ---
 	_bg_rect = ColorRect.new()
 	_bg_rect.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	_bg_rect.color = BG_COLOR
+	_bg_rect.color = Color(0.0, 0.0, 0.0, 0.0)  # starts transparent, fades in
 	_bg_rect.mouse_filter = MOUSE_FILTER_STOP
 	add_child(_bg_rect)
 
@@ -61,7 +51,7 @@ func _build_ui() -> void:
 	_title_label.text = "YOU HAVE FALLEN"
 	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_title_label.add_theme_font_size_override("font_size", 32)
-	_title_label.add_theme_color_override("font_color", TITLE_COLOR)
+	_title_label.add_theme_color_override("font_color", UIColors.CLOSE_BTN)
 	_title_label.modulate.a = 0.0
 	_title_label.mouse_filter = MOUSE_FILTER_IGNORE
 	vbox.add_child(_title_label)
@@ -76,7 +66,7 @@ func _build_ui() -> void:
 	_eulogy_label = Label.new()
 	_eulogy_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_eulogy_label.add_theme_font_size_override("font_size", 16)
-	_eulogy_label.add_theme_color_override("font_color", EULOGY_COLOR)
+	_eulogy_label.add_theme_color_override("font_color", UIColors.TEXT_PRIMARY)
 	_eulogy_label.modulate.a = 0.0
 	_eulogy_label.mouse_filter = MOUSE_FILTER_IGNORE
 	_eulogy_label.text = _build_eulogy_text()
@@ -149,7 +139,7 @@ func _build_memorial_stats() -> void:
 	header.text = "- Memorial -"
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	header.add_theme_font_size_override("font_size", 14)
-	header.add_theme_color_override("font_color", STAT_LABEL_COLOR)
+	header.add_theme_color_override("font_color", UIColors.TEXT_DIM)
 	header.mouse_filter = MOUSE_FILTER_IGNORE
 	_memorial_container.add_child(header)
 
@@ -192,7 +182,7 @@ func _add_stat_row(grid: GridContainer, label_text: String, value_text: String) 
 	label.text = label_text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	label.add_theme_font_size_override("font_size", 14)
-	label.add_theme_color_override("font_color", STAT_LABEL_COLOR)
+	label.add_theme_color_override("font_color", UIColors.TEXT_DIM)
 	label.custom_minimum_size.x = 120
 	label.mouse_filter = MOUSE_FILTER_IGNORE
 	grid.add_child(label)
@@ -201,7 +191,7 @@ func _add_stat_row(grid: GridContainer, label_text: String, value_text: String) 
 	value.text = value_text
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	value.add_theme_font_size_override("font_size", 14)
-	value.add_theme_color_override("font_color", STAT_VALUE_COLOR)
+	value.add_theme_color_override("font_color", UIColors.TEXT_HEADER)
 	value.custom_minimum_size.x = 80
 	value.mouse_filter = MOUSE_FILTER_IGNORE
 	grid.add_child(value)
@@ -210,7 +200,7 @@ func _add_stat_row(grid: GridContainer, label_text: String, value_text: String) 
 func _make_separator() -> ColorRect:
 	# Use a ColorRect instead because HSeparator is hard to style
 	var sep := ColorRect.new()
-	sep.color = SEPARATOR_COLOR
+	sep.color = Color(0.827, 0.271, 0.286, 0.3)  # death screen red accent
 	sep.custom_minimum_size = Vector2(280, 1)
 	sep.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	sep.mouse_filter = MOUSE_FILTER_IGNORE
@@ -225,8 +215,8 @@ func _make_button(text: String) -> Button:
 
 	# Style matching the dark theme
 	var normal_style := StyleBoxFlat.new()
-	normal_style.bg_color = BUTTON_COLOR
-	normal_style.border_color = BUTTON_BORDER
+	normal_style.bg_color = UIColors.BUTTON_BG
+	normal_style.border_color = UIColors.INPUT_BORDER
 	normal_style.set_border_width_all(1)
 	normal_style.set_corner_radius_all(2)
 	normal_style.set_content_margin_all(6)
@@ -234,7 +224,7 @@ func _make_button(text: String) -> Button:
 
 	var hover_style := StyleBoxFlat.new()
 	hover_style.bg_color = Color(0.18, 0.15, 0.22, 0.95)
-	hover_style.border_color = TITLE_COLOR  # red highlight on hover
+	hover_style.border_color = UIColors.CLOSE_BTN  # red highlight on hover
 	hover_style.set_border_width_all(1)
 	hover_style.set_corner_radius_all(2)
 	hover_style.set_content_margin_all(6)
@@ -242,7 +232,7 @@ func _make_button(text: String) -> Button:
 
 	var pressed_style := StyleBoxFlat.new()
 	pressed_style.bg_color = Color(0.08, 0.06, 0.1, 0.95)
-	pressed_style.border_color = TITLE_COLOR
+	pressed_style.border_color = UIColors.CLOSE_BTN
 	pressed_style.set_border_width_all(1)
 	pressed_style.set_corner_radius_all(2)
 	pressed_style.set_content_margin_all(6)
@@ -255,7 +245,7 @@ func _animate_entrance() -> void:
 	var tween := create_tween()
 
 	# Phase 0: Background fade in
-	tween.tween_property(_bg_rect, "color", BG_TARGET, OVERLAY_FADE_DURATION)\
+	tween.tween_property(_bg_rect, "color", Color(0.0, 0.0, 0.0, 0.92), OVERLAY_FADE_DURATION)\
 		.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
 
 	# Phase 1: Title fades in

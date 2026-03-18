@@ -36,18 +36,7 @@ func _build_ui() -> void:
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 	# Panel style with gold left border
-	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = UIColors.PANEL_BG
-	panel_style.border_color = UIColors.FRAME_GOLD
-	panel_style.border_width_left = 2
-	panel_style.border_width_top = 0
-	panel_style.border_width_right = 0
-	panel_style.border_width_bottom = 0
-	panel_style.content_margin_left = 6.0
-	panel_style.content_margin_top = 4.0
-	panel_style.content_margin_right = 6.0
-	panel_style.content_margin_bottom = 4.0
-	add_theme_stylebox_override("panel", panel_style)
+	add_theme_stylebox_override("panel", UIStyles.side_panel())
 
 	# Main vertical layout
 	_vbox = VBoxContainer.new()
@@ -65,12 +54,7 @@ func _build_ui() -> void:
 	_vbox.add_child(_header_label)
 
 	# Header separator
-	var sep := HSeparator.new()
-	var sep_style := StyleBoxLine.new()
-	sep_style.color = UIColors.SEPARATOR
-	sep_style.thickness = 1
-	sep.add_theme_stylebox_override("separator", sep_style)
-	sep.add_theme_constant_override("separation", 2)
+	var sep := UIStyles.h_separator(2)
 	_vbox.add_child(sep)
 
 	# -- Scroll container for narrative text --
@@ -109,12 +93,7 @@ func _build_ui() -> void:
 	_vbox.add_child(_choices_container)
 
 	# Separator before input
-	var input_sep := HSeparator.new()
-	var input_sep_style := StyleBoxLine.new()
-	input_sep_style.color = UIColors.SEPARATOR
-	input_sep_style.thickness = 1
-	input_sep.add_theme_stylebox_override("separator", input_sep_style)
-	input_sep.add_theme_constant_override("separation", 2)
+	var input_sep := UIStyles.h_separator(2)
 	_vbox.add_child(input_sep)
 
 	# -- Speaker selectors --
@@ -162,25 +141,7 @@ func _build_ui() -> void:
 	_input_field.add_theme_color_override("font_placeholder_color", UIColors.TEXT_DIM)
 
 	# Style the input field background
-	var input_normal := StyleBoxFlat.new()
-	input_normal.bg_color = UIColors.INPUT_BG
-	input_normal.border_color = UIColors.INPUT_BORDER
-	input_normal.border_width_bottom = 1
-	input_normal.content_margin_left = 4.0
-	input_normal.content_margin_right = 4.0
-	input_normal.content_margin_top = 2.0
-	input_normal.content_margin_bottom = 2.0
-	_input_field.add_theme_stylebox_override("normal", input_normal)
-
-	var input_focus := StyleBoxFlat.new()
-	input_focus.bg_color = UIColors.INPUT_BG
-	input_focus.border_color = UIColors.FRAME_GOLD
-	input_focus.border_width_bottom = 1
-	input_focus.content_margin_left = 4.0
-	input_focus.content_margin_right = 4.0
-	input_focus.content_margin_top = 2.0
-	input_focus.content_margin_bottom = 2.0
-	_input_field.add_theme_stylebox_override("focus", input_focus)
+	UIStyles.apply_input_styles(_input_field)
 
 	_input_field.text_submitted.connect(_on_text_submitted)
 	_vbox.add_child(_input_field)
@@ -243,37 +204,8 @@ func _on_choices_presented(choices: Array[String]) -> void:
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.add_theme_font_size_override("font_size", 16)
-		button.add_theme_color_override("font_color", UIColors.CHOICE_TEXT)
-		button.add_theme_color_override("font_hover_color", UIColors.CHOICE_HOVER_TEXT)
-		button.add_theme_color_override("font_pressed_color", UIColors.CHOICE_PRESSED_TEXT)
-
 		# Style the choice buttons
-		var btn_normal := StyleBoxFlat.new()
-		btn_normal.bg_color = UIColors.BUTTON_BG
-		btn_normal.content_margin_left = 4.0
-		btn_normal.content_margin_right = 4.0
-		btn_normal.content_margin_top = 2.0
-		btn_normal.content_margin_bottom = 2.0
-		button.add_theme_stylebox_override("normal", btn_normal)
-
-		var btn_hover := StyleBoxFlat.new()
-		btn_hover.bg_color = UIColors.BUTTON_HOVER
-		btn_hover.content_margin_left = 4.0
-		btn_hover.content_margin_right = 4.0
-		btn_hover.content_margin_top = 2.0
-		btn_hover.content_margin_bottom = 2.0
-		button.add_theme_stylebox_override("hover", btn_hover)
-
-		var btn_pressed := StyleBoxFlat.new()
-		btn_pressed.bg_color = UIColors.BUTTON_PRESSED
-		btn_pressed.content_margin_left = 4.0
-		btn_pressed.content_margin_right = 4.0
-		btn_pressed.content_margin_top = 2.0
-		btn_pressed.content_margin_bottom = 2.0
-		button.add_theme_stylebox_override("pressed", btn_pressed)
-
-		var btn_focus := StyleBoxEmpty.new()
-		button.add_theme_stylebox_override("focus", btn_focus)
+		UIStyles.apply_choice_button_styles(button)
 
 		var choice_index := i
 		button.pressed.connect(func() -> void: _on_choice_pressed(choice_index))

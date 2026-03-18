@@ -3,7 +3,7 @@ extends Control
 
 signal drop_requested(selections: Array[ItemSelection])
 
-@onready var hp_bar: ProgressBarWithLabel = %HP
+@onready var party_bar: PartyBar = %PartyBar
 @onready var status_text: RichTextLabel = %StatusText
 @onready var inventory_button: Button = %InventoryButton
 @onready var hover_info: RichTextLabel = %HoverInfo
@@ -13,7 +13,6 @@ signal drop_requested(selections: Array[ItemSelection])
 @onready var ranged_container: HBoxContainer = %RangedContainer
 @onready var armor_container: HBoxContainer = %ArmorContainer
 @onready var char_sheet_button: Button = %CharSheetButton
-@onready var title_label: Label = %Title1
 
 const MAX_LOG_LENGTH = 10000
 const EQUIPMENT_ICON_SIZE := Vector2(16, 16)
@@ -32,7 +31,7 @@ var debug_mode: bool:
 
 
 func _ready() -> void:
-	assert(hp_bar, "HP bar is not found")
+	assert(party_bar, "PartyBar is not found")
 	assert(status_text, "StatusText is not found")
 
 	World.world_initialized.connect(_on_world_initialized)
@@ -76,20 +75,13 @@ func _update_display() -> void:
 	if not updates_enabled:
 		return
 
-	hp_bar.set_value_and_max(World.player.hp, World.player.max_hp)
-
-	# Update character name in title
-	if title_label and World.player.character_data:
-		var cd := World.player.character_data
-		title_label.text = cd.character_name if not cd.character_name.is_empty() else "Adventurer"
-
-	# Update equipment displays (compact icon-only)
+	# Update equipment displays (icon-only, no text labels)
 	_build_weapon_container(
-		melee_container, "Melee", World.player.equipment.get_equipped_item(Equipment.Slot.MELEE)
+		melee_container, World.player.equipment.get_equipped_item(Equipment.Slot.MELEE)
 	)
 
 	_build_weapon_container(
-		ranged_container, "Ranged", World.player.equipment.get_equipped_item(Equipment.Slot.RANGED)
+		ranged_container, World.player.equipment.get_equipped_item(Equipment.Slot.RANGED)
 	)
 
 	_build_armor_container(armor_container)
@@ -165,18 +157,13 @@ func _create_equipment_icon(
 	return container
 
 
-func _build_weapon_container(container: HBoxContainer, label_text: String, item: Item) -> void:
+func _build_weapon_container(container: HBoxContainer, item: Item) -> void:
 	# Clear all children
 	for child in container.get_children():
 		child.queue_free()
 
 	# Set container properties
 	container.add_theme_constant_override("separation", 0)
-
-	# Add the label
-	var label := Label.new()
-	label.text = label_text + ": "  # Added space after colon
-	container.add_child(label)
 
 	if item:
 		var main_icon := _create_equipment_icon(
@@ -185,7 +172,7 @@ func _build_weapon_container(container: HBoxContainer, label_text: String, item:
 		container.add_child(main_icon)
 
 		# Check for missing ammo in ranged weapons
-		if label_text == "Ranged" and item.ammo_type != Damage.AmmoType.NONE:
+		if item.ammo_type != Damage.AmmoType.NONE:
 			var has_ammo := false
 			for child: Item in item.children.to_array():
 				if child.type == Item.Type.AMMO and child.quantity > 0:
@@ -194,7 +181,7 @@ func _build_weapon_container(container: HBoxContainer, label_text: String, item:
 
 			if not has_ammo:
 				var meta := Label.new()
-				meta.text = "(no ammo)"
+				meta.text = "(!)"
 				meta.theme_type_variation = &"SubtleLabel"
 				container.add_child(meta)
 				return
@@ -209,15 +196,15 @@ func _build_weapon_container(container: HBoxContainer, label_text: String, item:
 				)
 				container.add_child(module_icon)
 
-				# Add ammo count for ranged weapons
-				if child.type == Item.Type.AMMO and label_text == "Ranged":
+				# Add ammo count
+				if child.type == Item.Type.AMMO:
 					var meta := Label.new()
 					meta.text = "(%d)" % child.quantity
 					meta.theme_type_variation = &"SubtleLabel"
 					container.add_child(meta)
 	else:
 		var meta := Label.new()
-		meta.text = "(none)"
+		meta.text = "-"
 		meta.theme_type_variation = &"SubtleLabel"
 		container.add_child(meta)
 
@@ -229,14 +216,6 @@ func _build_armor_container(container: HBoxContainer) -> void:
 
 	# Set container properties
 	container.add_theme_constant_override("separation", 0)
-
-	# Add the label
-	var label := Label.new()
-	label.text = "Armor: "  # Added space after colon
-	container.add_child(label)
-
-	var icons_container := HBoxContainer.new()
-	container.add_child(icons_container)
 
 	var has_armor := false
 	for slot: Equipment.Slot in [
@@ -256,14 +235,17 @@ func _build_armor_container(container: HBoxContainer) -> void:
 			var icon := _create_equipment_icon(
 				ItemTiles.get_texture(item.sprite_name), item.get_info(), item
 			)
-			icons_container.add_child(icon)
+			container.add_child(icon)
 
 			# Check children of armor items for power sources
 			for child: Item in item.children.to_array():
 				var child_icon := _create_equipment_icon(
 					ItemTiles.get_texture(child.sprite_name), child.get_info(), child
 				)
-				icons_container.add_child(child_icon)
+				container.add_child(child_icon)
 
 	if not has_armor:
-		label.text = "Armor: (none)"
+		var meta := Label.new()
+		meta.text = "-"
+		meta.theme_type_variation = &"SubtleLabel"
+		container.add_child(meta)
