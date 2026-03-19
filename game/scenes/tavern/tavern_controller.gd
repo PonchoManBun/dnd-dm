@@ -2,6 +2,8 @@ extends Node2D
 
 ## Tavern scene controller — orchestrates TavernMap, TavernRenderer,
 ## NPC/obstacle handlers, and player movement.
+## Supports loading from Forge-generated JSON or hardcoded fallback.
+## Press F5 to hot-reload the tavern JSON during iteration.
 
 signal npc_interacted(npc_name: String)
 signal exit_triggered
@@ -13,12 +15,19 @@ const _TavernMapScript = preload("res://src/tavern_map.gd")
 const _NpcHandlerScript = preload("res://scenes/tavern/tavern_npc_handler.gd")
 const _ObstacleHandlerScript = preload("res://scenes/tavern/tavern_obstacle_handler.gd")
 
+# Default JSON search path for Forge-generated taverns
+const _TAVERN_JSON_DIR := "res://../../forge_output/taverns/"
+const _TAVERN_JSON_FALLBACK := "res://../../forge_output/taverns/the_welcome_wench.json"
+
 var _tavern_map: RefCounted  # TavernMap
 var _npc_handler: RefCounted  # TavernNpcHandler
 var _obstacle_handler: RefCounted  # TavernObstacleHandler
+var _tavern_json_path: String = ""  # Path used for F5 reload
 
 var player_pos: Vector2i
 var _npc_sprites: Dictionary = {}  # name -> Sprite2D
+var _candle_lights: Array[PointLight2D] = []
+var _candle_tweens: Array[Tween] = []
 
 # Autoload references (runtime resolution per conventions)
 var _nm: Node  # NarrativeManager
@@ -34,8 +43,8 @@ func _ready() -> void:
 	_nm = get_node_or_null("/root/NarrativeManager")
 	_oc = get_node_or_null("/root/OrchestratorClient")
 
-	# Build data model
-	_tavern_map = _TavernMapScript.new()
+	# Try to load tavern from JSON, fallback to hardcoded
+	_tavern_map = _load_tavern_map()
 
 	# Create handlers
 	_npc_handler = _NpcHandlerScript.new(_nm, _oc)
@@ -54,48 +63,68 @@ func _ready() -> void:
 	# UI layer with DM panel
 	_setup_ui()
 
-	# Entrance narration
+	# Entrance narration (from JSON or fallback)
 	_nm.clear()
-	_nm.add_narrative(
-		"[color=#6cb4c4][b]The Welcome Wench[/b][/color]\n"
-		+ "You push open the heavy oak door. The warmth of the tavern "
-		+ "washes over you — crackling hearth, the clink of mugs, "
-		+ "and the low murmur of conversation."
-	)
-	_nm.add_narrative(
-		"[color=#d9d566]Barkeep Marta[/color] stands behind the polished bar, "
-		+ "wiping down a mug. [color=#d9d566]Old Tom[/color] nurses an ale at a "
-		+ "nearby table. A [color=#d9d566]hooded figure[/color] sits alone in the "
-		+ "corner. A [color=#d9d566]quest board[/color] on the far wall catches your eye."
-	)
+	if _tavern_map.entrance_narration.size() > 0:
+		for line: String in _tavern_map.entrance_narration:
+			_nm.add_narrative(line)
+	else:
+		_nm.add_narrative(
+			"[color=#6cb4c4][b]The Welcome Wench[/b][/color]\n"
+			+ "You push open the heavy oak door. The warmth of the tavern "
+			+ "washes over you — crackling hearth, the clink of mugs, "
+			+ "and the low murmur of conversation."
+		)
+		_nm.add_narrative(
+			"[color=#d9d566]Barkeep Marta[/color] stands behind the polished bar, "
+			+ "wiping down a mug. [color=#d9d566]Old Tom[/color] nurses an ale at a "
+			+ "nearby table. A [color=#d9d566]hooded figure[/color] sits alone in the "
+			+ "corner. A [color=#d9d566]quest board[/color] on the far wall catches your eye."
+		)
 
 	# Release GUI focus so WASD works immediately
 	get_viewport().gui_release_focus.call_deferred()
 
 
+func _load_tavern_map() -> RefCounted:
+	# Try the absolute path for forge_output on disk
+	var abs_path := ProjectSettings.globalize_path(_TAVERN_JSON_FALLBACK)
+	if FileAccess.file_exists(abs_path):
+		_tavern_json_path = abs_path
+		print("TavernController: Loading tavern from %s" % abs_path)
+		return _TavernMapScript.from_json(abs_path)
+
+	# Try user:// path
+	var user_path := "user://forge_output/taverns/the_welcome_wench.json"
+	if FileAccess.file_exists(user_path):
+		_tavern_json_path = user_path
+		print("TavernController: Loading tavern from %s" % user_path)
+		return _TavernMapScript.from_json(user_path)
+
+	# Fallback to hardcoded
+	print("TavernController: No tavern JSON found, using hardcoded fallback")
+	return _TavernMapScript.new()
+
+
 func _place_npcs() -> void:
-	# NPC positions and sprites accessed through the data model instance
-	var barkeep_pos: Vector2i = _tavern_map.BARKEEP_POS
-	var old_tom_pos: Vector2i = _tavern_map.OLD_TOM_POS
-	var elara_pos: Vector2i = _tavern_map.ELARA_POS
+	# Place NPCs from tavern_map.npc_data (works for both JSON and fallback)
+	for npc: Dictionary in _tavern_map.npc_data:
+		var display_name: String = str(npc.get("display_name", npc.get("npc_id", "NPC")))
+		var pos_arr: Variant = npc.get("position", [0, 0])
+		var arr: Array = pos_arr if pos_arr is Array else [0, 0]
+		var grid_pos := Vector2i(int(arr[0]), int(arr[1]))
+		var sprite_name := StringName(str(npc.get("sprite_name", "player-0")))
 
-	# Barkeep Marta — warm amber tint
-	var marta := _create_npc_sprite("Marta", barkeep_pos, &"player-25")
-	marta.modulate = Color(0.8, 0.5, 0.3, 1.0)
-	npc_layer.add_child(marta)
-	_npc_sprites["Marta"] = marta
+		var sprite := _create_npc_sprite(display_name, grid_pos, sprite_name)
 
-	# Old Tom — earthy brown tint
-	var old_tom := _create_npc_sprite("OldTom", old_tom_pos, &"player-31")
-	old_tom.modulate = Color(0.55, 0.4, 0.25, 1.0)
-	npc_layer.add_child(old_tom)
-	_npc_sprites["OldTom"] = old_tom
+		# Apply modulate color if specified
+		var mod: Variant = npc.get("modulate", null)
+		if mod is Array and (mod as Array).size() >= 4:
+			var m: Array = mod
+			sprite.modulate = Color(float(m[0]), float(m[1]), float(m[2]), float(m[3]))
 
-	# Elara — deep purple/blue tint
-	var elara := _create_npc_sprite("Elara", elara_pos, &"player-4")
-	elara.modulate = Color(0.4, 0.3, 0.7, 1.0)
-	npc_layer.add_child(elara)
-	_npc_sprites["Elara"] = elara
+		npc_layer.add_child(sprite)
+		_npc_sprites[display_name] = sprite
 
 
 func _create_npc_sprite(npc_name: String, grid_pos: Vector2i, sprite_name: StringName) -> Sprite2D:
@@ -116,11 +145,11 @@ func _create_npc_sprite(npc_name: String, grid_pos: Vector2i, sprite_name: Strin
 
 
 func _place_player() -> void:
-	player_pos = _tavern_map.PLAYER_SPAWN
-	var player_sprite_name: StringName = _tavern_map.PLAYER_SPRITE_NAME
+	player_pos = _tavern_map.player_spawn
+	var psn: StringName = _tavern_map.player_sprite_name
 	player_sprite.texture = CharacterTiles.TEXTURE
 	player_sprite.region_enabled = true
-	player_sprite.region_rect = CharacterTiles.get_region(player_sprite_name)
+	player_sprite.region_rect = CharacterTiles.get_region(psn)
 	player_sprite.hframes = 2
 	player_sprite.frame = 0
 	player_sprite.position = Vector2(
@@ -146,27 +175,48 @@ func _setup_candle_lights() -> void:
 	light_tex.width = 128
 	light_tex.height = 128
 
-	# Candle positions (pixel coords) — bar, dining area, entrance
-	var candle_positions: Array[Vector2] = [
-		Vector2(12 * TILE_SIZE + 8, 11 * TILE_SIZE + 8),   # Bar area
-		Vector2(13 * TILE_SIZE + 8, 4 * TILE_SIZE + 8),    # Dining area
-		Vector2(20 * TILE_SIZE + 8, 17 * TILE_SIZE + 8),   # Near entrance
-	]
+	# Candle positions from atmosphere data or fallback
+	var atm: Dictionary = _tavern_map.atmosphere
+	var raw_positions: Array = atm.get("candle_positions", [[12, 11], [13, 4], [20, 17]])
+	var candle_color := Color(1.0, 0.85, 0.5)
+	var candle_energy: float = 0.6
+	var flicker_lo: float = 0.5
+	var flicker_hi: float = 0.7
 
-	for i in range(candle_positions.size()):
+	if atm.has("candle_color"):
+		var cc: Array = atm["candle_color"]
+		if cc.size() >= 3:
+			candle_color = Color(float(cc[0]), float(cc[1]), float(cc[2]))
+	if atm.has("candle_energy"):
+		candle_energy = float(atm["candle_energy"])
+	if atm.has("candle_flicker_range"):
+		var fr: Array = atm["candle_flicker_range"]
+		if fr.size() >= 2:
+			flicker_lo = float(fr[0])
+			flicker_hi = float(fr[1])
+
+	for i in range(raw_positions.size()):
+		var cp: Array = raw_positions[i]
+		if cp.size() < 2:
+			continue
+		var px: float = float(cp[0]) * TILE_SIZE + TILE_SIZE / 2.0
+		var py: float = float(cp[1]) * TILE_SIZE + TILE_SIZE / 2.0
+
 		var light := PointLight2D.new()
 		light.name = "CandleLight%d" % (i + 1)
-		light.position = candle_positions[i]
-		light.color = Color(1.0, 0.85, 0.5)
-		light.energy = 0.6
+		light.position = Vector2(px, py)
+		light.color = candle_color
+		light.energy = candle_energy
 		light.texture_scale = 2.5
 		light.texture = light_tex
 		add_child(light)
+		_candle_lights.append(light)
 
 		# Flicker animation via tween
 		var tween := create_tween().set_loops()
-		tween.tween_property(light, "energy", 0.7, 0.8 + randf() * 0.4)
-		tween.tween_property(light, "energy", 0.5, 0.8 + randf() * 0.4)
+		tween.tween_property(light, "energy", flicker_hi, 0.8 + randf() * 0.4)
+		tween.tween_property(light, "energy", flicker_lo, 0.8 + randf() * 0.4)
+		_candle_tweens.append(tween)
 
 
 func _setup_ui() -> void:
@@ -182,11 +232,28 @@ func _setup_ui() -> void:
 	dm_panel.anchor_bottom = 1.0
 	ui_layer.add_child(dm_panel)
 
+	# Provide tavern NPC names to the DM panel "To" dropdown
+	var npc_ids: Array[String] = _tavern_map.get_all_npc_ids()
+	var npc_names: Array[String] = []
+	var npc_id_map: Dictionary = {}  # display_name -> npc_id
+	for npc_id: String in npc_ids:
+		var profile: Dictionary = _npc_handler.get_profile(npc_id)
+		var display_name: String = profile.get("name", npc_id)
+		npc_names.append(display_name)
+		npc_id_map[display_name] = npc_id
+	dm_panel.set_available_targets(npc_names, npc_id_map)
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventKey:
 		return
 	if not event.pressed or event.is_echo():
+		return
+
+	# F5: Hot-reload tavern from JSON (for Forge iteration loop)
+	if event.keycode == KEY_F5:
+		_reload_tavern()
+		get_viewport().set_input_as_handled()
 		return
 
 	var direction := Vector2i.ZERO
@@ -246,3 +313,40 @@ func _try_move(direction: Vector2i) -> void:
 		player_pos.x * TILE_SIZE + TILE_SIZE / 2,
 		player_pos.y * TILE_SIZE + TILE_SIZE / 2,
 	)
+
+
+## Hot-reload tavern from JSON (F5 key). Clears and re-renders everything.
+func _reload_tavern() -> void:
+	if _tavern_json_path == "":
+		if _nm:
+			_nm.add_narrative("[color=gray][i]No tavern JSON loaded — nothing to reload.[/i][/color]")
+		return
+
+	print("TavernController: Reloading tavern from %s" % _tavern_json_path)
+
+	# Reload the data model
+	_tavern_map = _TavernMapScript.from_json(_tavern_json_path)
+
+	# Clear existing NPC sprites
+	for sprite_name: String in _npc_sprites:
+		var sprite: Sprite2D = _npc_sprites[sprite_name]
+		sprite.queue_free()
+	_npc_sprites.clear()
+
+	# Clear existing candle lights and tweens
+	for tween: Tween in _candle_tweens:
+		tween.kill()
+	_candle_tweens.clear()
+	for light: PointLight2D in _candle_lights:
+		light.queue_free()
+	_candle_lights.clear()
+
+	# Re-render
+	renderer.render_tavern(_tavern_map)
+	_place_npcs()
+	_place_player()
+	_setup_candle_lights()
+
+	# Notify
+	if _nm:
+		_nm.add_narrative("[color=gray][i]Tavern reloaded from JSON.[/i][/color]")

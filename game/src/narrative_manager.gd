@@ -66,7 +66,7 @@ func _load_narrative_data() -> void:
 		Log.w("narratives.json not found, using fallback narratives")
 
 
-## Add hardcoded opening narratives for testing.
+## Add opening narratives (scene-setting only, no choices).
 func _add_initial_narratives() -> void:
 	add_narrative(
 		"[color=#6cb4c4][b]The Welcome Wench[/b][/color]\n"
@@ -76,33 +76,6 @@ func _add_initial_narratives() -> void:
 	add_narrative(
 		"A [color=#d9d566]hooded figure[/color] in the corner catches your eye. "
 		+ "The barkeep polishes a mug, watching you with mild interest."
-	)
-	present_choices(
-		[
-			"Approach the hooded figure",
-			"Speak to the barkeep",
-			"Head straight for the cellar entrance",
-		],
-		func(index: int) -> void:
-			match index:
-				0:
-					add_narrative(
-						"You weave between the tables toward the hooded figure. "
-						+ "As you draw close, a pair of [color=#d44e4e]sharp red eyes[/color] "
-						+ "glint from beneath the hood."
-					)
-				1:
-					add_narrative(
-						"The barkeep sets down his mug. \"[i]Another adventurer, eh? "
-						+ "The cellar's been making strange noises again. "
-						+ "I'll pay good coin if you clear it out.[/i]\""
-					)
-				2:
-					add_narrative(
-						"You stride past the patrons toward the back. "
-						+ "A [color=#d44e4e]cold draft[/color] seeps from beneath "
-						+ "the cellar door, carrying with it the faint echo of scraping stone."
-					)
 	)
 
 

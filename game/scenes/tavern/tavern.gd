@@ -123,9 +123,12 @@ func _ready() -> void:
 	_dm_panel.anchor_top = 0.0
 	_dm_panel.anchor_bottom = 1.0
 	_ui_layer.add_child(_dm_panel)
+	print("TAVERN: dm_panel added")
 
 	# Clear old dungeon narratives and add tavern-specific opening
+	print("TAVERN: about to clear narrative")
 	_nm.clear()
+	Log.i("Tavern: narrative cleared OK")
 	_nm.add_narrative(
 		"[color=#6cb4c4][b]The Welcome Wench[/b][/color]\n"
 		+ "You push open the heavy oak door. The warmth of the tavern "
@@ -138,6 +141,18 @@ func _ready() -> void:
 		+ "nearby table. A [color=#d9d566]hooded figure[/color] sits alone in the "
 		+ "corner. A [color=#d9d566]quest board[/color] on the far wall catches your eye."
 	)
+
+	# Provide tavern NPC names to the DM panel "To" dropdown
+	Log.i("Tavern: _npc_positions has %d entries" % _npc_positions.size())
+	var npc_names: Array[String] = []
+	var npc_id_map: Dictionary = {}  # display_name -> npc_id
+	for npc_id: String in _npc_positions.values():
+		var profile: Dictionary = _npc_profiles.get(npc_id, {})
+		var display_name: String = profile.get("name", npc_id)
+		npc_names.append(display_name)
+		npc_id_map[display_name] = npc_id
+	Log.i("Tavern: calling set_available_targets with %d names: %s" % [npc_names.size(), str(npc_names)])
+	_dm_panel.set_available_targets(npc_names, npc_id_map)
 
 	# Release all GUI focus so WASD/arrow keys work immediately
 	get_viewport().gui_release_focus.call_deferred()

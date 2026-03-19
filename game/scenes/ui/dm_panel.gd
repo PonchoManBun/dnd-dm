@@ -19,6 +19,8 @@ var _vbox: VBoxContainer
 var _speaking_as: OptionButton
 var _speaking_to: OptionButton
 var _thinking_label: Label
+var _override_targets: Array[String] = []
+var _target_id_map: Dictionary = {}  # display_name -> npc_id
 
 
 func _ready() -> void:
@@ -255,7 +257,9 @@ func _on_text_submitted(text: String) -> void:
 	var target_idx := _speaking_to.selected
 	if target_idx > 0:
 		var target_name := _speaking_to.get_item_text(target_idx)
-		submitted_text = "[Speaking to: %s] %s" % [target_name, submitted_text]
+		# Use NPC ID if available (for orchestrator routing), else display name
+		var target_id: String = _target_id_map.get(target_name, target_name)
+		submitted_text = "[Speaking to: %s] %s" % [target_id, submitted_text]
 
 	text_submitted.emit(submitted_text)
 
@@ -322,7 +326,10 @@ func _refresh_speaker_options() -> void:
 	# Index 0 = the player (default)
 	var player_name := "Player"
 	if World.player:
-		player_name = World.player.name
+		if World.player.character_data and not World.player.character_data.character_name.is_empty():
+			player_name = World.player.character_data.character_name
+		else:
+			player_name = World.player.name
 	_speaking_as.add_item(player_name)
 
 	# Add party companions
@@ -332,6 +339,14 @@ func _refresh_speaker_options() -> void:
 	_speaking_as.selected = 0
 
 
+## Set explicit target list (used by tavern scene where NPCs aren't in World.current_map).
+## id_map: optional Dictionary mapping display_name -> npc_id for orchestrator routing.
+func set_available_targets(targets: Array[String], id_map: Dictionary = {}) -> void:
+	_override_targets = targets
+	_target_id_map = id_map
+	_refresh_target_options()
+
+
 ## Populate "Speaking to" with nearby visible non-party monsters.
 func _refresh_target_options() -> void:
 	_speaking_to.clear()
@@ -339,14 +354,16 @@ func _refresh_target_options() -> void:
 	# Index 0 = nobody in particular (DM / general)
 	_speaking_to.add_item("(anyone)")
 
-	if not World.current_map:
-		return
-
-	# List visible non-party monsters
-	var visible := World.current_map.get_visible_monsters()
-	for monster: Monster in visible:
-		if World.party.is_party_member(monster):
-			continue
-		_speaking_to.add_item(monster.name)
+	if _override_targets.size() > 0:
+		# Use explicit targets (tavern scene)
+		for target_name: String in _override_targets:
+			_speaking_to.add_item(target_name)
+	elif World.current_map:
+		# Use visible monsters from the map (dungeon)
+		var visible := World.current_map.get_visible_monsters()
+		for monster: Monster in visible:
+			if World.party.is_party_member(monster):
+				continue
+			_speaking_to.add_item(monster.name)
 
 	_speaking_to.selected = 0

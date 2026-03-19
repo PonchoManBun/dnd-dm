@@ -1,0 +1,99 @@
+============================================================
+  TMX Map: Blank.tmx
+============================================================
+  Source: /home/jetson/dnd-dm/game/art/DawnLike/Examples/Blank.tmx
+  Dimensions: 20x15 tiles (320x240 pixels)
+  Tile size: 16x16
+  Layers: 2
+
+  Tilesets:
+  --------------------------------------------------------
+  Name             FirstGID  Count  Category     Source
+  --------------------------------------------------------
+  Wall                    1    540  wall         Wall.png
+  Floor                 541    567  floor        Floor.png
+  Pit0                 1108    176  pit          Pit0.png
+  Door0                1284     40  door         Door0.png
+  Decor0               1324    144  decor        Decor0.png
+  Ground0              1468     24  ground       Ground0.png
+
+  Layer: Tiles
+  ============
+              1111111111
+    01234567890123456789
+   +--------------------+
+ 0 |                    |
+ 1 |                    |
+ 2 |                    |
+ 3 |                    |
+ 4 |                    |
+ 5 |                    |
+ 6 |                    |
+ 7 |                    |
+ 8 |                    |
+ 9 |                    |
+10 |                    |
+11 |                    |
+12 |                    |
+13 |                    |
+14 |                    |
+   +--------------------+
+
+  Layer: Sprites
+  ==============
+              1111111111
+    01234567890123456789
+   +--------------------+
+ 0 |                    |
+ 1 |                    |
+ 2 |                    |
+ 3 |                    |
+ 4 |                    |
+ 5 |                    |
+ 6 |                    |
+ 7 |                    |
+ 8 |                    |
+ 9 |                    |
+10 |                    |
+11 |                    |
+12 |                    |
+13 |                    |
+14 |                    |
+   +--------------------+
+
+  Merged View (all layers)
+  ========================
+              1111111111
+    01234567890123456789
+   +--------------------+
+ 0 |                    |
+ 1 |                    |
+ 2 |                    |
+ 3 |                    |
+ 4 |                    |
+ 5 |                    |
+ 6 |                    |
+ 7 |                    |
+ 8 |                    |
+ 9 |                    |
+10 |                    |
+11 |                    |
+12 |                    |
+13 |                    |
+14 |                    |
+   +--------------------+
+
+Legend:
+  #  = Wall
+  .  = Floor / Ground
+  D  = Door
+  F  = Furniture / Decor
+  C  = Character (Player / NPC / Monster)
+  T  = Tree
+  P  = Pit / Trap
+  I  = Item (Chest / Money / Weapon / etc.)
+  (space) = Empty / Transparent
+
+  Tile Statistics (merged):
+  ------------------------------
+  Empty             300 (100.0%)

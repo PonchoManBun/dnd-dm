@@ -1,0 +1,118 @@
+============================================================
+  TMX Map: Underworld.tmx
+============================================================
+  Source: /home/jetson/dnd-dm/game/art/DawnLike/Examples/Underworld.tmx
+  Dimensions: 20x15 tiles (320x240 pixels)
+  Tile size: 16x16
+  Layers: 2
+
+  Tilesets:
+  --------------------------------------------------------
+  Name             FirstGID  Count  Category     Source
+  --------------------------------------------------------
+  Wall                    1   1020  wall         Wall.png
+  Floor                1021    819  floor        Floor.png
+  Pit0                 1840    256  pit          Pit0.png
+  Door0                2096     40  door         Door0.png
+  Decor0               2136    176  decor        Decor0.png
+  Ground0              2312     56  ground       Ground0.png
+  Player0              2368    120  character    Player0.png
+  Tile                 2488     32  floor        Tile.png
+  Demon0               2520     72  character    Demon0.png
+  Dog0                 2592     56  character    Dog0.png
+  Tree0                2648    264  tree         Tree0.png
+  Money                2912     64  item         Money.png
+  Book                 2976     72  item         Book.png
+  Amulet               3048     24  item         Amulet.png
+  Elemental0           3072     88  character    Elemental0.png
+  Pest0                3160     88  character    Pest0.png
+  Chest0               3248     24  item         Chest0.png
+  Fence                3272     96  wall         Fence.png
+
+  Layer: Tiles
+  ============
+              1111111111
+    01234567890123456789
+   +--------------------+
+ 0 |##.##############.##|
+ 1 |##.##..........##.##|
+ 2 |##.##.#......#.##.##|
+ 3 |##.##..........##.##|
+ 4 |##....#......#....##|
+ 5 |....................|
+ 6 |##.....PP..PP.....##|
+ 7 |##.....PP..PP.....##|
+ 8 |####.##PPPPPP##.####|
+ 9 |##.....PP..PP....###|
+10 |#......PP..PP.....##|
+11 |#......PP..PP....###|
+12 |PPP....PP..PP...####|
+13 |PPPPPPPPPP.PP...####|
+14 |PPPPP..PP..PP.....##|
+   +--------------------+
+
+  Layer: Sprites
+  ==============
+              1111111111
+    01234567890123456789
+   +--------------------+
+ 0 |      F F  F F      |
+ 1 |  C                 |
+ 2 |     I  IIII  I     |
+ 3 |  DF   IIIIII   FD  |
+ 4 |                    |
+ 5 | D                D |
+ 6 |         C      C   |
+ 7 |   C      C         |
+ 8 |   F#F   ..   F#F   |
+ 9 |  I.  T       . .   |
+10 | T FFF        C  T  |
+11 | I C      C    T    |
+12 |    C               |
+13 | C            TC    |
+14 |     T       .  CC  |
+   +--------------------+
+
+  Merged View (all layers)
+  ========================
+              1111111111
+    01234567890123456789
+   +--------------------+
+ 0 |##.###F#F##F#F###.##|
+ 1 |##C##..........##.##|
+ 2 |##.##I#.IIII.#I##.##|
+ 3 |##DF#..IIIIII..#FD##|
+ 4 |##....#......#....##|
+ 5 |.D................D.|
+ 6 |##.....PPC.PP...C.##|
+ 7 |##.C...PP.CPP.....##|
+ 8 |###F#F#PP..PP#F#F###|
+ 9 |##I...TPP..PP....###|
+10 |#T.FFF.PP..PP.C..T##|
+11 |#I.C...PP.CPP..T.###|
+12 |PPP.C..PP..PP...####|
+13 |PCPPPPPPPP.PP.TC####|
+14 |PPPPPT.PP..PP...CC##|
+   +--------------------+
+
+Legend:
+  #  = Wall
+  .  = Floor / Ground
+  D  = Door
+  F  = Furniture / Decor
+  C  = Character (Player / NPC / Monster)
+  T  = Tree
+  P  = Pit / Trap
+  I  = Item (Chest / Money / Weapon / etc.)
+  (space) = Empty / Transparent
+
+  Tile Statistics (merged):
+  ------------------------------
+  Wall               84 ( 28.0%)
+  Floor/Ground      115 ( 38.3%)
+  Door                4 (  1.3%)
+  Furniture          13 (  4.3%)
+  Character          13 (  4.3%)
+  Tree                6 (  2.0%)
+  Pit                51 ( 17.0%)
+  Item               14 (  4.7%)

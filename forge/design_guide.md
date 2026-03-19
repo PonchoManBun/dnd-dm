@@ -466,6 +466,76 @@ After generating a dungeon, include design rationale in the manifest at `forge_o
 - Villagers on paths or in town square
 - Each NPC on a non-walkable '*' slot adjacent to walkable tiles
 
+---
+
+## Village Session Design Principles
+
+Villages are generated using a **6-phase DM-first pipeline** (see `/generate-village` command). These principles inform each phase.
+
+### The 8 Session Questions
+
+Every village starts with a DM answering these 8 questions. They produce a **Session Zero Brief** that drives all subsequent design decisions.
+
+1. **Founding Story** — Why does this village exist? (determines layout style and building types)
+2. **Current Situation** — Prosperous or struggling? Welcoming or suspicious?
+3. **The Threat** — What threatens it? (adventure hook source, dungeon gate direction)
+4. **The Mood** — Set by DM archetype (see below)
+5. **Player Experience Arc** — Arrival → Exploration → Departure (3-beat narrative)
+6. **Adventure Hooks** — Minimum 3 (1 main + 2 side), each with trigger/NPC/stakes/resolution
+7. **Faction/Relationship Web** — How NPCs relate to each other
+8. **Building Roster** — Type, name, narrative purpose, primary NPC for each building
+
+### DM Archetype Effects on Villages
+
+| Archetype | Village Mood | NPC Default Attitude | Building Condition | Environmental Detail |
+|-----------|-------------|---------------------|-------------------|---------------------|
+| Storyteller | Warm, layered, lived-in | Indifferent (warm but measured) | Well-maintained, each with history | Every detail has a story behind it |
+| Taskmaster | Tense, purposeful | Unfriendly (busy, no time) | Functional, some damaged | Signs of the threat visible |
+| Trickster | Deceptive calm | Friendly (suspiciously so) | Pristine surface, hidden rot | Things that seem fine but aren't |
+| Historian | Ancient, storied | Indifferent (distracted by lore) | Old but preserved, inscriptions | Ancient foundations, old markers |
+| Guide | Friendly, helpful | Friendly (eager to help) | Clean, welcoming, well-lit | Clear signage, helpful notices |
+
+### Layout Style by Founding Story
+
+| Founding Story | Layout Style | Key Feature |
+|----------------|-------------|-------------|
+| River ford / bridge | Waterfront | Buildings along one bank, dock/bridge at edge |
+| Trade route crossing | Crossroads | Buildings around central intersection, wide main road |
+| Farming community | Village green | Buildings around a grassy common area |
+| Mining / resource | Clustered | Tight-packed buildings near the resource site |
+| Pilgrim shrine | Linear | Buildings along single road to temple at far end |
+
+### Map Scale Guidelines
+
+| Buildings | Map Dimensions | Feel |
+|-----------|---------------|------|
+| 3 | 35x25 | Cozy hamlet — intimate, every building visible from center |
+| 4-5 | 40x30 | Standard village — room to breathe, clear zones |
+| 6+ | 45x35 | Large village — distinct neighborhoods, longer walks |
+
+### Building Templates (Interior Starting Points)
+
+These are starting points. Phase 3 sub-agents should customize based on the Session Brief.
+
+| Type | Size Range | Key Features | Furniture Density |
+|------|-----------|-------------|-------------------|
+| Tavern | 10-14w x 8-10h | Bar counter, table clusters, quest board, storage, carpet zones | 35-40% |
+| Blacksmith | 8-10w x 6-8h | Forge area (stone floor), anvil, supply crates, shop counter | 30-35% |
+| General Store | 8-10w x 6-8h | Display shelves along walls, shop counter, carpet display, crates | 30-35% |
+| Temple | 8-12w x 6-8h | Bench rows, carpet aisle, altar/memorial, holy text shelves | 25-30% |
+| Guard Post | 6-8w x 5-6h | Sparse/functional: map table, weapon crates, barrels | 20-25% |
+| Inn (if separate) | 10-12w x 8-10h | Reception counter, guest rooms with beds, common area | 30-35% |
+
+### Furnishing Quality Metric
+
+A well-furnished building interior uses:
+- **10+ different tile types** (not counting wall `#` and basic floor `.`)
+- **30-40% furniture density** (non-walkable non-wall tiles / total interior tiles)
+- **Floor variety** (wood `.`, carpet `r`, stone `g` in appropriate zones)
+- **Furniture hugs walls** (shelves, counters, barrels along perimeter — not floating in center)
+- **Walkable corridors** between all furniture groups (1+ tile wide)
+- **NPC slot reachable** from the door via walkable tiles
+
 ### Village Tile Vocabulary
 
 **Outdoor tiles:**

@@ -480,6 +480,8 @@ Always validate after writing. Always create/update notes file.
 
 ## Workflow E — Generate & Edit Villages
 
+Villages are generated using a **DM-first 6-phase creative pipeline**. The `/generate-village` command orchestrates this pipeline, which produces a **Session Zero Brief** (the DM's creative vision) before any tiles are placed. Sub-agents handle building interiors (Phase 3) and NPC profiles (Phase 4) in parallel. See the design guide's "Village Session Design Principles" section for the 8 session questions, DM archetype effects, and building templates.
+
 ### Village JSON Schema
 
 Must match village map loader format. Reference: `schemas/village_example.json`.

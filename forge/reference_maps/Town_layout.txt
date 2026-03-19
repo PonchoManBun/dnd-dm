@@ -1,0 +1,111 @@
+============================================================
+  TMX Map: Town.tmx
+============================================================
+  Source: /home/jetson/dnd-dm/game/art/DawnLike/Examples/Town.tmx
+  Dimensions: 20x15 tiles (320x240 pixels)
+  Tile size: 16x16
+  Layers: 2
+
+  Tilesets:
+  --------------------------------------------------------
+  Name             FirstGID  Count  Category     Source
+  --------------------------------------------------------
+  Wall                    1   1020  wall         Wall.png
+  Floor                1021    819  floor        Floor.png
+  Pit0                 1840    256  pit          Pit0.png
+  Door0                2096     40  door         Door0.png
+  Decor0               2136    176  decor        Decor0.png
+  Ground0              2312     56  ground       Ground0.png
+  Player0              2368    120  character    Player0.png
+  Tree0                2488    264  tree         Tree0.png
+  Humanoid0            2752    216  character    Humanoid0.png
+  Cat0                 2968     40  character    Cat0.png
+  Quadraped0           3008     96  character    Quadraped0.png
+  Container0           3104     24  item         Chest0.png
+
+  Layer: Tiles
+  ============
+              1111111111
+    01234567890123456789
+   +--------------------+
+ 0 |....................|
+ 1 |....................|
+ 2 |..........########..|
+ 3 |.........#........#.|
+ 4 |.........#..#.....#.|
+ 5 |####......###.....#.|
+ 6 |....#.......#.....##|
+ 7 |....#.......#.......|
+ 8 |....#.......#.....##|
+ 9 |....#.......#.....#.|
+10 |#.##.........##.##..|
+11 |....................|
+12 |....................|
+13 |....................|
+14 |....................|
+   +--------------------+
+
+  Layer: Sprites
+  ==============
+              1111111111
+    01234567890123456789
+   +--------------------+
+ 0 |TTTTTT# #.#..CCT.TTT|
+ 1 |TTTT.#T ##..#T##T#TT|
+ 2 |TTT.T.# C##########.|
+ 3 |TTT#.T# ##I#DFC CF##|
+ 4 |T#.#.#C ##II#FFFFF#.|
+ 5 |#######C.####F#FCF##|
+ 6 |F#CF#.# #...##FFF###|
+ 7 |FFFF##. ....##FFFCD#|
+ 8 |FFFF#T# #.TT#FFFFF##|
+ 9 |FFFF#.     ##FF#FF#T|
+10 |#D#F## #F#C##F#D#F#.|
+11 |. ..T# ##C C##. .T##|
+12 |    #. C## #F#. ##.#|
+13 |   C         C    ##|
+14 |    TT# C T#T##   C |
+   +--------------------+
+
+  Merged View (all layers)
+  ========================
+              1111111111
+    01234567890123456789
+   +--------------------+
+ 0 |TTTTTT#.#.#..CCT.TTT|
+ 1 |TTTT.#T.##..#T##T#TT|
+ 2 |TTT.T.#.C##########.|
+ 3 |TTT#.T#.##I#DFC.CF##|
+ 4 |T#.#.#C.##II#FFFFF#.|
+ 5 |#######C.####F#FCF##|
+ 6 |F#CF#.#.#...##FFF###|
+ 7 |FFFF##......##FFFCD#|
+ 8 |FFFF#T#.#.TT#FFFFF##|
+ 9 |FFFF#......##FF#FF#T|
+10 |#D#F##.#F#C##F#D#F#.|
+11 |....T#.##C.C##...T##|
+12 |....#..C##.#F#..##.#|
+13 |...C.........C....##|
+14 |....TT#.C.T#T##...C.|
+   +--------------------+
+
+Legend:
+  #  = Wall
+  .  = Floor / Ground
+  D  = Door
+  F  = Furniture / Decor
+  C  = Character (Player / NPC / Monster)
+  T  = Tree
+  P  = Pit / Trap
+  I  = Item (Chest / Money / Weapon / etc.)
+  (space) = Empty / Transparent
+
+  Tile Statistics (merged):
+  ------------------------------
+  Wall              106 ( 35.3%)
+  Floor/Ground       87 ( 29.0%)
+  Door                4 (  1.3%)
+  Furniture          44 ( 14.7%)
+  Character          18 (  6.0%)
+  Tree               38 ( 12.7%)
+  Item                3 (  1.0%)

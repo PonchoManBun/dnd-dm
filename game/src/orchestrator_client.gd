@@ -143,19 +143,12 @@ func _apply_state_delta(state_data: Dictionary) -> void:
 		player.character_data.current_hp = new_hp
 		player.hp = new_hp
 
-	# Sync narration
+	# Sync narration (choices suppressed — only NPC/obstacle interactions show choices)
 	if state_data.has("narrative"):
 		var narrative: Dictionary = state_data["narrative"]
 		var narration: String = narrative.get("current_narration", "")
 		if not narration.is_empty() and _nm:
-			var choices_raw: Array = narrative.get("current_choices", [])
-			if not choices_raw.is_empty():
-				var choices: Array[String] = []
-				for c: Variant in choices_raw:
-					choices.append(str(c))
-				_nm.present_choices(choices, func(index: int) -> void:
-					send_action("custom", "", choices[index])
-				)
+			_nm.add_narrative(narration)
 
 	state_synced.emit(state_data)
 
@@ -390,14 +383,10 @@ func _on_action_response(result: int, code: int, body_bytes: PackedByteArray) ->
 	if error != null and not str(error).is_empty():
 		Log.w("OrchestratorClient: orchestrator reported error: %s" % str(error))
 
-	# Relay to NarrativeManager
+	# Relay narration to NarrativeManager (suppress generic LLM choices —
+	# choices only come from direct NPC/obstacle interactions)
 	if not narration.is_empty() and _nm:
 		_nm.add_narrative(narration)
-		if choices.size() > 0:
-			_nm.present_choices(choices, func(index: int) -> void:
-				# When player picks a choice, send it as a new action
-				send_action("custom", "", choices[index])
-			)
 
 	response_received.emit(narration, choices)
 
@@ -447,6 +436,10 @@ func _on_npc_response(result: int, code: int, body_bytes: PackedByteArray) -> vo
 func _handle_npc_choice(npc_id: String, mode: String, choices: Array[String], index: int) -> void:
 	var choice_text: String = choices[index] if index < choices.size() else ""
 
+	# Echo the player's choice in the narrative
+	if _nm and not choice_text.is_empty():
+		_nm.add_narrative("[color=#6cb4c4]> %s[/color]" % choice_text)
+
 	# Check for skill check choices
 	if choice_text.begins_with("Try Persuasion"):
 		send_npc_skill_check(npc_id, "persuasion")
@@ -459,7 +452,9 @@ func _handle_npc_choice(npc_id: String, mode: String, choices: Array[String], in
 		return
 
 	# End conversation
-	if choice_text == "End conversation" or choice_text == "Walk away" or choice_text == "Leave":
+	if choice_text in ["End conversation", "Walk away", "Leave", "Decline"]:
+		if _nm:
+			_nm.add_narrative("[color=#888888]You step away.[/color]")
 		return
 
 	# Otherwise, send the choice text as a new message to the NPC
@@ -494,10 +489,9 @@ func _on_player_input(text: String) -> void:
 
 
 ## Generate a local fallback response when the orchestrator is unavailable.
-## Uses game state to produce context-aware narration and choices.
+## Produces narration only — no generic choices (choices come from NPC/obstacle interactions).
 func _handle_fallback(action_type: String, target: String, message: String) -> void:
 	var narration := ""
-	var choices: Array[String] = []
 
 	match action_type:
 		"speak":
@@ -511,7 +505,6 @@ func _handle_fallback(action_type: String, target: String, message: String) -> v
 				if not message.is_empty():
 					narration += " \"%s\"" % message
 				narration += "\n[color=#888888](DM is offline — no LLM response available)[/color]"
-			choices = _build_context_choices()
 		"attack":
 			if not target.is_empty():
 				narration = "You attack %s!" % target
@@ -519,29 +512,19 @@ func _handle_fallback(action_type: String, target: String, message: String) -> v
 				narration = "You swing your weapon at the enemy!"
 		"rest":
 			narration = "You take a moment to rest and gather your strength."
-			choices = _build_context_choices()
 		"interact":
 			if not target.is_empty():
 				narration = "You examine %s closely." % target
 			else:
 				narration = "You interact with the object."
-			choices = _build_context_choices()
 		_:
 			narration = "You consider your next move."
-			choices = _build_context_choices()
 
-	# In combat, don't present DM choices — combat uses the action economy
-	if World.game_mode.is_combat():
-		choices = []
-
-	# Relay to NarrativeManager
+	# Relay narration to NarrativeManager
 	if _nm:
 		_nm.add_narrative(narration)
-		if choices.size() > 0:
-			_nm.present_choices(choices, func(index: int) -> void:
-				send_action("custom", "", choices[index])
-			)
 
+	var choices: Array[String] = []
 	response_received.emit(narration, choices)
 
 
@@ -578,49 +561,3 @@ func _on_map_changed(map: Map) -> void:
 
 	var narration := "[color=#6cb4c4]%s[/color]" % " ".join(parts)
 	_nm.add_narrative(narration)
-
-	# Present context-aware choices
-	var choices := _build_context_choices()
-	if choices.size() > 0:
-		_nm.present_choices(choices, func(index: int) -> void:
-			send_action("custom", "", choices[index])
-		)
-
-
-## Build context-aware choices based on current game state.
-func _build_context_choices() -> Array[String]:
-	var choices: Array[String] = []
-
-	if not World.current_map:
-		return ["Look around", "Check inventory"]
-
-	var player_pos := World.current_map.find_monster_position(World.player) if World.player else Utils.INVALID_POS
-
-	# Check for nearby monsters
-	var visible_monsters := World.current_map.get_visible_monsters()
-	var non_party_monsters: Array[Monster] = []
-	for m: Monster in visible_monsters:
-		if not World.party.is_party_member(m):
-			non_party_monsters.append(m)
-
-	if non_party_monsters.size() > 0:
-		choices.append("Approach %s" % non_party_monsters[0].name)
-
-	# Check for items at feet
-	if player_pos != Utils.INVALID_POS:
-		var items := World.current_map.get_items(player_pos)
-		if items.size() > 0:
-			choices.append("Pick up %s" % items[0].name)
-
-	# Check for stairs
-	if World.current_map.has_stairs_down():
-		choices.append("Descend deeper")
-	if World.current_map.has_stairs_up():
-		choices.append("Go back up")
-
-	# Always offer these
-	choices.append("Look around")
-	if choices.size() < 4:
-		choices.append("Check for traps")
-
-	return choices

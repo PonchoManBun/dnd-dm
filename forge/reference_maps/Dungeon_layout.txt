@@ -1,0 +1,111 @@
+============================================================
+  TMX Map: Dungeon.tmx
+============================================================
+  Source: /home/jetson/dnd-dm/game/art/DawnLike/Examples/Dungeon.tmx
+  Dimensions: 20x15 tiles (320x240 pixels)
+  Tile size: 16x16
+  Layers: 2
+
+  Tilesets:
+  --------------------------------------------------------
+  Name             FirstGID  Count  Category     Source
+  --------------------------------------------------------
+  Wall                    1   1020  wall         Wall.png
+  Floor                1021    819  floor        Floor.png
+  Pit0                 1840    256  pit          Pit0.png
+  Door0                2096     40  door         Door0.png
+  Decor0               2136    176  decor        Decor0.png
+  Ground0              2312     56  ground       Ground0.png
+  Player0              2368    120  character    Player0.png
+  Pest0                2488     88  character    Pest0.png
+  Rodent0              2576     32  character    Rodent0.png
+  Undead0              2608     80  character    Undead0.png
+  Money                2688     64  item         Money.png
+  Chest0               2752     24  item         Chest0.png
+
+  Layer: Tiles
+  ============
+              1111111111
+    01234567890123456789
+   +--------------------+
+ 0 |....................|
+ 1 |.#################..|
+ 2 |.#...............#..|
+ 3 |.#.....#########.#..|
+ 4 |.#.....#.......#.#..|
+ 5 |.#.....#.#######.##.|
+ 6 |.#.....#.#PPPPPP.P#.|
+ 7 |.####.##.#PPPPPP.P#.|
+ 8 |....###..#P......P#.|
+ 9 |########.#P.PPPPPP#.|
+10 |#......#.#P.PPPPPP#.|
+11 |#......#.##.#######.|
+12 |#......#..#.#.......|
+13 |######.#..#.#.......|
+14 |.....#.#..#.#.......|
+   +--------------------+
+
+  Layer: Sprites
+  ==============
+              1111111111
+    01234567890123456789
+   +--------------------+
+ 0 |                    |
+ 1 |    F       F       |
+ 2 |  .    D  C     .   |
+ 3 |   I                |
+ 4 |  I                 |
+ 5 |  I C .    F  F D   |
+ 6 |   ...C             |
+ 7 |                C   |
+ 8 |              C     |
+ 9 |  F F      C        |
+10 | F FFD              |
+11 |  C  D     D        |
+12 | FFF D     .        |
+13 |      D             |
+14 |           C        |
+   +--------------------+
+
+  Merged View (all layers)
+  ========================
+              1111111111
+    01234567890123456789
+   +--------------------+
+ 0 |....................|
+ 1 |.###F#######F#####..|
+ 2 |.#.....D..C......#..|
+ 3 |.#.I...#########.#..|
+ 4 |.#I....#.......#.#..|
+ 5 |.#I.C..#.##F##F#D##.|
+ 6 |.#....C#.#PPPPPP.P#.|
+ 7 |.####.##.#PPPPPPCP#.|
+ 8 |....###..#P...C..P#.|
+ 9 |##F#F###.#PCPPPPPP#.|
+10 |#F.FFD.#.#P.PPPPPP#.|
+11 |#.C..D.#.##D#######.|
+12 |#FFF.D.#..#.#.......|
+13 |######D#..#.#.......|
+14 |.....#.#..#C#.......|
+   +--------------------+
+
+Legend:
+  #  = Wall
+  .  = Floor / Ground
+  D  = Door
+  F  = Furniture / Decor
+  C  = Character (Player / NPC / Monster)
+  T  = Tree
+  P  = Pit / Trap
+  I  = Item (Chest / Money / Weapon / etc.)
+  (space) = Empty / Transparent
+
+  Tile Statistics (merged):
+  ------------------------------
+  Wall               98 ( 32.7%)
+  Floor/Ground      142 ( 47.3%)
+  Door                7 (  2.3%)
+  Furniture          12 (  4.0%)
+  Character           8 (  2.7%)
+  Pit                30 ( 10.0%)
+  Item                3 (  1.0%)
