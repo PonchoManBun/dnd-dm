@@ -69,9 +69,9 @@ The orchestrator communicates with this session during gameplay. See `specs/phas
 For SSH access from another machine:
 
 ```
-Host jetson
-    HostName 192.168.2.1
-    User jetson
+Host <JETSON_USER>
+    HostName <JETSON_IP>
+    User <JETSON_USER>
 ```
 
 VS Code Remote-SSH is supported for remote editing when needed.

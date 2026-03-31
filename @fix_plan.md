@@ -2,7 +2,7 @@
 
 ## COMPLETED — Phase 0 Readiness
 
-- [x] Jetson Orin Nano: SSH working (192.168.2.1, user jetson, direct ethernet)
+- [x] Jetson Orin Nano: SSH working (<JETSON_IP>, user <JETSON_USER>, direct ethernet)
 - [x] Jetson: Ollama 0.18.0 + Llama 3.2 3B running on GPU (CUDA 12.6)
 - [x] Jetson: Project repo cloned to ~/dnd-dm
 - [x] Jetson: Godot 4.6.1 installed at /usr/local/bin/godot
