@@ -91,6 +91,6 @@ Originally forked from [statico/godot-roguelike-example](https://github.com/stat
 
 ## Licenses
 
-- **Source code:** MIT (see LICENSE)
-- **Dawnlike tileset:** [DawnBringer](https://opengameart.org/content/16x16-dawnhack-roguelike-tileset) — see tileset license
-- **Pixel Operator font:** [CC0](https://creativecommons.org/publicdomain/zero/1.0/)
+- **Project code:** MIT — see root [LICENSE](../LICENSE)
+- **Base game + FX textures:** MIT, Ian Langworth — see [game/LICENSE](LICENSE)
+- **Full attribution list:** See root [ATTRIBUTION.md](../ATTRIBUTION.md)
